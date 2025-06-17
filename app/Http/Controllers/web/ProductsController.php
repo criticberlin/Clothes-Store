@@ -58,7 +58,7 @@ class ProductsController extends Controller {
         return view('products.manage', compact('products'));
     }
 
-    public function edit(Request $request, Product $product = null) {
+    public function edit(Request $request, ?Product $product = null) {
         if(!Auth::check()) return redirect('login');
 
         $product = $product??new Product();
@@ -67,7 +67,7 @@ class ProductsController extends Controller {
         return view("products.edit", compact('product', 'colors', 'sizes'));
     }
 
-    public function save(Request $request, Product $product = null) {
+    public function save(Request $request, ?Product $product = null) {
         $this->validate($request, [
             'code' => ['required', 'string', 'max:32'],
             'name' => ['required', 'string', 'max:128'],

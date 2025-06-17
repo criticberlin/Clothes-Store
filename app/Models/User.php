@@ -62,4 +62,27 @@ class User extends Authenticatable
     {
         return $this->morphToMany('App\Models\Permission', 'model', 'model_has_permissions', 'model_id', 'permission_id');
     }
+    
+    /**
+     * Check if user has a specific permission
+     * 
+     * @param string $permission
+     * @return bool
+     */
+    public function hasPermissionTo($permission)
+    {
+        // Check direct permissions
+        if ($this->permissions()->where('name', $permission)->exists()) {
+            return true;
+        }
+        
+        // Check permissions via roles
+        foreach ($this->roles as $role) {
+            if ($role->permissions()->where('name', $permission)->exists()) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }

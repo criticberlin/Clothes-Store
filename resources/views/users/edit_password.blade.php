@@ -22,12 +22,17 @@
             </div>
           @endif
 
-          @if(!auth()->user()->hasPermissionTo('admin_users') || auth()->id()==$user->id)
+          @php
+            $isAdmin = auth()->check() && method_exists(auth()->user(), 'hasPermissionTo') ? auth()->user()->hasPermissionTo('admin_users') : false;
+            $isSameUser = auth()->id() == $user->id;
+          @endphp
+
+          @if(!$isAdmin || $isSameUser)
             <div class="form-group mb-3">
               <label for="old_password" class="form-label">Old Password:</label>
               <input type="password" id="old_password" class="form-control @error('old_password') is-invalid @enderror" placeholder="Old Password" name="old_password" required aria-required="true" autocomplete="current-password">
               @error('old_password')
-                <div class="invalid-feedback">{{ $error }}</div>
+                <div class="invalid-feedback">{{ $message }}</div>
               @enderror
             </div>
           @endif
@@ -36,7 +41,7 @@
             <label for="password" class="form-label">New Password:</label>
             <input type="password" id="password" class="form-control @error('password') is-invalid @enderror" placeholder="New Password" name="password" required aria-required="true" autocomplete="new-password">
             @error('password')
-              <div class="invalid-feedback">{{ $error }}</div>
+              <div class="invalid-feedback">{{ $message }}</div>
             @enderror
           </div>
 
@@ -44,7 +49,7 @@
             <label for="password_confirmation" class="form-label">Password Confirmation:</label>
             <input type="password" id="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror" placeholder="Confirm New Password" name="password_confirmation" required aria-required="true" autocomplete="new-password">
             @error('password_confirmation')
-              <div class="invalid-feedback">{{ $error }}</div>
+              <div class="invalid-feedback">{{ $message }}</div>
             @enderror
           </div>
 
