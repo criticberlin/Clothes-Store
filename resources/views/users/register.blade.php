@@ -21,6 +21,13 @@
               </ul>
             </div>
           @endif
+          
+          <!-- Display Info Messages -->
+          @if(session('info'))
+            <div class="alert alert-info">
+                {{ session('info') }}
+            </div>
+          @endif
 
           <!-- Name Input -->
           <div class="form-group mb-3">
@@ -63,16 +70,34 @@
           <div class="form-group mb-3">
             <button type="submit" class="btn btn-primary w-100">Register</button>
           </div>
-
-          <!-- Login Link -->
-          <div class="form-group mt-3 text-center">
-            <span>Already have an account?</span>
-            <a href="{{ route('login') }}" class="text-sm text-primary text-decoration-underline ms-1">
-              Login here
-            </a>
-          </div>
-
         </form>
+        
+        <!-- Social Login Buttons -->
+        <div class="my-4 position-relative">
+          <hr>
+          <div class="position-absolute top-50 start-50 translate-middle bg-white px-3">
+            Or Register With
+          </div>
+        </div>
+        <div class="d-grid gap-2 mb-3">
+          <a href="{{ route('google.login') }}" class="btn btn-outline-danger">
+            <i class="fab fa-google me-2"></i> Google
+          </a>
+          <a href="{{ route('facebook.login') }}" class="btn btn-outline-primary">
+            <i class="fab fa-facebook-f me-2"></i> Facebook
+          </a>
+          <a href="{{ route('github.redirect') }}" class="btn btn-outline-dark">
+            <i class="fab fa-github me-2"></i> GitHub
+          </a>
+        </div>
+
+        <!-- Login Link -->
+        <div class="form-group mt-3 text-center">
+          <span>Already have an account?</span>
+          <a href="{{ route('login') }}" class="text-sm text-primary text-decoration-underline ms-1">
+            Login here
+          </a>
+        </div>
       </div>
     </div>
   </div>

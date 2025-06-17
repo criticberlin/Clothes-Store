@@ -6,12 +6,16 @@ use App\Models\Product;
 use App\Models\Color;
 use App\Models\Size;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class ProductSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
-        // Create some colors
+        // Create colors if they don't exist
         $colors = [
             ['name' => 'Red', 'hex_code' => '#FF0000'],
             ['name' => 'Blue', 'hex_code' => '#0000FF'],
@@ -19,92 +23,82 @@ class ProductSeeder extends Seeder
             ['name' => 'Black', 'hex_code' => '#000000'],
             ['name' => 'White', 'hex_code' => '#FFFFFF'],
         ];
-
+        
         foreach ($colors as $color) {
-            Color::create($color);
+            Color::firstOrCreate(
+                ['name' => $color['name']],
+                ['hex_code' => $color['hex_code']]
+            );
         }
-
-        // Create some sizes
-        $sizes = [
-            ['name' => 'S'],
-            ['name' => 'M'],
-            ['name' => 'L'],
-            ['name' => 'XL'],
-            ['name' => 'XXL'],
-        ];
-
+        
+        // Create sizes if they don't exist
+        $sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        
         foreach ($sizes as $size) {
-            Size::create($size);
+            Size::firstOrCreate(['name' => $size]);
         }
-
-        // Create some products
+        
+        // Create sample products
         $products = [
             [
-                'code' => 'M001',
-                'name' => 'Men\'s T-Shirt',
-                'price' => 29.99,
-                'description' => 'Comfortable cotton t-shirt for men',
+                'code' => 'MEN-TSHIRT-001',
+                'name' => 'Men\'s Basic T-Shirt',
+                'price' => 19.99,
+                'description' => 'A comfortable cotton t-shirt for everyday wear.',
                 'photo' => 'men-tshirt.jpg',
                 'category' => 'men',
-                'quantity' => 100
+                'quantity' => 100,
             ],
             [
-                'code' => 'M002',
-                'name' => 'Men\'s Jeans',
+                'code' => 'MEN-JEANS-001',
+                'name' => 'Men\'s Slim Fit Jeans',
                 'price' => 49.99,
-                'description' => 'Stylish denim jeans for men',
+                'description' => 'Classic slim fit jeans for a modern look.',
                 'photo' => 'men-jeans.jpg',
                 'category' => 'men',
-                'quantity' => 80
+                'quantity' => 75,
             ],
             [
-                'code' => 'W001',
-                'name' => 'Women\'s Blouse',
+                'code' => 'WOMEN-DRESS-001',
+                'name' => 'Women\'s Summer Dress',
                 'price' => 39.99,
-                'description' => 'Elegant blouse for women',
+                'description' => 'Light and comfortable summer dress.',
+                'photo' => 'women-dress.jpg',
+                'category' => 'women',
+                'quantity' => 50,
+            ],
+            [
+                'code' => 'WOMEN-BLOUSE-001',
+                'name' => 'Women\'s Casual Blouse',
+                'price' => 29.99,
+                'description' => 'Elegant blouse for casual and formal occasions.',
                 'photo' => 'women-blouse.jpg',
                 'category' => 'women',
-                'quantity' => 90
+                'quantity' => 60,
             ],
             [
-                'code' => 'W002',
-                'name' => 'Women\'s Skirt',
-                'price' => 45.99,
-                'description' => 'Fashionable skirt for women',
-                'photo' => 'women-skirt.jpg',
-                'category' => 'women',
-                'quantity' => 75
-            ],
-            [
-                'code' => 'K001',
-                'name' => 'Kid\'s T-Shirt',
-                'price' => 19.99,
-                'description' => 'Colorful t-shirt for kids',
-                'photo' => 'kid-tshirt.jpg',
+                'code' => 'KIDS-TSHIRT-001',
+                'name' => 'Kids\' Cartoon T-Shirt',
+                'price' => 14.99,
+                'description' => 'Fun and colorful t-shirt for kids.',
+                'photo' => 'kids-tshirt.jpg',
                 'category' => 'kids',
-                'quantity' => 120
-            ],
-            [
-                'code' => 'K002',
-                'name' => 'Baby Romper',
-                'price' => 24.99,
-                'description' => 'Cute romper for babies',
-                'photo' => 'baby-romper.jpg',
-                'category' => 'kids',
-                'quantity' => 110
+                'quantity' => 80,
             ],
         ];
-
+        
         foreach ($products as $productData) {
-            $product = Product::create($productData);
+            $product = Product::firstOrCreate(
+                ['code' => $productData['code']],
+                $productData
+            );
             
-            // Attach random colors to each product
-            $colorIds = Color::inRandomOrder()->take(rand(1, 3))->pluck('id')->toArray();
-            $product->colors()->attach($colorIds);
+            // Attach random colors and sizes to each product
+            $colorIds = Color::inRandomOrder()->limit(rand(1, 3))->pluck('id')->toArray();
+            $sizeIds = Size::inRandomOrder()->limit(rand(2, 5))->pluck('id')->toArray();
             
-            // Attach random sizes to each product
-            $sizeIds = Size::inRandomOrder()->take(rand(1, 4))->pluck('id')->toArray();
-            $product->sizes()->attach($sizeIds);
+            $product->colors()->sync($colorIds);
+            $product->sizes()->sync($sizeIds);
         }
     }
 } 

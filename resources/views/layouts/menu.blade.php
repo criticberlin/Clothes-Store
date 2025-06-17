@@ -51,6 +51,15 @@
                     </a>
                 </div>
                 @endcan
+                
+                @can('admin_dashboard')
+                <div class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" href="{{ route('admin.dashboard') }}">
+                        <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
+                        <span>Admin Dashboard</span>
+                    </a>
+                </div>
+                @endcan
             </div>
             
             <div class="d-flex align-items-center gap-3">
@@ -118,6 +127,15 @@
                                         <i class="bi bi-key me-2"></i> Change Password
                                     </a>
                                 </li>
+                                
+                                @can('admin_dashboard')
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                        <i class="bi bi-speedometer2 me-2"></i> Admin Dashboard
+                                    </a>
+                                </li>
+                                @endcan
                                 
                                 @can('view_users')
                                 <li><hr class="dropdown-divider"></li>

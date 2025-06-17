@@ -10,6 +10,7 @@ use App\Http\Controllers\web\ProductsController;
 use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\CheckoutController;
 use App\Http\Controllers\web\HomeController;
+use App\Http\Controllers\web\AdminDashboardController;
 
 // Create a new HomeController for the root route
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -43,7 +44,18 @@ Route::post('/users/{user}/save-password', [UsersController::class, 'savePasswor
 // User Profile
 Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('profile');
 
-
+// Admin Routes
+Route::prefix('admin')->middleware(['auth:web', 'admin'])->group(function () {
+    // Admin Dashboard
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::post('/assign-role', [AdminDashboardController::class, 'assignRole'])->name('admin.assign-role');
+    
+    // Admin User Management
+    Route::get('/users', [UsersController::class, 'adminList'])->name('admin.users.list');
+    
+    // Admin Orders (already defined below)
+    // Route::get('/orders', [CartController::class, 'adminOrders'])->name('orders.admin');
+});
 
 // Public product routes
 Route::get('/category', [ProductsController::class, 'category'])->name('products.category');
