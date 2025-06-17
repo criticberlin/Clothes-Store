@@ -3,18 +3,16 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
-use App\Http\Controllers\Web\UsersController;
-use App\Http\Controllers\Web\SocialAuthController;
-use App\Http\Controllers\Web\SupportTicketController;
-use App\Http\Controllers\Web\ProductsController;
-use App\Http\Controllers\Web\CartController;
-use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\web\UsersController;
+use App\Http\Controllers\web\SocialAuthController;
+use App\Http\Controllers\web\SupportTicketController;
+use App\Http\Controllers\web\ProductsController;
+use App\Http\Controllers\web\CartController;
+use App\Http\Controllers\web\CheckoutController;
+use App\Http\Controllers\web\HomeController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-
+// Create a new HomeController for the root route
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 //  User Authentication
 Route::get('register', [UsersController::class, 'register'])->name('register');
@@ -51,7 +49,7 @@ Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('
 Route::get('/category', [ProductsController::class, 'category'])->name('products.category');
 Route::get('/category/{category}', [ProductsController::class, 'ListByCategory'])->name('products.byCategory');
 Route::get('/products', [ProductsController::class, 'index'])->name('products.list');
-Route::get('/test-products', [App\Http\Controllers\Web\TestProductController::class, 'index'])->name('test.products');
+Route::get('/test-products', [App\Http\Controllers\web\TestProductController::class, 'index'])->name('test.products');
 Route::get('/product/{id}', [ProductsController::class, 'productDetails'])->name('products.details');
 
 // Protected product management routes
@@ -93,15 +91,15 @@ Route::middleware(['auth:web'])->group(function () {
 });
 
 
-Route::get('/support', [App\Http\Controllers\Web\SupportTicketController::class, 'list'])->name('support.list');
-Route::get('/support/add', [App\Http\Controllers\Web\SupportTicketController::class, 'add'])->name('support.add');
-Route::post('/support', [App\Http\Controllers\Web\SupportTicketController::class, 'store'])->name('support.store');
-Route::get('/support/{ticket}', [App\Http\Controllers\Web\SupportTicketController::class, 'show'])->name('support.show');
+Route::get('/support', [App\Http\Controllers\web\SupportTicketController::class, 'list'])->name('support.list');
+Route::get('/support/add', [App\Http\Controllers\web\SupportTicketController::class, 'add'])->name('support.add');
+Route::post('/support', [App\Http\Controllers\web\SupportTicketController::class, 'store'])->name('support.store');
+Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketController::class, 'show'])->name('support.show');
 
 // Admin Support Ticket Routes
-Route::get('/admin/support', [App\Http\Controllers\Web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
-Route::get('/admin/support/{ticket}', [App\Http\Controllers\Web\AdminSupportTicketController::class, 'show'])->name('admin.support.show');
-Route::post('/admin/support/{ticket}/reply', [App\Http\Controllers\Web\AdminSupportTicketController::class, 'reply'])->name('admin.support.reply');
-Route::post('/admin/support/{ticket}/close', [App\Http\Controllers\Web\AdminSupportTicketController::class, 'close'])->name('admin.support.close');
+Route::get('/admin/support', [App\Http\Controllers\web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
+Route::get('/admin/support/{ticket}', [App\Http\Controllers\web\AdminSupportTicketController::class, 'show'])->name('admin.support.show');
+Route::post('/admin/support/{ticket}/reply', [App\Http\Controllers\web\AdminSupportTicketController::class, 'reply'])->name('admin.support.reply');
+Route::post('/admin/support/{ticket}/close', [App\Http\Controllers\web\AdminSupportTicketController::class, 'close'])->name('admin.support.close');
 
 

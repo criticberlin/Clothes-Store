@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web;
+namespace App\Http\Controllers\web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class CartController extends Controller
 {
@@ -138,7 +140,7 @@ class CartController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        // تحقق من الكمية المتاحة
+        // Check available quantity
         foreach ($cartItems as $item) {
             if ($item->quantity > $item->product->quantity) {
                 return redirect()->route('cart.index')->with('error', 'Insufficient stock for product: ' . $item->product->name);
@@ -177,6 +179,20 @@ class CartController extends Controller
         Cart::where('user_id', Auth::id())->delete();
 
         return redirect()->route('checkout.success')->with('success', 'Order placed successfully!');
+    }
+
+    public function checkoutSuccess()
+    {
+        $lastOrder = Order::where('user_id', Auth::id())
+            ->with(['items.product'])
+            ->latest()
+            ->first();
+
+        if (!$lastOrder) {
+            return redirect()->route('cart.index');
+        }
+
+        return view('checkout.success', compact('lastOrder'));
     }
 
     public function orders()
