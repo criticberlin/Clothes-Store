@@ -44,6 +44,7 @@
           <div class="form-group mb-3">
             <label for="password" class="form-label">Password:</label>
             <input type="password" id="password" class="form-control @error('password') is-invalid @enderror" placeholder="Enter your password" name="password" required aria-required="true" aria-describedby="passwordHelp" autocomplete="new-password">
+            <div id="passwordHelp" class="form-text text-muted">Password must be at least 8 characters long</div>
             @error('password')
               <div class="invalid-feedback">{{ $message }}</div>
             @enderror
@@ -63,25 +64,9 @@
             <button type="submit" class="btn btn-primary w-100">Register</button>
           </div>
 
-          <!-- Social Register Buttons -->
-          <div class="form-group text-center mb-3">
-            <span class="text-success">Or sign up with</span>
-            <div class="mt-2">
-              <a href="{{ route('google.login') }}" class="btn btn-outline-primary mx-1" title="Register with Google">
-                <img src="{{ asset('images/google.png') }}" alt="Google Logo" style="width: 30px; height: 30px;">
-              </a>
-              <a href="{{ route('facebook.login') }}" class="btn btn-outline-primary mx-1" title="Register with Facebook">
-                <img src="{{ asset('images/facebooklogo.png') }}" alt="Facebook Logo" style="width: 30px; height: 30px;">
-              </a>
-              <a href="{{ route('github.redirect') }}" class="btn btn-outline-primary mx-1" title="Register with GitHub">
-                <img src="{{ asset('images/github.png') }}" alt="GitHub Logo" style="width: 30px; height: 30px;">
-              </a>
-            </div>
-          </div>
-
           <!-- Login Link -->
           <div class="form-group mt-3 text-center">
-            <span class="text-white">Already have an account?</span>
+            <span>Already have an account?</span>
             <a href="{{ route('login') }}" class="text-sm text-primary text-decoration-underline ms-1">
               Login here
             </a>

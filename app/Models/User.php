@@ -5,16 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-use Laravel\Passport\HasApiTokens;
-
-
 
 class User extends Authenticatable
 {
-    use HasRoles;
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -50,5 +45,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    /**
+     * Get all roles for the user
+     */
+    public function roles()
+    {
+        return $this->morphToMany('App\Models\Role', 'model', 'model_has_roles', 'model_id', 'role_id');
+    }
+    
+    /**
+     * Get all permissions for the user
+     */
+    public function permissions()
+    {
+        return $this->morphToMany('App\Models\Permission', 'model', 'model_has_permissions', 'model_id', 'permission_id');
     }
 }

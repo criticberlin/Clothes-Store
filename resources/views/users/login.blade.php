@@ -60,25 +60,9 @@
             </div>
         @endif
 
-        <!-- Social Login Buttons -->
-        <div class="form-group text-center mb-3">
-            <span class="text-success">Or sign in with</span>
-            <div class="mt-2">
-            <a href="{{ route('google.login') }}" class="btn btn-outline-primary mx-1" title="Login with Google">
-                <img src="{{ asset('images/google.png') }}" alt="Google Logo" style="width: 30px; height: 30px;">
-            </a>
-            <a href="{{ route('facebook.login') }}" class="btn btn-outline-primary mx-1" title="Login with Facebook">
-                <img src="{{ asset('images/facebooklogo.png') }}" alt="Facebook Logo" style="width: 30px; height: 30px;">
-            </a>
-            <a href="{{ route('github.redirect') }}" class="btn btn-outline-primary mx-1" title="Login with GitHub">
-                <img src="{{ asset('images/github.png') }}" alt="GitHub Logo" style="width: 30px; height: 30px;">
-            </a>
-            </div>
-        </div>
-
         </form>
         <div class="form-group mt-3 text-center">
-        <span class="text-white">Don't have an account?</span>
+        <span>Don't have an account?</span>
         <a href="{{ route('register') }}" class="text-sm text-primary text-decoration-underline ms-1">
             Register here
         </a>
