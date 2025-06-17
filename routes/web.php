@@ -47,16 +47,20 @@ Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('
 
 
 
-//  Products
+// Public product routes
 Route::get('/category', [ProductsController::class, 'category'])->name('products.category');
 Route::get('/category/{category}', [ProductsController::class, 'ListByCategory'])->name('products.byCategory');
+Route::get('/products', [ProductsController::class, 'index'])->name('products.list');
+Route::get('/test-products', [App\Http\Controllers\Web\TestProductController::class, 'index'])->name('test.products');
 Route::get('/product/{id}', [ProductsController::class, 'productDetails'])->name('products.details');
 
-//  Manage Products
-Route::get('/manage', [ProductsController::class, 'manage'])->name('products.manage');
-Route::get('/manage/edit/{product?}', [ProductsController::class, 'edit'])->name('products.edit');
-Route::post('/manage/save/{product?}', [ProductsController::class, 'save'])->name('products.save');
-Route::delete('/manage/delete/{product}', [ProductsController::class, 'delete'])->name('products.delete');
+// Protected product management routes
+Route::middleware(['auth:web'])->group(function () {
+    Route::get('/manage', [ProductsController::class, 'manage'])->name('products.manage');
+    Route::get('/manage/edit/{product?}', [ProductsController::class, 'edit'])->name('products.edit');
+    Route::post('/manage/save/{product?}', [ProductsController::class, 'save'])->name('products.save');
+    Route::delete('/manage/delete/{product}', [ProductsController::class, 'delete'])->name('products.delete');
+});
 
 //  Social Authentication
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirectToGoogle'])->name('google.login');

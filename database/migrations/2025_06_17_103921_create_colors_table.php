@@ -14,11 +14,9 @@ return new class extends Migration
         Schema::create('colors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->nullable(); // For color hex code
+            $table->string('hex_code')->nullable();
             $table->timestamps();
         });
-
-        // Pivot table will be created in a separate migration
     }
 
     /**
@@ -28,4 +26,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('colors');
     }
-}; 
+};

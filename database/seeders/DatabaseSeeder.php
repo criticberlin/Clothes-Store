@@ -80,5 +80,9 @@ class DatabaseSeeder extends Seeder
         ]);
         
         $this->command->info('Database seeded with users, roles and permissions!');
+
+        $this->call([
+            ProductSeeder::class,
+        ]);
     }
 }

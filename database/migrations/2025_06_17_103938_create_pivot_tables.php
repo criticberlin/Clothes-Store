@@ -40,4 +40,4 @@ return new class extends Migration
         Schema::dropIfExists('product_size');
         Schema::dropIfExists('color_product');
     }
-}; 
+};

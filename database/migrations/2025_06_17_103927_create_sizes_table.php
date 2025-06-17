@@ -14,11 +14,8 @@ return new class extends Migration
         Schema::create('sizes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->nullable(); // Size code like S, M, L, XL
             $table->timestamps();
         });
-
-        // Pivot table will be created in a separate migration
     }
 
     /**
@@ -28,4 +25,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('sizes');
     }
-}; 
+};
