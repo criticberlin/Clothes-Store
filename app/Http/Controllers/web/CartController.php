@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
@@ -205,6 +206,17 @@ class CartController extends Controller
         return view('orders.index', compact('orders'));
     }
 
+    public function orderDetails(Order $order)
+    {
+        if (Auth::id() != $order->user_id) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $order->load(['items.product', 'items.color', 'items.size', 'user']);
+        
+        return view('orders.details', compact('order'));
+    }
+
     public function adminOrders()
     {
         if (!Auth::check()) {
@@ -219,6 +231,29 @@ class CartController extends Controller
             ->get();
 
         return view('orders.admin', compact('orders'));
+    }
+
+    public function adminOrderDetails(Order $order)
+    {
+        if (!Auth::check()) {
+            abort(401, 'Unauthorized');
+        }
+        
+        // Check if user has admin role through model_has_roles table
+        $hasAdminRole = DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_id', Auth::id())
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->where('roles.name', 'Admin')
+            ->exists();
+            
+        if (!$hasAdminRole) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $order->load(['items.product', 'items.color', 'items.size', 'user']);
+        
+        return view('admin.orders.details', compact('order'));
     }
 
     public function updateStatus(Request $request, Order $order)

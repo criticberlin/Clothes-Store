@@ -38,12 +38,12 @@ class ProductSeeder extends Seeder
             Size::firstOrCreate(['name' => $size]);
         }
         
-        // Create sample products
+        // Create sample products with prices in EGP (converted from USD at 1 USD = 50 EGP)
         $products = [
             [
                 'code' => 'MEN-TSHIRT-001',
                 'name' => 'Men\'s Basic T-Shirt',
-                'price' => 19.99,
+                'price' => 999.50, // 19.99 USD * 50 = 999.50 EGP
                 'description' => 'A comfortable cotton t-shirt for everyday wear.',
                 'photo' => 'men-tshirt.jpg',
                 'category' => 'men',
@@ -52,7 +52,7 @@ class ProductSeeder extends Seeder
             [
                 'code' => 'MEN-JEANS-001',
                 'name' => 'Men\'s Slim Fit Jeans',
-                'price' => 49.99,
+                'price' => 2499.50, // 49.99 USD * 50 = 2499.50 EGP
                 'description' => 'Classic slim fit jeans for a modern look.',
                 'photo' => 'men-jeans.jpg',
                 'category' => 'men',
@@ -61,7 +61,7 @@ class ProductSeeder extends Seeder
             [
                 'code' => 'WOMEN-DRESS-001',
                 'name' => 'Women\'s Summer Dress',
-                'price' => 39.99,
+                'price' => 1999.50, // 39.99 USD * 50 = 1999.50 EGP
                 'description' => 'Light and comfortable summer dress.',
                 'photo' => 'women-dress.jpg',
                 'category' => 'women',
@@ -70,7 +70,7 @@ class ProductSeeder extends Seeder
             [
                 'code' => 'WOMEN-BLOUSE-001',
                 'name' => 'Women\'s Casual Blouse',
-                'price' => 29.99,
+                'price' => 1499.50, // 29.99 USD * 50 = 1499.50 EGP
                 'description' => 'Elegant blouse for casual and formal occasions.',
                 'photo' => 'women-blouse.jpg',
                 'category' => 'women',
@@ -79,7 +79,7 @@ class ProductSeeder extends Seeder
             [
                 'code' => 'KIDS-TSHIRT-001',
                 'name' => 'Kids\' Cartoon T-Shirt',
-                'price' => 14.99,
+                'price' => 749.50, // 14.99 USD * 50 = 749.50 EGP
                 'description' => 'Fun and colorful t-shirt for kids.',
                 'photo' => 'kids-tshirt.jpg',
                 'category' => 'kids',

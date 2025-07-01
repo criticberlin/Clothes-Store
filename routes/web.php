@@ -11,9 +11,23 @@ use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\CheckoutController;
 use App\Http\Controllers\web\HomeController;
 use App\Http\Controllers\web\AdminDashboardController;
+use App\Http\Controllers\web\AdminController;
+use App\Http\Controllers\PreferenceController;
+use App\Http\Middleware\AdminMiddleware;
 
 // Create a new HomeController for the root route
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Theme, Language and Currency preferences
+Route::get('/theme/toggle', [PreferenceController::class, 'toggleTheme'])->name('theme.toggle');
+Route::get('/theme/{theme}', [PreferenceController::class, 'setTheme'])->name('theme.set');
+Route::get('/language/{locale}', [PreferenceController::class, 'setLanguage'])->name('language.set');
+Route::get('/currency/{currency}', [PreferenceController::class, 'setCurrency'])->name('currency.set');
+Route::get('/currencies', [PreferenceController::class, 'getCurrencies'])->name('currencies.list');
+// New routes for POST preferences
+Route::post('/preferences/theme', [PreferenceController::class, 'setTheme'])->name('preferences.theme');
+Route::post('/preferences/language', [PreferenceController::class, 'setLanguage'])->name('preferences.language');
+Route::post('/preferences/currency', [PreferenceController::class, 'setCurrency'])->name('preferences.currency');
 
 //  User Authentication
 Route::get('register', [UsersController::class, 'register'])->name('register');
@@ -45,16 +59,48 @@ Route::post('/users/{user}/save-password', [UsersController::class, 'savePasswor
 Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('profile');
 
 // Admin Routes
-Route::prefix('admin')->middleware(['auth:web', 'admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(function () {
     // Admin Dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    Route::post('/assign-role', [AdminDashboardController::class, 'assignRole'])->name('admin.assign-role');
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::post('/assign-role', [AdminController::class, 'assignRole'])->name('admin.assign-role');
     
     // Admin User Management
-    Route::get('/users', [UsersController::class, 'adminList'])->name('admin.users.list');
+    Route::get('/users', [AdminController::class, 'users'])->name('admin.users.list');
+    Route::get('/users/create', [UsersController::class, 'createRoll'])->name('admin.users.create');
+    Route::get('/users/{user}/edit', [UsersController::class, 'edit'])->name('admin.users.edit');
+    Route::post('/users/{user}/save', [UsersController::class, 'save'])->name('admin.users.save');
+    Route::delete('/users/{user}/delete', [UsersController::class, 'delete'])->name('admin.users.delete');
     
-    // Admin Orders (already defined below)
-    // Route::get('/orders', [CartController::class, 'adminOrders'])->name('orders.admin');
+    // Admin Product Management
+    Route::get('/products', [AdminController::class, 'products'])->name('admin.products.list');
+    Route::get('/products/create', [ProductsController::class, 'edit'])->name('admin.products.create');
+    Route::get('/products/{product}/edit', [ProductsController::class, 'edit'])->name('admin.products.edit');
+    Route::post('/products/{product?}/save', [ProductsController::class, 'save'])->name('admin.products.save');
+    Route::delete('/products/{product}/delete', [ProductsController::class, 'delete'])->name('admin.products.delete');
+    
+    // Admin Order Management
+    Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.list');
+    Route::get('/orders/{order}', [CartController::class, 'adminOrderDetails'])->name('admin.orders.details');
+    Route::patch('/orders/{order}/update-status', [CartController::class, 'updateStatus'])->name('admin.orders.update-status');
+    
+    // Admin Customer Management
+    Route::get('/customers', [AdminController::class, 'customers'])->name('admin.customers.list');
+    
+    // Admin Reports & Analytics
+    Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
+    
+    // Admin Settings
+    Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+    
+    // Admin Currency Management
+    Route::get('/currencies', [AdminController::class, 'currencies'])->name('admin.currencies');
+    Route::post('/currencies', [AdminController::class, 'updateCurrencies'])->name('admin.currencies.update');
+    
+    // Admin Support Ticket Management
+    Route::get('/support', [App\Http\Controllers\web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
+    Route::get('/support/{ticket}', [App\Http\Controllers\web\AdminSupportTicketController::class, 'show'])->name('admin.support.show');
+    Route::post('/support/{ticket}/reply', [App\Http\Controllers\web\AdminSupportTicketController::class, 'reply'])->name('admin.support.reply');
+    Route::post('/support/{ticket}/close', [App\Http\Controllers\web\AdminSupportTicketController::class, 'close'])->name('admin.support.close');
 });
 
 // Public product routes
@@ -63,6 +109,15 @@ Route::get('/category/{category}', [ProductsController::class, 'ListByCategory']
 Route::get('/products', [ProductsController::class, 'index'])->name('products.list');
 Route::get('/test-products', [App\Http\Controllers\web\TestProductController::class, 'index'])->name('test.products');
 Route::get('/product/{id}', [ProductsController::class, 'productDetails'])->name('products.details');
+
+// Static pages
+Route::get('/about', [App\Http\Controllers\web\PageController::class, 'about'])->name('pages.about');
+Route::get('/faq', [App\Http\Controllers\web\PageController::class, 'faq'])->name('pages.faq');
+Route::get('/contact', [App\Http\Controllers\web\PageController::class, 'contact'])->name('pages.contact');
+Route::get('/privacy', [App\Http\Controllers\web\PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/terms', [App\Http\Controllers\web\PageController::class, 'terms'])->name('pages.terms');
+Route::get('/shipping', [App\Http\Controllers\web\PageController::class, 'shipping'])->name('pages.shipping');
+Route::get('/returns', [App\Http\Controllers\web\PageController::class, 'returns'])->name('pages.returns');
 
 // Protected product management routes
 Route::middleware(['auth:web'])->group(function () {
@@ -95,11 +150,9 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/checkout/success', [CartController::class, 'checkoutSuccess'])->name('checkout.success');
 
 
-        // Orders route
+    // Orders route
     Route::get('/orders', [CartController::class, 'orders'])->name('orders.index');
-    Route::get('/admin/orders', [CartController::class, 'adminOrders'])->name('orders.admin');
-    Route::patch('/orders/{order}/update-status', [CartController::class, 'updateStatus'])->name('orders.update-status');
-
+    Route::get('/orders/{order}', [CartController::class, 'orderDetails'])->name('orders.details');
 });
 
 
@@ -107,11 +160,5 @@ Route::get('/support', [App\Http\Controllers\web\SupportTicketController::class,
 Route::get('/support/add', [App\Http\Controllers\web\SupportTicketController::class, 'add'])->name('support.add');
 Route::post('/support', [App\Http\Controllers\web\SupportTicketController::class, 'store'])->name('support.store');
 Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketController::class, 'show'])->name('support.show');
-
-// Admin Support Ticket Routes
-Route::get('/admin/support', [App\Http\Controllers\web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
-Route::get('/admin/support/{ticket}', [App\Http\Controllers\web\AdminSupportTicketController::class, 'show'])->name('admin.support.show');
-Route::post('/admin/support/{ticket}/reply', [App\Http\Controllers\web\AdminSupportTicketController::class, 'reply'])->name('admin.support.reply');
-Route::post('/admin/support/{ticket}/close', [App\Http\Controllers\web\AdminSupportTicketController::class, 'close'])->name('admin.support.close');
 
 

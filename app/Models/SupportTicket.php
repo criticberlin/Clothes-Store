@@ -9,22 +9,32 @@ class SupportTicket extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'subject',
         'message',
         'status',
-        'admin_reply',
-        'admin_id'
+        'priority',
     ];
 
+    /**
+     * Get the user that owns the support ticket.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function admin()
+    /**
+     * Get the replies for the support ticket.
+     */
+    public function replies()
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->hasMany(SupportTicketReply::class);
     }
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $currentLocale }}" dir="{{ $isRTL ? 'rtl' : 'ltr' }}" class="theme-{{ $currentTheme }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,6 +20,10 @@
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     
+    @if($isRTL)
+    <link rel="stylesheet" href="{{ asset('css/rtl.css') }}">
+    @endif
+    
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ asset('js/custom.js') }}" defer></script>
@@ -34,13 +38,13 @@
             --secondary-light: #4ADE80;
             --accent: #FF7F50;
             
-            /* Neutral Colors */
+            /* Neutral Colors - Dark Theme (default) */
             --bg-primary: #16161A;
             --bg-secondary: #242629;
             --surface: #2D2D33;
             --surface-alt: #383841;
             
-            /* Text Colors */
+            /* Text Colors - Dark Theme (default) */
             --text-primary: #FFFFFE;
             --text-secondary: #94A1B2;
             --text-tertiary: #72757E;
@@ -66,6 +70,26 @@
             --shadow-md: 0px 4px 8px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.2);
             --shadow-lg: 0px 8px 16px rgba(0, 0, 0, 0.16), 0px 4px 8px rgba(0, 0, 0, 0.2);
             --shadow-glow: 0px 0px 20px rgba(127, 90, 240, 0.5);
+        }
+        
+        /* Light Theme Colors */
+        html.theme-light {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --surface: #FFFFFF;
+            --surface-alt: #F9F9F9;
+            --text-primary: #222222;
+            --text-secondary: #555555;
+            --text-tertiary: #777777;
+            --border: #E2E2E2;
+            --overlay: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Light/Dark Mode Transition */
+        body, .card, .navbar, .btn, .form-control {
+            transition: background-color var(--transition-normal), 
+                        color var(--transition-normal), 
+                        border-color var(--transition-normal);
         }
 
         /* Base Styles */
@@ -368,99 +392,181 @@
             background-color: var(--primary);
             transform: rotate(45deg);
         }
+
+        /* Theme & Language Switchers */
+        .theme-switcher, 
+        .language-switcher,
+        .currency-switcher {
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        
+        .theme-toggle-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+        }
+        
+        .theme-toggle-btn:hover {
+            transform: translateY(-2px);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* RTL Support */
+        html[dir="rtl"] .ms-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+        }
+        
+        html[dir="rtl"] .me-auto {
+            margin-left: auto !important;
+            margin-right: 0 !important;
+        }
+        
+        html[dir="rtl"] .navbar .dropdown-menu {
+            left: auto;
+            right: 0;
+            text-align: right;
+        }
     </style>
+    
+    @stack('styles')
 </head>
 <body>
-    @include('layouts.menu')
-
-    <div class="container my-5">
-        <main class="fade-in">
-            @yield('content')
-        </main>
-    </div>
-
-    <footer class="mt-5 py-5 border-top border-surface">
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4 col-md-6">
-                    <h5 class="mb-4 text-primary">MyClothes</h5>
-                    <p class="text-secondary mb-4">Modern fashion for everyone. Discover the latest trends and timeless classics for all ages.</p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-secondary hover-text-primary transition-normal"><i class="bi bi-instagram fs-5"></i></a>
-                        <a href="#" class="text-secondary hover-text-primary transition-normal"><i class="bi bi-twitter-x fs-5"></i></a>
-                        <a href="#" class="text-secondary hover-text-primary transition-normal"><i class="bi bi-facebook fs-5"></i></a>
-                        <a href="#" class="text-secondary hover-text-primary transition-normal"><i class="bi bi-pinterest fs-5"></i></a>
+            <a class="navbar-brand" href="{{ route('home') }}">
+                <i class="bi bi-bag-heart-fill text-primary me-2"></i> MyClothes
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">{{ __('Home') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.list') }}">{{ __('Shop') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('pages.about') ? 'active' : '' }}" href="{{ route('pages.about') }}">{{ __('About') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('pages.contact') ? 'active' : '' }}" href="{{ route('pages.contact') }}">{{ __('Contact') }}</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    @include('partials.theme_switcher')
+                    @include('partials.language_switcher')
+                    
+                    <div class="ms-2">
+                        @auth
+                        <div class="dropdown">
+                            <a href="#" class="btn btn-sm btn-primary dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{{ route('profile', Auth::id()) }}"><i class="bi bi-person me-1"></i> {{ __('My Profile') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('orders.index') }}"><i class="bi bi-bag me-1"></i> {{ __('My Orders') }}</a></li>
+                                @can('admin_dashboard')
+                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i> {{ __('Admin Dashboard') }}</a></li>
+                                @endcan
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ route('do_logout') }}"><i class="bi bi-box-arrow-right me-1"></i> {{ __('Logout') }}</a></li>
+                            </ul>
+                        </div>
+                        @else
+                        <div class="d-flex">
+                            <a href="{{ route('login') }}" class="btn btn-sm btn-outline-primary me-2">{{ __('Login') }}</a>
+                            <a href="{{ route('register') }}" class="btn btn-sm btn-primary">{{ __('Register') }}</a>
+                        </div>
+                        @endauth
                     </div>
-                </div>
-                <div class="col-lg-2 col-md-6 col-6">
-                    <h6 class="mb-4">Shop</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Men</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Women</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Kids</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">New Arrivals</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-6 col-6">
-                    <h6 class="mb-4">Help</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">FAQ</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Shipping</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Returns</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <h6 class="mb-4">Stay Updated</h6>
-                    <p class="text-secondary mb-4">Subscribe to get special offers, free giveaways, and new arrivals.</p>
-                    <div class="input-group mb-3">
-                        <input type="email" class="form-control" placeholder="Email address" aria-label="Email address">
-                        <button class="btn btn-primary" type="button">Subscribe</button>
-                    </div>
+                    
+                    <a href="{{ route('cart.index') }}" class="btn btn-link position-relative ms-2">
+                        <i class="bi bi-cart text-primary fs-5"></i>
+                        @if(Auth::check() && Auth::user()->cart && Auth::user()->cart->count() > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ Auth::user()->cart->count() }}
+                            </span>
+                        @endif
+                    </a>
                 </div>
             </div>
-            <div class="mt-5 pt-4 border-top border-surface">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="text-tertiary mb-md-0">© {{ date('Y') }} MyClothes. All rights reserved.</p>
+        </div>
+    </nav>
+    
+    <main>
+        @yield('content')
+    </main>
+    
+    <footer class="bg-surface text-text-secondary py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-primary mb-4"><i class="bi bi-bag-heart-fill me-2"></i> MyClothes</h5>
+                    <p>{{ __('Your one-stop destination for premium fashion.') }}</p>
+                    <div class="social-links mt-3">
+                        <a href="#" class="me-2 fs-5"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="me-2 fs-5"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="me-2 fs-5"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="fs-5"><i class="bi bi-pinterest"></i></a>
                     </div>
-                    <div class="col-md-6 text-md-end">
-                        <ul class="list-inline mb-0">
-                            <li class="list-inline-item"><a href="#" class="text-tertiary small">Privacy Policy</a></li>
-                            <li class="list-inline-item ms-3"><a href="#" class="text-tertiary small">Terms & Conditions</a></li>
-                        </ul>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h6 class="mb-4">{{ __('Shop') }}</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ route('products.byCategory', 'men') }}" class="text-reset">{{ __('Men') }}</a></li>
+                        <li class="mb-2"><a href="{{ route('products.byCategory', 'women') }}" class="text-reset">{{ __('Women') }}</a></li>
+                        <li class="mb-2"><a href="{{ route('products.byCategory', 'kids') }}" class="text-reset">{{ __('Kids') }}</a></li>
+                        <li><a href="{{ route('products.list') }}" class="text-reset">{{ __('All Products') }}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h6 class="mb-4">{{ __('Company') }}</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ route('pages.about') }}" class="text-reset">{{ __('About Us') }}</a></li>
+                        <li class="mb-2"><a href="{{ route('pages.contact') }}" class="text-reset">{{ __('Contact') }}</a></li>
+                        <li class="mb-2"><a href="{{ route('pages.faq') }}" class="text-reset">{{ __('FAQ') }}</a></li>
+                        <li><a href="#" class="text-reset">{{ __('Careers') }}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-4">{{ __('Newsletter') }}</h6>
+                    <p>{{ __('Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.') }}</p>
+                    <form class="newsletter-form mt-3">
+                        <div class="input-group">
+                            <input type="email" class="form-control" placeholder="{{ __('Enter your email') }}">
+                            <button class="btn btn-primary" type="button">{{ __('Subscribe') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-12">
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <p class="mb-0">© {{ date('Y') }} MyClothes. {{ __('All rights reserved.') }}</p>
+                        <div class="d-flex mt-2 mt-sm-0">
+                            <a href="{{ route('pages.privacy') }}" class="text-reset me-3">{{ __('Privacy Policy') }}</a>
+                            <a href="{{ route('pages.terms') }}" class="text-reset">{{ __('Terms of Service') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
-
-    <button class="theme-toggle" id="themeToggle">
-        <i class="bi bi-moon-stars"></i>
-    </button>
-
-    <script>
-        // Add smooth scrolling
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add scroll animation class to elements
-            const elements = document.querySelectorAll('.card, .btn, .section-title, .product-item');
-            let delay = 0;
-            
-            elements.forEach((el, i) => {
-                el.style.setProperty('--animation-order', i);
-                el.classList.add('page-transition');
-            });
-
-            // Navbar scroll effect
-            const navbar = document.querySelector('.navbar-custom');
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 50) {
-                    navbar.classList.add('shadow-lg');
-                } else {
-                    navbar.classList.remove('shadow-lg');
-                }
-            });
-        });
-    </script>
+    
+    @stack('scripts')
 </body>
 </html>

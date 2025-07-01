@@ -48,16 +48,31 @@ class DatabaseSeeder extends Seeder
         }
         
         // Create roles if they don't exist using DB query to avoid model dependency
-        $adminRoleExists = DB::table('roles')->where('name', 'admin')->exists();
+        $adminRoleExists = DB::table('roles')->where('name', 'Admin')->exists();
         if (!$adminRoleExists) {
-            $adminRoleId = DB::table('roles')->insertGetId([
-                'name' => 'admin',
-                'guard_name' => 'web',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            // Check if there's an 'admin' role that needs to be updated
+            $oldAdminRole = DB::table('roles')->where('name', 'admin')->first();
+            
+            if ($oldAdminRole) {
+                // Update the existing role
+                DB::table('roles')
+                    ->where('id', $oldAdminRole->id)
+                    ->update([
+                        'name' => 'Admin',
+                        'updated_at' => now()
+                    ]);
+                $adminRoleId = $oldAdminRole->id;
+            } else {
+                // Create a new role
+                $adminRoleId = DB::table('roles')->insertGetId([
+                    'name' => 'Admin',
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
         } else {
-            $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+            $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
         }
         
         $customerRoleExists = DB::table('roles')->where('name', 'customer')->exists();
@@ -75,7 +90,7 @@ class DatabaseSeeder extends Seeder
         // Create permissions if they don't exist
         $permissions = [
             'view_users', 'edit_users', 'delete_users', 'change_password',
-            'manage_orders', 'Complaints', 'admin_dashboard'
+            'manage_orders', 'Complaints', 'admin_dashboard', 'manage_products'
         ];
         
         foreach ($permissions as $permName) {
@@ -157,9 +172,12 @@ class DatabaseSeeder extends Seeder
         
         $this->command->info('Database seeded with users, roles and permissions!');
 
-        // Comment out ProductSeeder to avoid errors
-        // $this->call([
-        //     ProductSeeder::class,
-        // ]);
+        // Run the AdminUserSeeder to ensure admin has all required permissions
+        $this->call([
+            AdminUserSeeder::class,
+            ProductSeeder::class,
+            CategorySeeder::class,
+            CurrencySeeder::class,
+        ]);
     }
 }

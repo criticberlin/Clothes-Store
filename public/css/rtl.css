@@ -1,0 +1,165 @@
+/**
+ * RTL Support Styles
+ * For Arabic language and right-to-left layout
+ */
+
+/* Basic text alignment */
+body {
+    text-align: right;
+    direction: rtl;
+}
+
+/* Navbar */
+.navbar-nav {
+    padding-right: 0;
+}
+
+.dropdown-menu {
+    text-align: right;
+}
+
+.ms-auto {
+    margin-right: auto !important;
+    margin-left: unset !important;
+}
+
+.me-auto {
+    margin-left: auto !important;
+    margin-right: unset !important;
+}
+
+.ms-1, .ms-2, .ms-3, .ms-4, .ms-5 {
+    margin-right: .25rem !important;
+    margin-left: unset !important;
+}
+
+.me-1, .me-2, .me-3, .me-4, .me-5 {
+    margin-left: .25rem !important;
+    margin-right: unset !important;
+}
+
+.ps-1, .ps-2, .ps-3, .ps-4, .ps-5 {
+    padding-right: .25rem !important;
+    padding-left: unset !important;
+}
+
+.pe-1, .pe-2, .pe-3, .pe-4, .pe-5 {
+    padding-left: .25rem !important;
+    padding-right: unset !important;
+}
+
+/* Float adjustments */
+.float-start {
+    float: right !important;
+}
+
+.float-end {
+    float: left !important;
+}
+
+/* Text alignment classes */
+.text-start {
+    text-align: right !important;
+}
+
+.text-end {
+    text-align: left !important;
+}
+
+/* Adjust form controls */
+.form-check {
+    padding-left: 0;
+    padding-right: 1.5em;
+}
+
+.form-check .form-check-input {
+    float: right;
+    margin-left: 0;
+    margin-right: -1.5em;
+}
+
+/* Adjust input groups */
+.input-group > .form-control:not(:first-child),
+.input-group > .form-select:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.input-group > .form-control:not(:last-child),
+.input-group > .form-select:not(:last-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+    margin-right: -1px;
+    margin-left: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+/* Admin sidebar adjustments */
+.admin-sidebar {
+    right: 0;
+    left: auto;
+}
+
+.admin-content {
+    margin-right: 280px;
+    margin-left: 0;
+}
+
+.sidebar-nav .nav-link {
+    border-right: 3px solid transparent;
+    border-left: none;
+}
+
+.sidebar-nav .nav-link.active {
+    border-right: 3px solid var(--primary);
+    border-left: none;
+}
+
+/* Icon with text */
+.bi, .fa, .fas, .far {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+/* Breadcrumb divider */
+.breadcrumb-item + .breadcrumb-item::before {
+    float: right;
+    padding-left: 0.5rem;
+    padding-right: 0;
+}
+
+/* Cards and content containers */
+.card-header {
+    text-align: right;
+}
+
+/* Tables */
+.table th,
+.table td {
+    text-align: right;
+}
+
+/* Media queries for responsive layouts */
+@media (max-width: 992px) {
+    .admin-content {
+        margin-right: 0;
+    }
+    
+    .admin-sidebar {
+        transform: translateX(100%);
+    }
+    
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+} 

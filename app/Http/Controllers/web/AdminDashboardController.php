@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web;
+namespace App\Http\Controllers\web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -22,7 +22,7 @@ class AdminDashboardController extends Controller
             ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
             ->where('model_has_roles.model_id', Auth::id())
             ->where('model_has_roles.model_type', 'App\\Models\\User')
-            ->where('roles.name', 'admin')
+            ->where('roles.name', 'Admin')
             ->exists();
             
         if (!$hasAdminAccess) {

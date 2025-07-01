@@ -121,9 +121,21 @@
                     </div>
 
                     <div class="mt-5">
-                        <a href="{{ route('users.list') }}" class="btn btn-outline-secondary px-4">
-                            <i class="bi bi-arrow-left me-2"></i> Back to Users List
-                        </a>
+                        @php
+                            $hasViewUsersPermission = false;
+                            foreach ($permissions as $permission) {
+                                if ($permission->name === 'view_users') {
+                                    $hasViewUsersPermission = true;
+                                    break;
+                                }
+                            }
+                        @endphp
+
+                        @if($hasViewUsersPermission)
+                            <a href="{{ route('users.list') }}" class="btn btn-outline-secondary px-4">
+                                <i class="bi bi-arrow-left me-2"></i> Back to Users List
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>

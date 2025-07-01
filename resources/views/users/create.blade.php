@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-center">
   <div class="card m-4 col-sm-8">
     <div class="card-body">
-      <form action="{{ route('users_store') }}" method="post">
+      <form action="{{ route('admin.users.save', ['user' => 0]) }}" method="post">
         @csrf
         @foreach($errors->all() as $error)
         <div class="alert alert-danger">

@@ -11,6 +11,88 @@ document.addEventListener('DOMContentLoaded', function() {
     initProductInteractions();
     initTooltips();
     initCartFunctionality();
+    
+    // Get theme from localStorage or use the server-provided theme
+    const savedTheme = localStorage.getItem('theme');
+    const htmlElement = document.documentElement;
+    
+    if (savedTheme) {
+        htmlElement.classList.remove('theme-light', 'theme-dark');
+        htmlElement.classList.add(`theme-${savedTheme}`);
+        
+        // Also update any theme toggles
+        const themeToggles = document.querySelectorAll('.theme-toggle-btn');
+        themeToggles.forEach(toggle => {
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                if (savedTheme === 'dark') {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                } else {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-stars-fill');
+                }
+            }
+        });
+    }
+    
+    // Listen for theme changes
+    const themeLinks = document.querySelectorAll('a[href*="theme/toggle"], a[href*="theme/light"], a[href*="theme/dark"]');
+    
+    themeLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const href = this.getAttribute('href');
+            const newTheme = href.includes('light') ? 'light' : 
+                            href.includes('dark') ? 'dark' : 
+                            (htmlElement.classList.contains('theme-dark') ? 'light' : 'dark');
+            
+            // Save theme preference
+            localStorage.setItem('theme', newTheme);
+            
+            // Apply theme immediately for better UX
+            htmlElement.classList.remove('theme-light', 'theme-dark');
+            htmlElement.classList.add(`theme-${newTheme}`);
+            
+            // Update icon
+            const icon = this.querySelector('i');
+            if (icon) {
+                if (newTheme === 'dark') {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                } else {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-stars-fill');
+                }
+            }
+            
+            // Make server request to update session
+            fetch(href)
+                .then(response => {
+                    // Theme has been updated on the server
+                })
+                .catch(error => {
+                    console.error('Failed to update theme preference:', error);
+                });
+        });
+    });
+    
+    // Format currency amounts
+    function formatCurrency(amount, currency = 'EGP', locale = 'en-US') {
+        // Use current locale or fallback to en-US
+        const userLocale = document.documentElement.lang || locale;
+        
+        // Format the amount based on currency and locale
+        return new Intl.NumberFormat(userLocale, {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 2
+        }).format(amount);
+    }
+    
+    // Optional: Expose formatCurrency to global scope
+    window.formatCurrency = formatCurrency;
 });
 
 /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web;
+namespace App\Http\Controllers\web;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Validation\Rules\Password;
@@ -92,6 +92,19 @@ class UsersController extends Controller
         }
 
         Auth::setUser($user);
+
+        // Check if the user has Admin role
+        $hasAdminRole = DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->where('roles.name', 'Admin')
+            ->exists();
+
+        // Redirect admin users to the admin dashboard
+        if ($hasAdminRole) {
+            return redirect()->route('admin.dashboard');
+        }
 
         return redirect('/');
     }

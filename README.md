@@ -93,3 +93,96 @@ composer install
 npm install
 cp .env.example .env
 php artisan key:generate
+
+```
+
+# MyClothes Store
+
+Modern E-commerce platform for clothing retail.
+
+## Features
+
+- Responsive design for all devices
+- User authentication and registration
+- Product catalog with categories and filtering
+- Shopping cart functionality
+- Checkout and order management
+- Admin dashboard for product, order, and user management
+- Support ticket system
+- Dark/Light mode switching with theme persistence
+- Multi-language support (English and Arabic)
+- RTL layout for Arabic language
+- Currency localization with Egyptian Pound (EGP) as base currency
+- Dynamic currency switching (EGP, USD, EUR) for admins
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/Clothes_Store.git
+```
+
+2. Install dependencies:
+```bash
+composer install
+npm install
+```
+
+3. Create and configure `.env` file:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+4. Configure your database in `.env` file
+
+5. Run migrations and seeders:
+```bash
+php artisan migrate --seed
+```
+
+6. Start development server:
+```bash
+php artisan serve
+```
+
+## Theme Switching
+
+The application supports both light and dark modes. Theme preference is saved in both localStorage (for immediate visual feedback) and server-side session for persistence across devices.
+
+## Multi-language Support
+
+- Languages supported: English (default) and Arabic
+- Language selection is saved in the session
+- RTL (Right-to-Left) support is automatically enabled for Arabic
+
+## Currency Localization
+
+- Base currency: EGP (Egyptian Pound)
+- Admin can manage and update exchange rates
+- Dynamic currency conversion based on stored exchange rates
+- Product prices are stored in EGP in the database
+
+## Admin Features
+
+- Complete admin dashboard
+- User management
+- Product management
+- Order management
+- Support ticket management
+- Currency management
+- Reports and analytics
+
+## User Features
+
+- Registration and authentication
+- Product browsing and filtering
+- Shopping cart
+- Order history
+- Support ticket creation
+- Theme preference
+- Language preference
+
+## License
+
+[MIT License](LICENSE)

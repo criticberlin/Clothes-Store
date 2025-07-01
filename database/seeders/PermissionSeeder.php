@@ -39,7 +39,7 @@ class PermissionSeeder extends Seeder
         }
         
         // Assign all permissions to admin role
-        $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+        $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
         $permissions = DB::table('permissions')->get();
         
         foreach ($permissions as $permission) {
