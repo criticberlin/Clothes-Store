@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ $currentLocale ?? app()->getLocale() }}" dir="{{ isset($isRTL) && $isRTL ? 'rtl' : 'ltr' }}" class="theme-{{ $currentTheme ?? session('theme_mode', 'dark') }}">
+<html lang="{{ $currentLocale ?? app()->getLocale() }}" dir="{{ isset($isRTL) && $isRTL ? 'rtl' : 'ltr' }}" class="theme-{{ $currentTheme ?? session('theme_mode', 'dark') }}" data-currency="{{ $currentCurrency }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,6 +15,7 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@6.11.0/css/flag-icons.min.css">
 
     <!-- Core Styles -->
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
@@ -99,6 +100,23 @@
             --border: #383841;
             --focus-ring: rgba(127, 90, 240, 0.5);
             --overlay: rgba(22, 22, 26, 0.8);
+            
+            /* Radius & Spacing */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1.5rem;
+            --radius-xl: 2rem;
+            
+            /* Animation */
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+            --transition-slow: 350ms cubic-bezier(0.65, 0, 0.35, 1);
+            
+            /* Shadows */
+            --shadow-sm: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 0px 2px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0px 4px 8px rgba(0, 0, 0, 0.12), 0px 2px 4px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0px 8px 16px rgba(0, 0, 0, 0.16), 0px 4px 8px rgba(0, 0, 0, 0.2);
+            --shadow-glow: 0px 0px 20px rgba(127, 90, 240, 0.5);
         }
 
         body {
@@ -308,6 +326,8 @@
             }
         }
     </style>
+    
+    @stack('styles')
 </head>
 <body>
     <div class="admin-wrapper">
@@ -433,6 +453,11 @@
                     <div class="language-switcher mx-3">
                         <div class="dropdown">
                             <button class="theme-toggle-btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if(app()->getLocale() == 'ar')
+                                    <span class="fi fi-eg me-1"></span>
+                                @else
+                                    <span class="fi fi-gb me-1"></span>
+                                @endif
                                 {{ strtoupper(app()->getLocale()) }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
@@ -441,7 +466,9 @@
                                         @csrf
                                         <input type="hidden" name="language" value="en">
                                         <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}">English</button>
+                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}">
+                                            <span class="fi fi-gb me-2"></span> English
+                                        </button>
                                     </form>
                                 </li>
                                 <li>
@@ -449,7 +476,9 @@
                                         @csrf
                                         <input type="hidden" name="language" value="ar">
                                         <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'ar' ? 'active' : '' }}">العربية</button>
+                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'ar' ? 'active' : '' }}">
+                                            <span class="fi fi-eg me-2"></span> العربية
+                                        </button>
                                     </form>
                                 </li>
                             </ul>
@@ -460,7 +489,11 @@
                     <div class="currency-switcher">
                         <div class="dropdown">
                             <button class="theme-toggle-btn dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ session('currency_code', 'EGP') }}
+                                @php
+                                    $currency = App\Models\Currency::where('code', session('currency_code', 'EGP'))->first();
+                                    $symbol = $currency ? $currency->symbol : 'ج.م';
+                                @endphp
+                                {{ $symbol }} {{ session('currency_code', 'EGP') }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
                                 @foreach(App\Models\Currency::where('is_active', true)->get() as $currency)
@@ -470,7 +503,7 @@
                                         <input type="hidden" name="currency_code" value="{{ $currency->code }}">
                                         <input type="hidden" name="redirect" value="{{ url()->current() }}">
                                         <button type="submit" class="dropdown-item {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}">
-                                            {{ $currency->code }} - {{ $currency->name }}
+                                            {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
                                         </button>
                                     </form>
                                 </li>

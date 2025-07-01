@@ -1,47 +1,50 @@
 @extends('layouts.master')
-@section('title', 'Shopping Cart')
+
+@section('title', __('general.your_cart'))
 
 @section('content')
-<div class="container my-5">
-    <h1 class="mb-4">Shopping Cart</h1>
-
+<div class="container py-5">
+    <h1 class="mb-4">{{ __('general.your_cart') }}</h1>
+    
     @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
     @endif
-
+    
     @if(session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
     @endif
 
-    @if(count($cartItems) > 0)
-        <div class="card bg-dark">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Color</th>
-                                <th>Size</th>
-                                <th>Price</th>
-                                <th>Quantity</th>
-                                <th>Total</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    @if(!empty($cartItems))
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('general.product') }}</th>
+                                    <th>{{ __('general.color') }}</th>
+                                    <th>{{ __('general.size') }}</th>
+                                    <th>{{ __('general.price') }}</th>
+                                    <th>{{ __('general.quantity') }}</th>
+                                    <th>{{ __('general.total') }}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
                             @foreach($cartItems as $item)
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="{{ asset('images/' . $item->product->photo) }}" alt="{{ $item->product->name }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                                            <img src="{{ asset('img/products/' . $item->product->photo) }}" alt="{{ $item->product->name }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
                                             <div class="ms-3">
                                                 <h6 class="mb-0">{{ $item->product->name }}</h6>
-                                                <small class="text-secondary">Stock: {{ $item->product->quantity }}</small>
+                                                <small class="text-secondary">{{ __('general.available') }}: {{ $item->product->quantity }}</small>
                                             </div>
                                         </div>
                                     </td>
@@ -54,55 +57,92 @@
                                         @endif
                                     </td>
                                     <td>{{ $item->size ? $item->size->name : 'N/A' }}</td>
-                                    <td>${{ number_format($item->product->price, 2) }}</td>
+                                    <td><span class="price-value" data-base-price="{{ $item->product->price }}">{{ formatPrice($item->product->price) }}</span></td>
                                     <td>
-                                        <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-flex align-items-center">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->product->quantity }}" class="form-control form-control-sm" style="width: 70px;">
-                                            <button type="submit" class="btn btn-sm btn-primary ms-2">Update</button>
-                                        </form>
+                                        <div class="input-group input-group-sm" style="width: 100px;">
+                                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-flex">
+                                                @csrf
+                                                <input type="number" name="quantity" class="form-control" value="{{ $item->quantity }}" min="1" max="{{ $item->product->quantity }}">
+                                                <button type="submit" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
-                                    <td>${{ number_format($item->product->price * $item->quantity, 2) }}</td>
+                                    <td><span class="price-value" data-base-price="{{ $item->product->price * $item->quantity }}">{{ formatPrice($item->product->price * $item->quantity) }}</span></td>
                                     <td>
                                         <form action="{{ route('cart.remove', $item->id) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </form>
                                     </td>
                                 </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div>
-                        <h4>Total: ${{ number_format($total, 2) }}</h4>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="d-flex gap-2">
-                        <form action="{{ route('cart.clear') }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to clear your cart?')">
-                                Clear Cart
-                            </button>
-                        </form>
-                        <a href="{{ route('products.category') }}" class="btn btn-secondary">Continue Shopping</a>
-                        <a href="{{ route('checkout.index') }}" class="btn btn-primary">Proceed to Checkout</a>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{{ route('products.index') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2"></i>{{ __('general.continue_shopping') }}
+                </a>
+                <form action="{{ route('cart.clear') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-2"></i>{{ __('general.clear_cart') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">{{ __('general.order_summary') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>{{ __('general.subtotal') }}</span>
+                        <span class="price-value" data-base-price="{{ $subTotal }}">{{ formatPrice($subTotal) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>{{ __('general.shipping') }}</span>
+                        <span class="price-value" data-base-price="{{ $shippingCost }}">{{ formatPrice($shippingCost) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>{{ __('general.tax') }}</span>
+                        <span class="price-value" data-base-price="{{ $tax }}">{{ formatPrice($tax) }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>{{ __('general.total') }}</strong>
+                        <strong class="price-value" data-base-price="{{ $total }}">{{ formatPrice($total) }}</strong>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('checkout.index') }}" class="btn btn-primary btn-lg">
+                            {{ __('general.checkout') }}
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     @else
-        <div class="card bg-dark">
-            <div class="card-body text-center">
-                <h3>Your cart is empty</h3>
-                <p class="text-secondary">Looks like you haven't added any items to your cart yet.</p>
-                <a href="{{ route('products.category') }}" class="btn btn-primary">Start Shopping</a>
-            </div>
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-cart-x" style="font-size: 4rem;"></i>
         </div>
+        <h2>{{ __('general.cart_empty') }}</h2>
+        <p class="text-secondary mb-4">{{ __('general.cart_empty_message') }}</p>
+        <a href="{{ route('products.index') }}" class="btn btn-primary btn-lg">
+            {{ __('general.start_shopping') }}
+        </a>
+    </div>
     @endif
 </div>
 @endsection

@@ -1,6 +1,10 @@
 <div class="dropdown currency-switcher">
     <button class="btn btn-sm dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-cash"></i> {{ $currentCurrency }}
+        @php
+            $currency = App\Models\Currency::where('code', $currentCurrency)->first();
+            $symbol = $currency ? $currency->symbol : 'ج.م';
+        @endphp
+        {{ $symbol }} {{ $currentCurrency }}
     </button>
     <ul class="dropdown-menu" aria-labelledby="currencyDropdown">
         @foreach($currencies as $currency)
@@ -10,7 +14,7 @@
                     <input type="hidden" name="currency_code" value="{{ $currency->code }}">
                     <input type="hidden" name="redirect" value="{{ url()->current() }}">
                     <button type="submit" class="dropdown-item {{ $currentCurrency === $currency->code ? 'active' : '' }}">
-                        {{ $currency->name }} ({{ $currency->symbol }})
+                        {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
                     </button>
                 </form>
             </li>

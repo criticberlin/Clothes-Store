@@ -34,9 +34,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        
+        // Sync with server if theme doesn't match
+        const serverTheme = htmlElement.className.includes('theme-dark') ? 'dark' : 'light';
+        if (savedTheme !== serverTheme) {
+            fetch(`/theme/${savedTheme}`)
+                .catch(error => console.error('Failed to sync theme with server:', error));
+        }
     }
     
-    // Listen for theme changes
+    // Listen for theme form submissions
+    document.querySelectorAll('form[action*="preferences/theme"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get the new theme from the form input
+            const newTheme = this.querySelector('input[name="theme"]').value;
+            
+            // Save theme preference
+            localStorage.setItem('theme', newTheme);
+            
+            // Apply theme immediately for better UX
+            htmlElement.classList.remove('theme-light', 'theme-dark');
+            htmlElement.classList.add(`theme-${newTheme}`);
+            
+            // Update icons
+            const themeToggles = document.querySelectorAll('.theme-toggle-btn');
+            themeToggles.forEach(toggle => {
+                const icon = toggle.querySelector('i');
+                if (icon) {
+                    if (newTheme === 'dark') {
+                        icon.classList.remove('bi-moon-stars-fill');
+                        icon.classList.add('bi-sun-fill');
+                    } else {
+                        icon.classList.remove('bi-sun-fill');
+                        icon.classList.add('bi-moon-stars-fill');
+                    }
+                }
+            });
+            
+            // Submit the form to update on server
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this)
+            }).catch(error => {
+                console.error('Failed to update theme preference on server:', error);
+            });
+            
+            // Add a nice transition effect
+            document.body.style.transition = 'background-color 0.5s ease, color 0.5s ease';
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 500);
+        });
+    });
+    
+    // Listen for direct theme links
     const themeLinks = document.querySelectorAll('a[href*="theme/toggle"], a[href*="theme/light"], a[href*="theme/dark"]');
     
     themeLinks.forEach(link => {
@@ -69,12 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Make server request to update session
             fetch(href)
-                .then(response => {
-                    // Theme has been updated on the server
-                })
                 .catch(error => {
                     console.error('Failed to update theme preference:', error);
                 });
+                
+            // Add a nice transition effect
+            document.body.style.transition = 'background-color 0.5s ease, color 0.5s ease';
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 500);
         });
     });
     
@@ -90,24 +146,47 @@ document.addEventListener('DOMContentLoaded', function() {
             minimumFractionDigits: 2
         }).format(amount);
     }
+
+    // Apply currency formatting to all price elements
+    function applyPriceFormatting() {
+        const currentCurrency = document.documentElement.getAttribute('data-currency') || 'EGP';
+        const priceElements = document.querySelectorAll('.price-value');
+        
+        priceElements.forEach(el => {
+            const baseAmount = parseFloat(el.getAttribute('data-base-price') || el.textContent);
+            if (!isNaN(baseAmount)) {
+                el.textContent = formatCurrency(baseAmount, currentCurrency);
+            }
+        });
+    }
     
-    // Optional: Expose formatCurrency to global scope
-    window.formatCurrency = formatCurrency;
+    // Call initially
+    applyPriceFormatting();
+    
+    // Listen for currency changes
+    document.querySelectorAll('form[action*="preferences/currency"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Don't prevent default - let the form submit normally
+            // But we can update the UI immediately
+            const newCurrency = this.querySelector('input[name="currency_code"]').value;
+            document.documentElement.setAttribute('data-currency', newCurrency);
+        });
+    });
 });
 
 /**
  * Navbar scroll effect and mobile menu handling
  */
 function initNavbar() {
-    const navbar = document.querySelector('.navbar-custom');
+    const navbar = document.querySelector('.navbar');
     
     // Add scroll effect to navbar
     if (navbar) {
         window.addEventListener('scroll', function() {
             if (window.scrollY > 50) {
-                navbar.classList.add('scrolled', 'shadow-lg');
+                navbar.classList.add('navbar-scrolled');
             } else {
-                navbar.classList.remove('scrolled', 'shadow-lg');
+                navbar.classList.remove('navbar-scrolled');
             }
         });
     }
@@ -201,6 +280,12 @@ function initThemeToggle() {
             setTimeout(() => {
                 document.documentElement.classList.remove('theme-transition');
             }, 1000);
+            
+            // Update server
+            fetch(`/theme/${newTheme}`)
+                .catch(error => {
+                    console.error('Failed to update theme preference:', error);
+                });
         });
     }
 }

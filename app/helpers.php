@@ -17,16 +17,31 @@ if (!function_exists('emailFromLoginCertificate')) {
     }
 }
 
-if (!function_exists('format_price')) {
+if (!function_exists('lang')) {
     /**
-     * Format a price with the current or specified currency
+     * Get translation for the given key
      *
-     * @param float $price The price to format
-     * @param string|null $currencyCode Optional currency code to use
-     * @param bool $includeCode Whether to include the currency code
+     * @param string $key
+     * @param array $replace
+     * @param string|null $locale
      * @return string
      */
-    function format_price($price, $currencyCode = null, $includeCode = false)
+    function lang($key, $replace = [], $locale = null)
+    {
+        return __('general.' . $key, $replace, $locale);
+    }
+}
+
+if (!function_exists('formatPrice')) {
+    /**
+     * Format price with the appropriate currency symbol and exchange rate
+     *
+     * @param float $price
+     * @param string|null $currencyCode
+     * @param bool $includeCode
+     * @return string
+     */
+    function formatPrice($price, $currencyCode = null, $includeCode = false)
     {
         // Get current currency code from session or use default
         $code = $currencyCode ?? Session::get('currency_code', 'EGP');
@@ -38,7 +53,7 @@ if (!function_exists('format_price')) {
             if ($currency) {
                 // Convert price using exchange rate if not default currency
                 if (!$currency->is_default) {
-                    $price = $price * $currency->exchange_rate;
+                    $price = $price / $currency->exchange_rate;
                 }
                 
                 // Format the price with the currency symbol
@@ -56,6 +71,53 @@ if (!function_exists('format_price')) {
         }
         
         // Default formatting if no currency found
-        return 'EGP ' . number_format($price, 2);
+        return 'ج.م ' . number_format($price, 2);
+    }
+}
+
+if (!function_exists('getBasePrice')) {
+    /**
+     * Convert price from any currency to base currency (EGP)
+     * 
+     * @param float $price
+     * @param string|null $fromCurrency
+     * @return float
+     */
+    function getBasePrice($price, $fromCurrency = null)
+    {
+        // If no currency specified, assume price is already in base currency
+        if (!$fromCurrency) {
+            return $price;
+        }
+        
+        try {
+            $currency = Currency::where('code', $fromCurrency)->first();
+            
+            if ($currency) {
+                // If not default currency, convert to base currency
+                if (!$currency->is_default) {
+                    return $price * $currency->exchange_rate;
+                }
+            }
+        } catch (\Exception $e) {
+            // Fallback to original price if currency not found
+        }
+        
+        return $price;
+    }
+}
+
+if (!function_exists('displayPrice')) {
+    /**
+     * HTML helper to display a formatted price with data attributes for dynamic updating
+     * 
+     * @param float $price
+     * @param string|null $currencyCode
+     * @return string
+     */
+    function displayPrice($price, $currencyCode = null)
+    {
+        // Store base price (EGP) in data attribute for JavaScript currency switching
+        return '<span class="price-value" data-base-price="'.$price.'">'.formatPrice($price, $currencyCode).'</span>';
     }
 }

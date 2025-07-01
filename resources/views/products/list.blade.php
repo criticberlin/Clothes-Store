@@ -35,34 +35,43 @@
             </div>
             @endif
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary">Search</button>
+                <button type="submit" class="btn btn-primary">{{ __('general.search') }}</button>
             </div>
             <div class="col-auto">
-                <a href="{{ isset($category) ? route('products.byCategory', $category) : route('products.list') }}" 
-                   class="btn btn-outline-secondary">Reset</a>
+                <a href="{{ isset($category) ? route('products.category', $category) : route('products.index') }}" 
+                   class="btn btn-outline-secondary">{{ __('general.reset') }}</a>
             </div>
         </div>
     </form>
 
-    <div class="row">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
     @forelse($products as $product)
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            @if($product->photo)
-            <img src="{{ asset("images/$product->photo") }}" class="card-img-top" alt="{{ $product->name }}">
-            @endif
-            <div class="card-body">
+    <div class="col">
+        <div class="card h-100 product-card">
+            <div class="position-relative">
+                @if($product->photo)
+                <img src="{{ asset('img/products/' . $product->photo) }}" class="card-img-top" alt="{{ $product->name }}">
+                @endif
+                <div class="position-absolute top-0 end-0 m-2">
+                    @if($product->quantity <= 0)
+                    <span class="badge bg-danger">{{ __('general.out_of_stock') }}</span>
+                    @endif
+                </div>
+            </div>
+            <div class="card-body d-flex flex-column">
                 <h5 class="card-title">{{ $product->name }}</h5>
-                {{-- <p class="card-text">{{ $product->description }}</p> --}}
-                <p class="text-warning h4 mb-3">${{ $product->price }}</p>
-                <div class="d-grid gap-2">
-                    <a href="{{ route('products.details', $product->id) }}" class="btn btn-outline-primary">View Details</a>
+                <p class="card-text text-secondary small flex-grow-1">{{ Str::limit($product->description, 70) }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="price-value fw-bold" data-base-price="{{ $product->price }}">{{ formatPrice($product->price) }}</span>
+                    <a href="{{ route('products.details', $product->id) }}" class="btn btn-sm btn-primary">{{ __('general.view') }}</a>
                 </div>
             </div>
         </div>
     </div>
     @empty
-        <p>No products found.</p>
+        <div class="col-12">
+            <div class="alert alert-info">{{ __('general.no_products_found') }}</div>
+        </div>
     @endforelse
     </div>
     
@@ -74,17 +83,16 @@
 </div>
 
 <style>
-.card {
+.product-card {
     transition: transform 0.2s ease-in-out;
 }
-.card:hover {
+.product-card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
 }
-.btn {
-    transition: all 0.2s ease-in-out;
-}
-.btn:hover {
-    transform: translateY(-2px);
+.card-img-top {
+    height: 220px;
+    object-fit: cover;
 }
 </style>
 @endsection
