@@ -42,7 +42,7 @@
                     @foreach($product->colors as $color)
                     <div class="color-option form-check">
                         <input type="radio" name="color" id="color-{{ $color->id }}" class="form-check-input color-radio" value="{{ $color->id }}">
-                        <label for="color-{{ $color->id }}" class="color-label" style="background-color: {{ $color->hex_code }}" title="{{ $color->name }}"></label>
+                        <label for="color-{{ $color->id }}" class="color-label" data-bg="{{ $color->hex_code }}" title="{{ $color->name }}"></label>
                     </div>
                     @endforeach
                 </div>
@@ -176,4 +176,16 @@
         transform: scale(1.03);
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var colorLabels = document.querySelectorAll('.color-label[data-bg]');
+        for (var i = 0; i < colorLabels.length; i++) {
+            var label = colorLabels[i];
+            label.style.backgroundColor = label.getAttribute('data-bg');
+        }
+    });
+</script>
 @endpush
