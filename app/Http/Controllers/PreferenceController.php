@@ -19,6 +19,10 @@ class PreferenceController extends Controller
         
         Session::put('theme', $newTheme);
         
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'theme' => $newTheme]);
+        }
+        
         return redirect()->back();
     }
     
@@ -31,6 +35,10 @@ class PreferenceController extends Controller
         
         if (in_array($theme, ['light', 'dark'])) {
             Session::put('theme_mode', $theme);
+        }
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'theme' => $theme]);
         }
         
         if ($request->has('redirect')) {
@@ -52,6 +60,10 @@ class PreferenceController extends Controller
             App::setLocale($locale);
         }
         
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'language' => $locale]);
+        }
+        
         if ($request->has('redirect')) {
             return redirect($request->redirect);
         }
@@ -70,6 +82,14 @@ class PreferenceController extends Controller
         
         if ($currency) {
             Session::put('currency_code', $currencyCode);
+        }
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true, 
+                'currency' => $currencyCode,
+                'symbol' => $currency ? $currency->symbol : null
+            ]);
         }
         
         if ($request->has('redirect')) {

@@ -22,28 +22,46 @@ class AdminController extends Controller
         $userCount = User::count();
         $productCount = Product::count();
         $orderCount = Order::count();
-        $revenue = Order::sum('total_amount');
+        $revenue = Order::where('status', 'completed')->sum('total_amount');
         $pendingOrderCount = Order::where('status', 'pending')->count();
         
-        // Recent orders
+        // Get recent orders
         $recentOrders = Order::with('user')
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->take(5)
             ->get();
         
-        // Popular products
+        // Get popular products (most ordered)
         $popularProducts = Product::orderBy('quantity', 'desc')
             ->take(5)
             ->get();
+            
+        // Check if support tickets model exists and get recent tickets
+        $recentTickets = [];
+        $hasTickets = false;
+        
+        if (class_exists('\App\Models\SupportTicket')) {
+            try {
+                $recentTickets = \App\Models\SupportTicket::with('user')
+                    ->latest()
+                    ->limit(5)
+                    ->get();
+                $hasTickets = true;
+            } catch (\Exception $e) {
+                $hasTickets = false;
+            }
+        }
         
         return view('admin.dashboard', compact(
-            'userCount', 
-            'productCount', 
-            'orderCount', 
-            'pendingOrderCount', 
-            'revenue', 
-            'recentOrders', 
-            'popularProducts'
+            'userCount',
+            'productCount',
+            'orderCount',
+            'pendingOrderCount',
+            'revenue',
+            'recentOrders',
+            'popularProducts',
+            'recentTickets',
+            'hasTickets'
         ));
     }
     

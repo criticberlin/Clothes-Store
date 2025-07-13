@@ -20,8 +20,15 @@
             <span>User Information</span>
         </div>
         <div class="admin-card-body">
-            <form method="POST" action="{{ route('admin.users.store') }}">
+            <form method="POST" action="{{ route('admin.users.save', ['user' => 0]) }}">
                 @csrf
+                
+                @foreach($errors->all() as $error)
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ $error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                @endforeach
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -55,51 +62,33 @@
                         <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
                     </div>
                 </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="phone" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}">
-                        @error('phone')
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label for="address" class="form-label">Address (Optional)</label>
+                        <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3">{{ old('address') }}</textarea>
+                        @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    
+                </div>
+                
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="role" class="form-label">User Role</label>
-                        <select class="form-select @error('role') is-invalid @enderror" id="role" name="role">
-                            <option value="">Select Role</option>
-                            @foreach(\App\Models\Role::all() as $role)
-                                <option value="{{ $role->id }}" {{ old('role') == $role->id ? 'selected' : '' }}>
-                                    {{ $role->name }}
-                                </option>
+                        <label for="roles" class="form-label">Assign Roles</label>
+                        <select class="form-select @error('roles') is-invalid @enderror" id="roles" name="roles[]" multiple required>
+                            @foreach($roles as $role)
+                                <option value="{{ $role->name }}" {{ (is_array(old('roles')) && in_array($role->name, old('roles'))) ? 'selected' : '' }}>{{ $role->name }}</option>
                             @endforeach
                         </select>
-                        @error('role')
+                        @error('roles')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple roles</div>
                     </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="address" class="form-label">Address</label>
-                    <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3">{{ old('address') }}</textarea>
-                    @error('address')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="active" name="active" value="1" {{ old('active') ? 'checked' : '' }}>
-                        <label class="form-check-label" for="active">
-                            Account Active
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-person-plus me-2"></i> Create User
                     </button>

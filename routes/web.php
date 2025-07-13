@@ -10,7 +10,6 @@ use App\Http\Controllers\web\ProductsController;
 use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\CheckoutController;
 use App\Http\Controllers\web\HomeController;
-use App\Http\Controllers\web\AdminDashboardController;
 use App\Http\Controllers\web\AdminController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Middleware\AdminMiddleware;
@@ -24,10 +23,16 @@ Route::get('/theme/{theme}', [PreferenceController::class, 'setTheme'])->name('t
 Route::get('/language/{locale}', [PreferenceController::class, 'setLanguage'])->name('language.set');
 Route::get('/currency/{currency}', [PreferenceController::class, 'setCurrency'])->name('currency.set');
 Route::get('/currencies', [PreferenceController::class, 'getCurrencies'])->name('currencies.list');
-// New routes for POST preferences
+// Routes for POST preferences
 Route::post('/preferences/theme', [PreferenceController::class, 'setTheme'])->name('preferences.theme');
 Route::post('/preferences/language', [PreferenceController::class, 'setLanguage'])->name('preferences.language');
 Route::post('/preferences/currency', [PreferenceController::class, 'setCurrency'])->name('preferences.currency');
+// Accept JSON requests for preferences
+Route::middleware('api')->group(function() {
+    Route::post('/api/preferences/theme', [PreferenceController::class, 'setTheme']);
+    Route::post('/api/preferences/language', [PreferenceController::class, 'setLanguage']);
+    Route::post('/api/preferences/currency', [PreferenceController::class, 'setCurrency']);
+});
 
 //  User Authentication
 Route::get('register', [UsersController::class, 'register'])->name('register');
@@ -61,6 +66,7 @@ Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('
 // Admin Routes
 Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(function () {
     // Admin Dashboard
+    Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard'); // Add a root route for admin
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::post('/assign-role', [AdminController::class, 'assignRole'])->name('admin.assign-role');
     
@@ -74,6 +80,7 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     // Admin Product Management
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products.list');
     Route::get('/products/create', [ProductsController::class, 'edit'])->name('admin.products.create');
+    Route::post('/products/store', [ProductsController::class, 'save'])->name('admin.products.store');
     Route::get('/products/{product}/edit', [ProductsController::class, 'edit'])->name('admin.products.edit');
     Route::post('/products/{product?}/save', [ProductsController::class, 'save'])->name('admin.products.save');
     Route::delete('/products/{product}/delete', [ProductsController::class, 'delete'])->name('admin.products.delete');
@@ -140,8 +147,10 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/update/{cart}', [CartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/remove/{cart}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/remove/{cartId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::get('/cart/remove/{cartId}', [CartController::class, 'remove'])->name('cart.remove.get'); // Temporary for debugging
     Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::get('/cart/clear', [CartController::class, 'clear'])->name('cart.clear.get'); // Temporary for debugging
 
     // Checkout routes
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout.index');

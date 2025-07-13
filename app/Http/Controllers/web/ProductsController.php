@@ -74,15 +74,27 @@ class ProductsController extends Controller {
             'description' => ['required', 'string', 'max:1024'],
             'price' => ['required', 'numeric'],
             'category' => ['required', 'string', 'max:128'],
-            'quantity' => ['required','integer','min:0']
+            'quantity' => ['required','integer','min:0'],
+            'image' => ['nullable', 'image', 'max:5120'] // 5MB max
         ]);
 
         $product = $product??new Product();
         $product->fill($request->all());
+        
+        // Handle image upload
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $imagePath = $request->file('image')->store('products', 'public');
+            $product->image_path = $imagePath;
+        }
+        
         $product->save();
 
         $product->colors()->sync($request->colors ?? []);
         $product->sizes()->sync($request->sizes ?? []);
+
+        if ($request->is('admin/*')) {
+            return redirect()->route('admin.products.list')->with('success', 'Product saved successfully!');
+        }
 
         return redirect()->route('products.manage');
     }

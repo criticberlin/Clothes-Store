@@ -38,7 +38,7 @@
                 <button type="submit" class="btn btn-primary">{{ __('general.search') }}</button>
             </div>
             <div class="col-auto">
-                <a href="{{ isset($category) ? route('products.category', $category) : route('products.index') }}" 
+                <a href="{{ isset($category) ? route('products.category', $category) : route('products.list') }}" 
                    class="btn btn-outline-secondary">{{ __('general.reset') }}</a>
             </div>
         </div>

@@ -75,6 +75,7 @@
                         <div class="text-center py-5">
                             <i class="bi bi-graph-up fs-1 text-primary"></i>
                             <p class="mt-3">Sales chart visualization would appear here</p>
+                            <p class="text-muted">Total Revenue: ${{ number_format($revenue, 2) }}</p>
                         </div>
                     </div>
                 </div>

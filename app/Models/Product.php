@@ -9,6 +9,7 @@ class Product extends Model {
         'price',
         'description',
         'photo',
+        'image_path',
         'category',
         'quantity',
         'created_by',

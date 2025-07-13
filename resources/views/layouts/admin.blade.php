@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="MyClothes Admin Dashboard">
     <meta name="theme-color" content="#7F5AF0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>MyClothes Admin - @yield('title')</title>
 
     <!-- Google Fonts -->
@@ -24,6 +25,8 @@
     @if(isset($isRTL) && $isRTL)
     <link rel="stylesheet" href="{{ asset('css/rtl.css') }}">
     @endif
+    
+    @stack('styles')
     
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
@@ -435,18 +438,13 @@
                 <div class="d-flex align-items-center">
                     <!-- Theme Switcher -->
                     <div class="theme-switcher">
-                        <form action="{{ route('preferences.theme') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="theme" value="{{ session('theme_mode', 'dark') == 'dark' ? 'light' : 'dark' }}">
-                            <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                            <button type="submit" class="theme-toggle-btn border-0 bg-transparent">
-                                @if(session('theme_mode', 'dark') == 'dark')
-                                <i class="bi bi-sun-fill"></i>
-                                @else
-                                <i class="bi bi-moon-stars-fill"></i>
-                                @endif
-                            </button>
-                        </form>
+                        <button type="button" class="theme-toggle-btn border-0 bg-transparent" id="adminThemeToggle">
+                            @if(session('theme_mode', 'dark') == 'dark')
+                            <i class="bi bi-sun-fill"></i>
+                            @else
+                            <i class="bi bi-moon-stars-fill"></i>
+                            @endif
+                        </button>
                     </div>
                     
                     <!-- Language Switcher -->
@@ -462,24 +460,14 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                 <li>
-                                    <form action="{{ route('preferences.language') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="language" value="en">
-                                        <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}">
-                                            <span class="fi fi-gb me-2"></span> English
-                                        </button>
-                                    </form>
+                                    <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'en' ? 'active' : '' }}" data-language="en">
+                                        <span class="fi fi-gb me-2"></span> English
+                                    </button>
                                 </li>
                                 <li>
-                                    <form action="{{ route('preferences.language') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="language" value="ar">
-                                        <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                        <button type="submit" class="dropdown-item {{ app()->getLocale() == 'ar' ? 'active' : '' }}">
-                                            <span class="fi fi-eg me-2"></span> العربية
-                                        </button>
-                                    </form>
+                                    <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'ar' ? 'active' : '' }}" data-language="ar">
+                                        <span class="fi fi-eg me-2"></span> العربية
+                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -498,14 +486,11 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
                                 @foreach(App\Models\Currency::where('is_active', true)->get() as $currency)
                                 <li>
-                                    <form action="{{ route('preferences.currency') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="currency_code" value="{{ $currency->code }}">
-                                        <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                        <button type="submit" class="dropdown-item {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}">
-                                            {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
-                                        </button>
-                                    </form>
+                                    <button type="button" class="dropdown-item currency-option {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}" 
+                                            data-currency-code="{{ $currency->code }}" 
+                                            data-currency-symbol="{{ $currency->symbol }}">
+                                        {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
+                                    </button>
                                 </li>
                                 @endforeach
                             </ul>
@@ -555,7 +540,183 @@
                     adminSidebar.classList.toggle('show');
                 });
             }
+            
+            // Theme Switcher
+            const themeToggleBtn = document.getElementById('adminThemeToggle');
+            
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', function() {
+                    // Get current theme
+                    const htmlElement = document.documentElement;
+                    const isDarkTheme = htmlElement.classList.contains('theme-dark');
+                    const newTheme = isDarkTheme ? 'light' : 'dark';
+                    
+                    // Update theme class
+                    htmlElement.classList.remove('theme-dark', 'theme-light');
+                    htmlElement.classList.add(`theme-${newTheme}`);
+                    
+                    // Update icon
+                    const icon = themeToggleBtn.querySelector('i');
+                    if (icon) {
+                        if (newTheme === 'dark') {
+                            icon.classList.remove('bi-moon-stars-fill');
+                            icon.classList.add('bi-sun-fill');
+                        } else {
+                            icon.classList.remove('bi-sun-fill');
+                            icon.classList.add('bi-moon-stars-fill');
+                        }
+                    }
+                    
+                    // Save to localStorage
+                    localStorage.setItem('theme', newTheme);
+                    
+                    // Update server-side via fetch API
+                    fetch('/preferences/theme', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ theme: newTheme })
+                    }).catch(error => {
+                        console.error('Failed to update theme preference:', error);
+                    });
+                    
+                    // Add a nice transition effect
+                    document.body.style.transition = 'background-color 0.5s ease, color 0.5s ease';
+                    setTimeout(() => {
+                        document.body.style.transition = '';
+                    }, 500);
+                });
+                
+                // Apply saved theme from localStorage on page load
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    const htmlElement = document.documentElement;
+                    htmlElement.classList.remove('theme-light', 'theme-dark');
+                    htmlElement.classList.add(`theme-${savedTheme}`);
+                    
+                    // Update icon
+                    const icon = themeToggleBtn.querySelector('i');
+                    if (icon) {
+                        if (savedTheme === 'dark') {
+                            icon.classList.remove('bi-moon-stars-fill');
+                            icon.classList.add('bi-sun-fill');
+                        } else {
+                            icon.classList.remove('bi-sun-fill');
+                            icon.classList.add('bi-moon-stars-fill');
+                        }
+                    }
+                }
+            }
+
+            // Language Switcher
+            const languageDropdownBtn = document.getElementById('languageDropdown');
+            const languageOptions = document.querySelectorAll('.language-option');
+
+            if (languageDropdownBtn) {
+                languageDropdownBtn.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent dropdown from closing
+                    const dropdownMenu = new bootstrap.Dropdown(languageDropdownBtn);
+                    dropdownMenu.toggle();
+                });
+
+                languageOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const selectedLanguage = this.dataset.language;
+                        const currentLanguage = languageDropdownBtn.textContent.trim().split(' ')[0];
+
+                        if (selectedLanguage !== currentLanguage) {
+                            // Update the button text
+                            languageDropdownBtn.textContent = this.textContent;
+                            languageDropdownBtn.setAttribute('data-bs-original-title', this.textContent); // Keep original title for tooltip
+
+                            // Update the flag icon
+                            const flagIcon = languageDropdownBtn.querySelector('.fi');
+                            if (flagIcon) {
+                                if (selectedLanguage === 'en') {
+                                    flagIcon.classList.remove('fi-eg');
+                                    flagIcon.classList.add('fi-gb');
+                                } else {
+                                    flagIcon.classList.remove('fi-gb');
+                                    flagIcon.classList.add('fi-eg');
+                                }
+                            }
+
+                            // Update the URL without page reload
+                            const currentUrl = new URL(window.location.href);
+                            currentUrl.searchParams.set('lang', selectedLanguage);
+                            window.history.pushState({}, '', currentUrl);
+
+                            // Update server-side via fetch API
+                            fetch('/preferences/language', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({ language: selectedLanguage })
+                            }).catch(error => {
+                                console.error('Failed to update language preference:', error);
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Currency Switcher
+            const currencyDropdownBtn = document.getElementById('currencyDropdown');
+            const currencyOptions = document.querySelectorAll('.currency-option');
+
+            if (currencyDropdownBtn) {
+                currencyDropdownBtn.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent dropdown from closing
+                    const dropdownMenu = new bootstrap.Dropdown(currencyDropdownBtn);
+                    dropdownMenu.toggle();
+                });
+
+                currencyOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const selectedCurrencyCode = this.dataset.currencyCode;
+                        const currentCurrencyCode = currencyDropdownBtn.textContent.trim().split(' ')[1];
+
+                        if (selectedCurrencyCode !== currentCurrencyCode) {
+                            // Update the button text
+                            currencyDropdownBtn.textContent = this.textContent;
+                            currencyDropdownBtn.setAttribute('data-bs-original-title', this.textContent); // Keep original title for tooltip
+
+                            // Update the currency symbol
+                            const currencySymbol = this.dataset.currencySymbol;
+                            const currentSymbol = currencyDropdownBtn.textContent.trim().split(' ')[0];
+                            if (currencySymbol !== currentSymbol) {
+                                const textContent = this.textContent.replace(currencySymbol, '').trim();
+                                currencyDropdownBtn.textContent = textContent;
+                                currencyDropdownBtn.setAttribute('data-bs-original-title', textContent);
+                            }
+
+                            // Update the URL without page reload
+                            const currentUrl = new URL(window.location.href);
+                            currentUrl.searchParams.set('currency_code', selectedCurrencyCode);
+                            window.history.pushState({}, '', currentUrl);
+
+                            // Update server-side via fetch API
+                            fetch('/preferences/currency', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({ currency_code: selectedCurrencyCode })
+                            }).catch(error => {
+                                console.error('Failed to update currency preference:', error);
+                            });
+                        }
+                    });
+                });
+            }
         });
     </script>
+    
+    @stack('scripts')
 </body>
 </html> 

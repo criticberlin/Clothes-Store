@@ -2,6 +2,20 @@
 
 @section('title', __('general.your_cart'))
 
+@push('styles')
+<style>
+.color-swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="container py-5">
     <h1 class="mb-4">{{ __('general.your_cart') }}</h1>
@@ -50,7 +64,7 @@
                                     </td>
                                     <td>
                                         @if($item->color)
-                                            <span style="display:inline-block;width:20px;height:20px;background-color:{{ $item->color->hex_code }};border-radius:50%;border:1px solid #ccc;"></span>
+                                            <span class="color-swatch" data-color="{{ $item->color->hex_code }}"></span>
                                             {{ $item->color->name }}
                                         @else
                                             N/A
@@ -88,7 +102,7 @@
             </div>
             
             <div class="d-flex gap-2">
-                <a href="{{ route('products.index') }}" class="btn btn-outline-primary">
+                <a href="{{ route('products.list') }}" class="btn btn-outline-primary">
                     <i class="bi bi-arrow-left me-2"></i>{{ __('general.continue_shopping') }}
                 </a>
                 <form action="{{ route('cart.clear') }}" method="POST">
@@ -139,10 +153,20 @@
         </div>
         <h2>{{ __('general.cart_empty') }}</h2>
         <p class="text-secondary mb-4">{{ __('general.cart_empty_message') }}</p>
-        <a href="{{ route('products.index') }}" class="btn btn-primary btn-lg">
+        <a href="{{ route('products.list') }}" class="btn btn-primary btn-lg">
             {{ __('general.start_shopping') }}
         </a>
     </div>
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.color-swatch').forEach(function(swatch) {
+            swatch.style.backgroundColor = swatch.dataset.color;
+        });
+    });
+</script>
+@endpush

@@ -41,7 +41,7 @@
                 <div class="color-options d-flex gap-2 flex-wrap">
                     @foreach($product->colors as $color)
                     <div class="color-option form-check">
-                        <input type="radio" name="color" id="color-{{ $color->id }}" class="form-check-input color-radio" value="{{ $color->id }}">
+                        <input type="radio" name="color" id="color-{{ $color->id }}" class="form-check-input color-radio" value="{{ $color->id }}" form="add-to-cart-form">
                         <label for="color-{{ $color->id }}" class="color-label" data-bg="{{ $color->hex_code }}" title="{{ $color->name }}"></label>
                     </div>
                     @endforeach
@@ -53,7 +53,7 @@
                 <div class="size-options d-flex gap-2 flex-wrap">
                     @foreach($product->sizes as $size)
                     <div class="form-check">
-                        <input class="btn-check" type="radio" name="size" id="size-{{ $size->id }}" value="{{ $size->id }}">
+                        <input class="btn-check" type="radio" name="size" id="size-{{ $size->id }}" value="{{ $size->id }}" form="add-to-cart-form">
                         <label class="btn btn-outline-secondary" for="size-{{ $size->id }}">{{ $size->name }}</label>
                     </div>
                     @endforeach
@@ -63,21 +63,22 @@
             <div class="d-flex align-items-center mb-4">
                 <div class="me-3">
                     <label for="quantity" class="form-label">{{ __('general.quantity') }}</label>
-                    <input type="number" class="form-control" id="quantity" value="1" min="1" max="{{ $product->quantity }}" style="width: 80px;">
+                    <input type="number" class="form-control" id="quantity" name="quantity" form="add-to-cart-form" value="1" min="1" max="{{ $product->quantity }}" style="width: 80px;">
                 </div>
                 <div class="availability">
                     <span class="text-secondary">{{ __('general.available') }}: <strong>{{ $product->quantity }}</strong></span>
                 </div>
             </div>
             
-            <div class="d-grid gap-2 d-md-flex mb-4">
-                <button id="add-to-cart" class="btn btn-primary btn-lg flex-grow-1 add-to-cart-btn" data-product-id="{{ $product->id }}">
+            <form id="add-to-cart-form" action="{{ route('cart.add', $product->id) }}" method="POST" class="d-grid gap-2 d-md-flex mb-4">
+                @csrf
+                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
                     <i class="bi bi-cart-plus me-2"></i> {{ __('general.add_to_cart') }}
                 </button>
-                <button class="btn btn-outline-primary btn-lg">
+                <button type="button" class="btn btn-outline-primary btn-lg">
                     <i class="bi bi-heart"></i>
                 </button>
-            </div>
+            </form>
             
             <div class="product-meta">
                 <div class="row text-secondary">
@@ -181,6 +182,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Set color labels background
         var colorLabels = document.querySelectorAll('.color-label[data-bg]');
         for (var i = 0; i < colorLabels.length; i++) {
             var label = colorLabels[i];

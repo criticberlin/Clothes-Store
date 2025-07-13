@@ -111,9 +111,22 @@
                 
                 <div class="mb-3">
                     <label for="image" class="form-label">Product Image</label>
-                    <input type="file" class="form-control @error('image') is-invalid @enderror" id="image" name="image">
+                    <div class="dropzone-container" id="productImageDropzone">
+                        <div class="dropzone-prompt">
+                            <i class="bi bi-cloud-arrow-up fs-3 mb-2"></i>
+                            <p class="mb-0">Drag and drop your image here, or click to browse</p>
+                            <p class="small text-muted">Supports: JPG, PNG, GIF (Max 5MB)</p>
+                        </div>
+                        <div class="dropzone-preview" style="display: none;">
+                            <div class="image-preview"></div>
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 remove-image">
+                                <i class="bi bi-trash"></i> Remove Image
+                            </button>
+                        </div>
+                        <input type="file" class="form-control d-none @error('image') is-invalid @enderror" id="image" name="image" accept="image/*">
+                    </div>
                     @error('image')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
                 
@@ -145,3 +158,122 @@
         </div>
     </div>
 @endsection 
+
+@push('styles')
+<style>
+    .dropzone-container {
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: var(--surface-alt);
+    }
+    
+    .dropzone-container:hover, .dropzone-container.dragover {
+        border-color: var(--primary);
+        background-color: rgba(127, 90, 240, 0.05);
+    }
+    
+    .dropzone-prompt {
+        color: var(--text-secondary);
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        height: 200px;
+        margin: 0 auto;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropzone = document.getElementById('productImageDropzone');
+        const fileInput = dropzone.querySelector('input[type="file"]');
+        const preview = dropzone.querySelector('.dropzone-preview');
+        const imagePreview = preview.querySelector('.image-preview');
+        const prompt = dropzone.querySelector('.dropzone-prompt');
+        const removeButton = dropzone.querySelector('.remove-image');
+        
+        // Handle click on dropzone
+        dropzone.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                // Check file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size should not exceed 5MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.style.backgroundImage = `url(${e.target.result})`;
+                    prompt.style.display = 'none';
+                    preview.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.remove('dragover');
+            }, false);
+        });
+        
+        dropzone.addEventListener('drop', function(e) {
+            const files = e.dataTransfer.files;
+            if (files && files.length) {
+                fileInput.files = files;
+                
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        }, false);
+        
+        // Handle remove button
+        removeButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fileInput.value = '';
+            imagePreview.style.backgroundImage = '';
+            prompt.style.display = 'block';
+            preview.style.display = 'none';
+        });
+    });
+</script>
+@endpush 
