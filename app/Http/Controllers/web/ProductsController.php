@@ -5,10 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Color;
 use App\Models\Size;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Storage;
 
 class ProductsController extends Controller {
     
@@ -30,7 +31,12 @@ class ProductsController extends Controller {
     }
 
     public function ListByCategory($category , Request $request){
-        $query = Product::where('category', $category);
+        // Find the category by slug
+        $categoryModel = Category::where('slug', $category)->firstOrFail();
+        
+        // Get products from this category
+        $query = $categoryModel->products();
+        
         $query->when($request->input('keywords'),
             fn($q)=> $q->where("name","like","%".$request->input('keywords')."%"));
         $query->when($request->input('min_price'),
@@ -39,12 +45,13 @@ class ProductsController extends Controller {
             fn($q)=> $q->where("price", "<=", $request->input('max_price')));
         $query->when($request->input('order_by'),
             fn($q)=> $q->orderBy($request->input('order_by'), $request->input('order_direction', 'ASC')));
+            
         $products = $query->get();
-        return view('products.list', compact('products', 'category'));
+        return view('products.list', compact('products', 'category', 'categoryModel'));
     }
 
     public function productDetails($id){
-        $product = Product::find($id);
+        $product = Product::with(['categories', 'colors', 'sizes'])->find($id);
         if (!$product) {
             return redirect()->back()->with('error', 'Product not found.');
         }
@@ -54,17 +61,24 @@ class ProductsController extends Controller {
     public function manage() {
         if(!Auth::check()) return redirect('login');
 
-        $products = Product::with(['colors', 'sizes'])->get();
+        $products = Product::with(['colors', 'sizes', 'categories'])->get();
         return view('products.manage', compact('products'));
     }
 
     public function edit(Request $request, ?Product $product = null) {
         if(!Auth::check()) return redirect('login');
 
-        $product = $product??new Product();
+        $product = $product ?? new Product();
         $colors = Color::all();
         $sizes = Size::all();
-        return view("products.edit", compact('product', 'colors', 'sizes'));
+        $categories = Category::all();
+        
+        // If this is an admin route, use admin layout
+        if ($request->is('admin/*')) {
+            return view('admin.products.edit', compact('product', 'colors', 'sizes', 'categories'));
+        }
+        
+        return view("products.edit", compact('product', 'colors', 'sizes', 'categories'));
     }
 
     public function save(Request $request, ?Product $product = null) {
@@ -73,22 +87,36 @@ class ProductsController extends Controller {
             'name' => ['required', 'string', 'max:128'],
             'description' => ['required', 'string', 'max:1024'],
             'price' => ['required', 'numeric'],
-            'category' => ['required', 'string', 'max:128'],
             'quantity' => ['required','integer','min:0'],
-            'image' => ['nullable', 'image', 'max:5120'] // 5MB max
+            'photo' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'categories' => ['required', 'array', 'min:1'],
+            'categories.*' => ['exists:categories,id']
         ]);
 
-        $product = $product??new Product();
-        $product->fill($request->all());
+        $product = $product ?? new Product();
+        
+        $product->code = $request->code;
+        $product->name = $request->name;
+        $product->description = $request->description;
+        $product->price = $request->price;
+        $product->quantity = $request->quantity;
+        $product->created_by = Auth::id();
         
         // Handle image upload
-        if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $imagePath = $request->file('image')->store('products', 'public');
-            $product->image_path = $imagePath;
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            // Delete old image if exists
+            if ($product->photo && Storage::disk('public')->exists($product->photo)) {
+                Storage::disk('public')->delete($product->photo);
+            }
+            
+            $imagePath = $request->file('photo')->store('products', 'public');
+            $product->photo = $imagePath;
         }
         
         $product->save();
 
+        // Sync relationships
+        $product->categories()->sync($request->categories);
         $product->colors()->sync($request->colors ?? []);
         $product->sizes()->sync($request->sizes ?? []);
 
@@ -96,12 +124,23 @@ class ProductsController extends Controller {
             return redirect()->route('admin.products.list')->with('success', 'Product saved successfully!');
         }
 
-        return redirect()->route('products.manage');
+        return redirect()->route('products.manage')->with('success', 'Product saved successfully!');
     }
 
     public function delete(Request $request, Product $product) {
         if(!Auth::check()) return redirect('login');
+        
+        // Delete the product image if it exists
+        if ($product->photo && Storage::disk('public')->exists($product->photo)) {
+            Storage::disk('public')->delete($product->photo);
+        }
+        
         $product->delete();
-        return redirect()->route('products.manage');
+        
+        if ($request->is('admin/*')) {
+            return redirect()->route('admin.products.list')->with('success', 'Product deleted successfully!');
+        }
+        
+        return redirect()->route('products.manage')->with('success', 'Product deleted successfully!');
     }
 }

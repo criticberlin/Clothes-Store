@@ -55,19 +55,23 @@
                             </div>
                         @endif
                         
-                        <div class="dropzone-container border rounded p-3">
-                            <div class="dz-message text-center py-5">
-                                <div class="mb-3">
-                                    <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
-                                </div>
-                                <h5>Drop files here or click to upload</h5>
-                                <p class="text-secondary small">Upload a new image to replace the current one (optional)</p>
+                        <div class="dropzone-container" id="categoryImageDropzone">
+                            <div class="dropzone-prompt">
+                                <i class="bi bi-cloud-arrow-up fs-3 mb-2"></i>
+                                <p class="mb-0">Drag and drop your image here, or click to browse</p>
+                                <p class="small text-muted">Supports: JPG, PNG, GIF (Max 2MB)</p>
                             </div>
-                            <input type="file" name="photo" id="photo" class="form-control @error('photo') is-invalid @enderror" accept="image/*">
-                            @error('photo')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <div class="dropzone-preview" style="display: none;">
+                                <div class="image-preview"></div>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2 remove-image">
+                                    <i class="bi bi-trash"></i> Remove Image
+                                </button>
+                            </div>
+                            <input type="file" class="form-control d-none @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/*">
                         </div>
+                        @error('photo')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 
@@ -84,25 +88,118 @@
 @push('styles')
 <style>
     .dropzone-container {
-        position: relative;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
+        background-color: var(--surface-alt);
     }
     
-    .dropzone-container:hover {
-        border-color: var(--primary) !important;
+    .dropzone-container:hover, .dropzone-container.dragover {
+        border-color: var(--primary);
         background-color: rgba(127, 90, 240, 0.05);
     }
     
-    .dropzone-container input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 1;
+    .dropzone-prompt {
+        color: var(--text-secondary);
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        height: 200px;
+        margin: 0 auto;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropzone = document.getElementById('categoryImageDropzone');
+        const fileInput = dropzone.querySelector('input[type="file"]');
+        const preview = dropzone.querySelector('.dropzone-preview');
+        const imagePreview = preview.querySelector('.image-preview');
+        const prompt = dropzone.querySelector('.dropzone-prompt');
+        const removeButton = dropzone.querySelector('.remove-image');
+        
+        // Handle click on dropzone
+        dropzone.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                // Check file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size should not exceed 2MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.style.backgroundImage = `url(${e.target.result})`;
+                    prompt.style.display = 'none';
+                    preview.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.remove('dragover');
+            }, false);
+        });
+        
+        dropzone.addEventListener('drop', function(e) {
+            const files = e.dataTransfer.files;
+            if (files && files.length) {
+                fileInput.files = files;
+                
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        }, false);
+        
+        // Handle remove button
+        removeButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fileInput.value = '';
+            imagePreview.style.backgroundImage = '';
+            prompt.style.display = 'block';
+            preview.style.display = 'none';
+        });
+    });
+</script>
 @endpush 

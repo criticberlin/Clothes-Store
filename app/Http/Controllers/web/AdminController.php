@@ -53,12 +53,12 @@ class AdminController extends Controller
         }
         
         return view('admin.dashboard', compact(
-            'userCount',
-            'productCount',
-            'orderCount',
-            'pendingOrderCount',
-            'revenue',
-            'recentOrders',
+            'userCount', 
+            'productCount', 
+            'orderCount', 
+            'pendingOrderCount', 
+            'revenue', 
+            'recentOrders', 
             'popularProducts',
             'recentTickets',
             'hasTickets'
@@ -106,6 +106,16 @@ class AdminController extends Controller
         })->orderBy('created_at', 'desc')->paginate(10);
         
         return view('admin.customers.index', compact('customers'));
+    }
+    
+    /**
+     * Display categories list
+     */
+    public function categories()
+    {
+        $categories = \App\Models\Category::orderBy('name')->paginate(10);
+        
+        return view('admin.categories.index', compact('categories'));
     }
     
     /**

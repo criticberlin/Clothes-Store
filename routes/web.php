@@ -68,7 +68,6 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     // Admin Dashboard
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard'); // Add a root route for admin
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-    Route::post('/assign-role', [AdminController::class, 'assignRole'])->name('admin.assign-role');
     
     // Admin User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users.list');
@@ -84,6 +83,14 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     Route::get('/products/{product}/edit', [ProductsController::class, 'edit'])->name('admin.products.edit');
     Route::post('/products/{product?}/save', [ProductsController::class, 'save'])->name('admin.products.save');
     Route::delete('/products/{product}/delete', [ProductsController::class, 'delete'])->name('admin.products.delete');
+    
+    // Admin Category Management
+    Route::get('/categories', [AdminController::class, 'categories'])->name('admin.categories.index');
+    Route::get('/categories/create', [App\Http\Controllers\web\CategoryController::class, 'create'])->name('admin.categories.create');
+    Route::post('/categories', [App\Http\Controllers\web\CategoryController::class, 'store'])->name('admin.categories.store');
+    Route::get('/categories/{category}/edit', [App\Http\Controllers\web\CategoryController::class, 'edit'])->name('admin.categories.edit');
+    Route::put('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'update'])->name('admin.categories.update');
+    Route::delete('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'destroy'])->name('admin.categories.destroy');
     
     // Admin Order Management
     Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.list');

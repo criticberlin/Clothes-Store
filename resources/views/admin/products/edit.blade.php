@@ -2,11 +2,16 @@
 
 @section('title', isset($product->id) ? 'Edit Product' : 'Add New Product')
 
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.products.list') }}">Products</a></li>
+    <li class="breadcrumb-item active">{{ isset($product->id) ? 'Edit Product' : 'Add New Product' }}</li>
+@endsection
+
 @section('content')
     <div class="admin-header">
         <div>
             <h1 class="mb-2">{{ isset($product->id) ? 'Edit Product' : 'Add New Product' }}</h1>
-            <p class="text-secondary mb-0">{{ isset($product->id) ? 'Modify product details' : 'Create a new product in your store' }}</p>
+            <p class="text-secondary mb-0">{{ isset($product->id) ? 'Update product information' : 'Create a new product' }}</p>
         </div>
         <div>
             <a href="{{ route('admin.products.list') }}" class="btn btn-outline-primary">
@@ -20,69 +25,50 @@
             <span>Product Information</span>
         </div>
         <div class="admin-card-body">
-            <form method="POST" action="{{ route('admin.products.save', $product->id ?? null) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ isset($product->id) ? route('admin.products.save', $product) : route('admin.products.store') }}" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="name" class="form-label">Product Name</label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $product->name) }}" required autofocus>
-                        @error('name')
+                        <label for="code" class="form-label">Product Code</label>
+                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $product->code ?? '') }}" required>
+                        @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    
                     <div class="col-md-6">
-                        <label for="code" class="form-label">SKU/Code</label>
-                        <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code', $product->code) }}" required>
-                        @error('code')
+                        <label for="name" class="form-label">Product Name</label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $product->name ?? '') }}" required>
+                        @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
                 
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="price" class="form-label">Price</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $product->price) }}" required>
+                            <input type="number" step="0.01" min="0" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $product->price ?? '') }}" required>
                             @error('price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                    
-                    <div class="col-md-4">
-                        <label for="quantity" class="form-label">Quantity in Stock</label>
-                        <input type="number" class="form-control @error('quantity') is-invalid @enderror" id="quantity" name="quantity" value="{{ old('quantity', $product->quantity) }}" required>
+                    <div class="col-md-6">
+                        <label for="quantity" class="form-label">Stock Quantity</label>
+                        <input type="number" min="0" class="form-control @error('quantity') is-invalid @enderror" id="quantity" name="quantity" value="{{ old('quantity', $product->quantity ?? 0) }}" required>
                         @error('quantity')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="categories" class="form-label">Categories</label>
-                        <select class="form-select @error('categories') is-invalid @enderror" id="categories" name="categories[]" multiple>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" 
-                                    {{ (is_array(old('categories')) && in_array($category->id, old('categories'))) || 
-                                       (isset($product->id) && $product->categories->contains($category->id)) ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('categories')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">Hold Ctrl/Cmd to select multiple categories</div>
                     </div>
                 </div>
                 
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="4" required>{{ old('description', $product->description) }}</textarea>
+                        <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="4">{{ old('description', $product->description ?? '') }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -90,75 +76,80 @@
                 </div>
                 
                 <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="categories" class="form-label">Categories</label>
+                        <select class="form-select @error('categories') is-invalid @enderror" id="categories" name="categories[]" multiple required>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (isset($product) && $product->categories->contains($category->id)) ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('categories')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple categories</small>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="colors" class="form-label">Available Colors</label>
+                        <label class="form-label">Colors</label>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach($colors as $color)
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="color_{{ $color->id }}" name="colors[]" value="{{ $color->id }}"
-                                        {{ (is_array(old('colors')) && in_array($color->id, old('colors'))) || 
-                                           (isset($product->id) && $product->colors->contains($color->id)) ? 'checked' : '' }}>
-                                    <label class="form-check-label d-flex align-items-center" for="color_{{ $color->id }}">
-                                        <span class="color-swatch me-1" data-color="{{ $color->hex_code }}"></span>
+                                    <input class="form-check-input" type="checkbox" name="colors[]" value="{{ $color->id }}" 
+                                        id="color-{{ $color->id }}" {{ (isset($product) && $product->colors->contains($color->id)) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="color-{{ $color->id }}">
+                                        <span class="color-swatch" data-color="{{ $color->hex_code }}"></span>
                                         {{ $color->name }}
                                     </label>
                                 </div>
                             @endforeach
                         </div>
-                        @error('colors')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
                     </div>
-                    
                     <div class="col-md-6">
-                        <label for="sizes" class="form-label">Available Sizes</label>
+                        <label class="form-label">Sizes</label>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach($sizes as $size)
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="size_{{ $size->id }}" name="sizes[]" value="{{ $size->id }}"
-                                        {{ (is_array(old('sizes')) && in_array($size->id, old('sizes'))) || 
-                                           (isset($product->id) && $product->sizes->contains($size->id)) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="size_{{ $size->id }}">
-                                        {{ $size->name }}
-                                    </label>
+                                    <input class="form-check-input" type="checkbox" name="sizes[]" value="{{ $size->id }}" 
+                                        id="size-{{ $size->id }}" {{ (isset($product) && $product->sizes->contains($size->id)) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="size-{{ $size->id }}">{{ $size->name }}</label>
                                 </div>
                             @endforeach
                         </div>
-                        @error('sizes')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
                     </div>
                 </div>
 
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        <label for="image" class="form-label">Product Image</label>
+                        <label for="photo" class="form-label">Product Image</label>
                         
-                        @if($product->image)
+                        @if(isset($product) && $product->photo)
                             <div class="mb-3">
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-height: 200px">
-                                <p class="small text-secondary mt-1">Current image from storage</p>
-                            </div>
-                        @elseif($product->photo)
-                            <div class="mb-3">
-                                <img src="{{ asset('img/products/' . $product->photo) }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-height: 200px">
-                                <p class="small text-secondary mt-1">Current image from legacy path</p>
+                                <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-height: 200px">
+                                <p class="small text-secondary mt-1">Current image</p>
                             </div>
                         @endif
                         
-                        <div class="dropzone-container border rounded p-3">
-                            <div class="dz-message text-center py-5">
-                                <div class="mb-3">
-                                    <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
-                                </div>
-                                <h5>Drop files here or click to upload</h5>
-                                <p class="text-secondary small">Upload a product image (JPEG, PNG, WebP)</p>
+                        <div class="dropzone-container" id="productImageDropzone">
+                            <div class="dropzone-prompt">
+                                <i class="bi bi-cloud-arrow-up fs-3 mb-2"></i>
+                                <p class="mb-0">Drag and drop your image here, or click to browse</p>
+                                <p class="small text-muted">Supports: JPG, PNG, GIF (Max 2MB)</p>
                             </div>
-                            <input type="file" name="image" id="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
-                            @error('image')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <div class="dropzone-preview" style="display: none;">
+                                <div class="image-preview"></div>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2 remove-image">
+                                    <i class="bi bi-trash"></i> Remove Image
+                                </button>
+                            </div>
+                            <input type="file" class="form-control d-none @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/*">
                         </div>
+                        @error('photo')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 
@@ -175,42 +166,145 @@
 @push('styles')
 <style>
     .dropzone-container {
-        position: relative;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
+        background-color: var(--surface-alt);
     }
     
-    .dropzone-container:hover {
-        border-color: var(--primary) !important;
+    .dropzone-container:hover, .dropzone-container.dragover {
+        border-color: var(--primary);
         background-color: rgba(127, 90, 240, 0.05);
     }
     
-    .dropzone-container input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 1;
+    .dropzone-prompt {
+        color: var(--text-secondary);
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        height: 200px;
+        margin: 0 auto;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
     }
     
     .color-swatch {
-        width: 16px;
-        height: 16px;
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
         border-radius: 50%;
+        margin-right: 0.5rem;
         border: 1px solid var(--border);
     }
 </style>
-@endpush
+@endpush 
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Apply color swatches background colors
         document.querySelectorAll('.color-swatch').forEach(function(swatch) {
             swatch.style.backgroundColor = swatch.dataset.color;
         });
+        
+        // Initialize dropzone functionality
+        const dropzone = document.getElementById('productImageDropzone');
+        const fileInput = dropzone.querySelector('input[type="file"]');
+        const preview = dropzone.querySelector('.dropzone-preview');
+        const imagePreview = preview.querySelector('.image-preview');
+        const prompt = dropzone.querySelector('.dropzone-prompt');
+        const removeButton = dropzone.querySelector('.remove-image');
+        
+        // Handle click on dropzone
+        dropzone.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                // Check file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size should not exceed 2MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imagePreview.style.backgroundImage = `url(${e.target.result})`;
+                    prompt.style.display = 'none';
+                    preview.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, function() {
+                this.classList.remove('dragover');
+            }, false);
+        });
+        
+        dropzone.addEventListener('drop', function(e) {
+            const files = e.dataTransfer.files;
+            if (files && files.length) {
+                fileInput.files = files;
+                
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        }, false);
+        
+        // Handle remove button
+        removeButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            fileInput.value = '';
+            imagePreview.style.backgroundImage = '';
+            prompt.style.display = 'block';
+            preview.style.display = 'none';
+        });
+        
+        // Make the categories select more user-friendly
+        const categoriesSelect = document.getElementById('categories');
+        if (categoriesSelect) {
+            // Add Bootstrap's select2 if available (optional enhancement)
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                $(categoriesSelect).select2({
+                    placeholder: 'Select categories',
+                    allowClear: true
+                });
+            }
+        }
     });
 </script>
 @endpush 

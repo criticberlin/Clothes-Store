@@ -39,8 +39,8 @@
                             <tr>
                                 <td>{{ $product->id }}</td>
                                 <td>
-                                    @if($product->image)
-                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" width="50" class="img-thumbnail">
+                                    @if($product->photo)
+                                        <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" width="50" class="img-thumbnail">
                                     @else
                                         <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                                             <i class="bi bi-image"></i>
@@ -50,26 +50,21 @@
                                 <td>{{ $product->name }}</td>
                                 <td>${{ number_format($product->price, 2) }}</td>
                                 <td>
-                                    @if(isset($product->stock) || isset($product->quantity))
-                                        @php $stock = isset($product->stock) ? $product->stock : $product->quantity; @endphp
-                                        @if($stock > 10)
-                                            <span class="badge bg-success">{{ $stock }}</span>
-                                        @elseif($stock > 0)
-                                            <span class="badge bg-warning">{{ $stock }}</span>
-                                        @else
-                                            <span class="badge bg-danger">Out of stock</span>
-                                        @endif
+                                    @if($product->quantity > 10)
+                                        <span class="badge bg-success">{{ $product->quantity }}</span>
+                                    @elseif($product->quantity > 0)
+                                        <span class="badge bg-warning">{{ $product->quantity }}</span>
                                     @else
-                                        <span class="badge bg-secondary">N/A</span>
+                                        <span class="badge bg-danger">Out of stock</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if(method_exists($product, 'categories') && $product->categories && $product->categories->count() > 0)
+                                    @if($product->categories && $product->categories->count() > 0)
                                         @foreach($product->categories as $category)
                                             <span class="badge bg-info">{{ $category->name }}</span>
                                         @endforeach
                                     @else
-                                        <span class="text-muted">{{ $product->category ?? 'No category' }}</span>
+                                        <span class="badge bg-secondary">No category</span>
                                     @endif
                                 </td>
                                 <td>

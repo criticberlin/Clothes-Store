@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="admin-card mb-4">
+    <div class="admin-card">
         <div class="admin-card-header">
             <span>Users List</span>
             <span class="badge bg-primary">{{ $users->total() }} Users</span>
@@ -77,44 +77,6 @@
             <div class="d-flex justify-content-center mt-4">
                 {{ $users->links() }}
             </div>
-        </div>
-    </div>
-
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <span>Assign Role</span>
-        </div>
-        <div class="admin-card-body">
-            <form method="POST" action="{{ route('admin.assign-role') }}">
-                @csrf
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="mb-3">
-                            <label for="user_id" class="form-label">Select User</label>
-                            <select name="user_id" id="user_id" class="form-select">
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="mb-3">
-                            <label for="role_id" class="form-label">Select Role</label>
-                            <select name="role_id" id="role_id" class="form-select">
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-check2 me-2"></i> Assign
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 @endsection 

@@ -376,7 +376,7 @@
                         <span class="nav-icon"><i class="bi bi-plus-circle"></i></span>
                         <span>{{ __('Add Product') }}</span>
                     </a>
-                    <a href="{{ route('admin.products.list') }}" class="nav-link">
+                    <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-tags"></i></span>
                         <span>{{ __('Categories') }}</span>
                     </a>
@@ -439,12 +439,12 @@
                     <!-- Theme Switcher -->
                     <div class="theme-switcher">
                         <button type="button" class="theme-toggle-btn border-0 bg-transparent" id="adminThemeToggle">
-                            @if(session('theme_mode', 'dark') == 'dark')
-                            <i class="bi bi-sun-fill"></i>
-                            @else
-                            <i class="bi bi-moon-stars-fill"></i>
-                            @endif
-                        </button>
+                                @if(session('theme_mode', 'dark') == 'dark')
+                                <i class="bi bi-sun-fill"></i>
+                                @else
+                                <i class="bi bi-moon-stars-fill"></i>
+                                @endif
+                            </button>
                     </div>
                     
                     <!-- Language Switcher -->
@@ -461,13 +461,13 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                 <li>
                                     <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'en' ? 'active' : '' }}" data-language="en">
-                                        <span class="fi fi-gb me-2"></span> English
-                                    </button>
+                                            <span class="fi fi-gb me-2"></span> English
+                                        </button>
                                 </li>
                                 <li>
                                     <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'ar' ? 'active' : '' }}" data-language="ar">
-                                        <span class="fi fi-eg me-2"></span> العربية
-                                    </button>
+                                            <span class="fi fi-eg me-2"></span> العربية
+                                        </button>
                                 </li>
                             </ul>
                         </div>
@@ -489,8 +489,8 @@
                                     <button type="button" class="dropdown-item currency-option {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}" 
                                             data-currency-code="{{ $currency->code }}" 
                                             data-currency-symbol="{{ $currency->symbol }}">
-                                        {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
-                                    </button>
+                                            {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
+                                        </button>
                                 </li>
                                 @endforeach
                             </ul>

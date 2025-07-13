@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 //use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
@@ -246,152 +247,128 @@ class UsersController extends Controller
         return view('users.list', compact('users', 'roles'));
     }
 
-    public function createRoll(){
+    public function createRoll(Request $request){
+        if(!Auth::check()) return redirect('login');
+        
         // Get roles from DB directly
         $roles = DB::table('roles')->get();
-        return view('users.create', compact('roles'));
+        $permissions = DB::table('permissions')->get();
+        
+        // If this is an admin route, use admin layout
+        if ($request->is('admin/*')) {
+            return view('admin.users.create', compact('roles', 'permissions'));
+        }
+        
+        return view('users.create', compact('roles', 'permissions'));
     }
 
     public function edit(Request $request, ?User $user = null){
-        $user = $user ?? Auth::user();
-        if(Auth::id() != $user?->id) {
-            // Check permission using direct DB query
-            $hasPermission = DB::table('model_has_permissions')
-                ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
-                ->where('model_id', Auth::id())
-                ->where('model_type', User::class)
-                ->where('permissions.name', 'edit_users')
-                ->exists();
-                
-            if (!$hasPermission) {
-                abort(401);
-            }
-        }
+        if(!Auth::check()) return redirect('login');
+        
+        $user = $user ?? new User();
+        $roles = DB::table('roles')->get();
+        $permissions = DB::table('permissions')->get();
 
-        $roles = [];
-        $allRoles = DB::table('roles')->get();
-        foreach ($allRoles as $role) {
-            // Check if user has role directly
-            $hasRole = DB::table('model_has_roles')
-                ->where('model_id', $user->id)
-                ->where('model_type', User::class)
-                ->where('role_id', $role->id)
-                ->exists();
-            
-            $role->taken = $hasRole;
-            $roles[] = $role;
+        // If this is an admin route, use admin layout
+        if ($request->is('admin/*')) {
+            return view('admin.users.edit', compact('user', 'roles', 'permissions'));
         }
-
-        $permissions = [];
-        $directPermissionsIds = DB::table('model_has_permissions')
-            ->where('model_id', $user->id)
-            ->where('model_type', User::class)
-            ->pluck('permission_id')
-            ->toArray();
-            
-        $allPermissions = DB::table('permissions')->get();
-        foreach ($allPermissions as $permission) {
-            $permission->taken = in_array($permission->id, $directPermissionsIds);
-            $permissions[] = $permission;
-        }
-
+        
         return view('users.edit', compact('user', 'roles', 'permissions'));
     }
 
-    public function save(Request $request, User $user){
-        if(Auth::id() != $user->id) {
-            // Check permission using direct DB query
-            $hasPermission = DB::table('model_has_permissions')
-                ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
-                ->where('model_id', Auth::id())
-                ->where('model_type', User::class)
-                ->where('permissions.name', 'view_users')
-                ->exists();
-                
-            if (!$hasPermission) {
-                abort(401);
-            }
-        }
-
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'roles' => ['array'],
-            'permissions' => ['array'],
-        ]);
-
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'address' => $request->address,
-        ]);
+    public function save(Request $request, $user){
+        if(!Auth::check()) return redirect('login');
         
-        // Check if user has Admin or Manager role
-        $hasAdminOrManagerRole = DB::table('model_has_roles')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_id', Auth::id())
-            ->where('model_type', User::class)
-            ->whereIn('roles.name', ['Admin', 'Manager'])
-            ->exists();
-            
-        if ($hasAdminOrManagerRole) {
-            // Sync roles manually
-            if ($request->has('roles')) {
-                // Clear existing roles
-                DB::table('model_has_roles')
-                    ->where('model_id', $user->id)
-                    ->where('model_type', User::class)
-                    ->delete();
-                
-                // Add new roles
-                foreach ($request->roles as $roleId) {
-                    DB::table('model_has_roles')->insert([
-                        'role_id' => $roleId,
-                        'model_type' => User::class,
-                        'model_id' => $user->id
-                    ]);
-                }
+        // Handle case where user is 0 (new user)
+        if ($user === '0' || $user === 0) {
+            $user = new User();
+            $validationRules = [
+                'name' => ['required', 'string', 'min:3', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'profile_photo' => ['nullable', 'image', 'max:2048'], // 2MB max
+            ];
+        } else {
+            // Find existing user
+            $user = User::find($user);
+            if (!$user) {
+                return redirect()->back()->withErrors('User not found.');
             }
             
-            // Sync permissions manually
-            if ($request->has('permissions')) {
-                // Clear existing permissions
-                DB::table('model_has_permissions')
-                    ->where('model_id', $user->id)
-                    ->where('model_type', User::class)
-                    ->delete();
-                
-                // Add new permissions
-                foreach ($request->permissions as $permissionId) {
-                    DB::table('model_has_permissions')->insert([
-                        'permission_id' => $permissionId,
-                        'model_type' => User::class,
-                        'model_id' => $user->id
-                    ]);
-                }
-            }
+            $validationRules = [
+                'name' => ['required', 'string', 'min:3', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+                'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+                'profile_photo' => ['nullable', 'image', 'max:2048'], // 2MB max
+            ];
         }
-
-        return redirect()->route('profile', ['user' => $user->id])->with('success', 'Profile updated successfully.');
+        
+        $validated = $request->validate($validationRules);
+        
+        // Update basic info
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        
+        // Update password if provided
+        if (!empty($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+        
+        // Additional fields if they exist in the request
+        if ($request->has('phone')) {
+            $user->phone = $request->input('phone');
+        }
+        
+        if ($request->has('address')) {
+            $user->address = $request->input('address');
+        }
+        
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
+            // Delete old photo if exists
+            if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+                Storage::disk('public')->delete($user->profile_photo);
+            }
+            
+            $imagePath = $request->file('profile_photo')->store('users', 'public');
+            $user->profile_photo = $imagePath;
+        }
+        
+        $user->save();
+        
+        // Handle role assignment if role is provided
+        if ($request->has('role')) {
+            $user->roles()->sync([$request->input('role')]);
+        }
+        
+        if ($request->is('admin/*')) {
+            return redirect()->route('admin.users.list')->with('success', 'User saved successfully!');
+        }
+        
+        return redirect()->route('users.list')->with('success', 'User saved successfully!');
     }
 
     public function delete(Request $request, User $user){
-        // Check permission using direct DB query
-        $hasPermission = DB::table('model_has_permissions')
-            ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
-            ->where('model_id', Auth::id())
-            ->where('model_type', User::class)
-            ->where('permissions.name', 'delete_users')
-            ->exists();
-            
-        if (!$hasPermission) {
-            abort(401);
+        if(!Auth::check()) return redirect('login');
+        
+        // Don't allow deleting yourself
+        if ($user->id === Auth::id()) {
+            return redirect()->back()->withErrors('You cannot delete your own account.');
+        }
+        
+        // Delete profile photo if exists
+        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+            Storage::disk('public')->delete($user->profile_photo);
         }
         
         $user->delete();
-
-        return redirect()->route('users.list')->with('success', 'User deleted successfully.');
+        
+        if ($request->is('admin/*')) {
+            return redirect()->route('admin.users.list')->with('success', 'User deleted successfully!');
+        }
+        
+        return redirect()->route('users.list')->with('success', 'User deleted successfully!');
     }
 
     public function editPassword(Request $request, ?User $user = null){
