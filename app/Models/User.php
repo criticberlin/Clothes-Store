@@ -74,17 +74,39 @@ class User extends Authenticatable
     public function hasPermissionTo($permission)
     {
         // Check direct permissions
-        if ($this->permissions()->where('name', $permission)->exists()) {
+        if ($this->permissions->contains('name', $permission)) {
             return true;
         }
         
-        // Check permissions via roles
+        // Check role permissions
         foreach ($this->roles as $role) {
-            if ($role->permissions()->where('name', $permission)->exists()) {
+            if ($role->permissions->contains('name', $permission)) {
                 return true;
             }
         }
         
         return false;
+    }
+    
+    /**
+     * Get the URL for the user's profile photo
+     * 
+     * @return string
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo) {
+            return asset('storage/' . $this->profile_photo);
+        }
+        
+        return asset('images/default-avatar.png');
+    }
+    
+    /**
+     * Get all ratings submitted by this user
+     */
+    public function ratings()
+    {
+        return $this->hasMany(ProductRating::class);
     }
 }

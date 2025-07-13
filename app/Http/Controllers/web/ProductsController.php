@@ -15,15 +15,61 @@ class ProductsController extends Controller {
     
     public function index(Request $request){
         $query = Product::query();
+        $categories = Category::all();
+        $selectedCategory = null;
         
+        // Filter by search query
         if ($request->has('query') && !empty($request->input('query'))) {
             $searchQuery = $request->input('query');
-            $query->where('name', 'like', '%' . $searchQuery . '%')
-                  ->orWhere('description', 'like', '%' . $searchQuery . '%');
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('name', 'like', '%' . $searchQuery . '%')
+                  ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                  ->orWhere('code', 'like', '%' . $searchQuery . '%');
+            });
+        }
+        
+        // Filter by category
+        if ($request->has('category_id') && !empty($request->input('category_id'))) {
+            $categoryId = $request->input('category_id');
+            $selectedCategory = Category::find($categoryId);
+            
+            if ($selectedCategory) {
+                $query->whereHas('categories', function($q) use ($categoryId) {
+                    $q->where('categories.id', $categoryId);
+                });
+            }
+        }
+        
+        // Apply sorting if specified
+        if ($request->has('sort') && !empty($request->input('sort'))) {
+            $sortField = $request->input('sort');
+            $sortDirection = $request->input('direction', 'asc');
+            
+            switch ($sortField) {
+                case 'price_low':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'newest':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'name':
+                    $query->orderBy('name', $sortDirection);
+                    break;
+                default:
+                    // Default sorting
+                    $query->orderBy('id', 'desc');
+            }
+        } else {
+            // Default sorting
+            $query->orderBy('id', 'desc');
         }
         
         $products = $query->paginate(12);
-        return view('products.list', compact('products'));
+        
+        return view('products.list', compact('products', 'categories', 'selectedCategory'));
     }
 
     public function category(){
@@ -142,5 +188,71 @@ class ProductsController extends Controller {
         }
         
         return redirect()->route('products.manage')->with('success', 'Product deleted successfully!');
+    }
+    
+    /**
+     * Search products based on a query string
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('q');
+        $categoryId = $request->input('category_id');
+        $sort = $request->input('sort');
+        $products = [];
+        $categories = Category::all();
+        $selectedCategory = null;
+        
+        $productsQuery = Product::query();
+        
+        // Apply search query if provided
+        if (!empty($query)) {
+            $productsQuery->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('description', 'LIKE', "%{$query}%")
+                  ->orWhere('code', 'LIKE', "%{$query}%");
+            });
+        }
+        
+        // Apply category filter if provided
+        if (!empty($categoryId)) {
+            $selectedCategory = Category::find($categoryId);
+            
+            if ($selectedCategory) {
+                $productsQuery->whereHas('categories', function($q) use ($categoryId) {
+                    $q->where('categories.id', $categoryId);
+                });
+            }
+        }
+        
+        // Apply sorting if specified
+        if (!empty($sort)) {
+            switch ($sort) {
+                case 'price_low':
+                    $productsQuery->orderBy('price', 'asc');
+                    break;
+                case 'price_high':
+                    $productsQuery->orderBy('price', 'desc');
+                    break;
+                case 'newest':
+                    $productsQuery->orderBy('created_at', 'desc');
+                    break;
+                case 'name':
+                    $productsQuery->orderBy('name', 'asc');
+                    break;
+                default:
+                    // Default sorting
+                    $productsQuery->orderBy('id', 'desc');
+            }
+        } else {
+            // Default sorting
+            $productsQuery->orderBy('id', 'desc');
+        }
+        
+        $products = $productsQuery->paginate(12);
+        
+        return view('products.list', compact('products', 'query', 'categories', 'selectedCategory'));
     }
 }

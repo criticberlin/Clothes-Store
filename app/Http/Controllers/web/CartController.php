@@ -39,133 +39,148 @@ class CartController extends Controller
         return view('cart.index', compact('cartItems', 'subTotal', 'shippingCost', 'tax', 'total'));
     }
 
+    /**
+     * Add a product to the cart
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function add(Request $request, Product $product)
     {
-        if (!Auth::check()) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Please login to add items to cart'], 401);
-            }
-            return redirect('login');
+        $quantity = $request->input('quantity', 1);
+        $colorId = $request->input('color');
+        $sizeId = $request->input('size');
+        
+        // Check if product is available
+        if ($product->quantity < $quantity) {
+            return redirect()->back()->with('error', 'Sorry, the product is out of stock or not enough quantity available.');
         }
         
-        Log::info('Add to cart request:', [
-            'user_id' => Auth::id(),
-            'product_id' => $product->id,
-            'quantity' => $request->quantity,
-            'color' => $request->color,
-            'size' => $request->size
-        ]);
-
-        $request->validate([
-            'quantity' => 'required|integer|min:1|max:' . $product->quantity,
-            'color' => 'nullable|exists:colors,id',
-            'size' => 'nullable|exists:sizes,id'
-        ]);
-
-        // Check if product already exists in cart with same color and size
-        $cartItem = Cart::where('user_id', Auth::id())
+        // Check if product already in cart
+        $existingCart = Cart::where('user_id', Auth::id())
             ->where('product_id', $product->id)
-            ->where('color_id', $request->color)
-            ->where('size_id', $request->size)
+            ->where('color_id', $colorId)
+            ->where('size_id', $sizeId)
             ->first();
-
-        if ($cartItem) {
-            $newQuantity = $cartItem->quantity + $request->quantity;
-            if ($newQuantity > $product->quantity) {
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => 'Not enough stock available.']);
-                }
-                return redirect()->back()->with('error', 'Not enough stock available.');
-            }
-            $cartItem->quantity = $newQuantity;
-            $cartItem->save();
-            Log::info('Updated existing cart item:', ['cart_item' => $cartItem->toArray()]);
+            
+        if ($existingCart) {
+            // Update quantity if product already in cart
+            $existingCart->quantity += $quantity;
+            $existingCart->save();
         } else {
-            // Create new cart item
-            $newCartItem = Cart::create([
+            // Add new product to cart
+            Cart::create([
                 'user_id' => Auth::id(),
                 'product_id' => $product->id,
-                'color_id' => $request->color ?: null,
-                'size_id' => $request->size ?: null,
-                'quantity' => $request->quantity
+                'color_id' => $colorId,
+                'size_id' => $sizeId,
+                'quantity' => $quantity
             ]);
-            Log::info('Created new cart item:', ['cart_item' => $newCartItem->toArray()]);
         }
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Product added to cart successfully!']);
+        
+        // If AJAX request, return JSON response with updated cart count
+        if ($request->ajax()) {
+            $cartCount = Auth::user()->cart->sum('quantity');
+            return response()->json([
+                'success' => true, 
+                'message' => 'Product added to cart successfully!',
+                'cart_count' => $cartCount
+            ]);
         }
         
         return redirect()->back()->with('success', 'Product added to cart successfully!');
     }
 
+    /**
+     * Update cart item quantity
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Cart  $cart
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, Cart $cart)
     {
+        // Ensure user can only update their own cart
         if ($cart->user_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'Unauthorized action.');
+            return redirect()->back()->with('error', 'You are not authorized to update this cart item.');
         }
-
-        $request->validate([
-            'quantity' => 'required|integer|min:1|max:' . $cart->product->quantity
-        ]);
-
-        $cart->quantity = $request->quantity;
+        
+        $quantity = $request->input('quantity');
+        
+        // Check if product is available
+        if ($cart->product->quantity < $quantity) {
+            return redirect()->back()->with('error', 'Sorry, the product is out of stock or not enough quantity available.');
+        }
+        
+        $cart->quantity = $quantity;
         $cart->save();
-
+        
+        // If AJAX request, return JSON response with updated cart count
+        if ($request->ajax()) {
+            $cartCount = Auth::user()->cart->sum('quantity');
+            return response()->json([
+                'success' => true, 
+                'message' => 'Cart updated successfully!',
+                'cart_count' => $cartCount,
+                'item_total' => number_format($cart->quantity * $cart->product->price, 2)
+            ]);
+        }
+        
         return redirect()->back()->with('success', 'Cart updated successfully!');
     }
 
-    public function remove($cartId)
+    /**
+     * Remove an item from the cart
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $cartId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function remove(Request $request, $cartId)
     {
-        try {
-            Log::info('Removing cart item', ['cart_id' => $cartId, 'user_id' => Auth::id(), 'method' => request()->method()]);
-            
-            // Find the cart item
-            $cart = Cart::findOrFail($cartId);
-            
-            // Check if the cart item belongs to the authenticated user
-            if ($cart->user_id !== Auth::id()) {
-                Log::warning('Unauthorized cart removal attempt', [
-                    'cart_id' => $cartId, 
-                    'cart_user_id' => $cart->user_id, 
-                    'current_user_id' => Auth::id()
-                ]);
-                return redirect()->back()->with('error', 'Unauthorized action.');
-            }
-
-            // Delete the cart item
-            $cart->delete();
-            
-            Log::info('Cart item removed successfully', ['cart_id' => $cartId]);
-            return redirect()->route('cart.index')->with('success', 'Item removed from cart successfully!');
-        } catch (\Exception $e) {
-            Log::error('Error removing cart item', [
-                'cart_id' => $cartId, 
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return redirect()->route('cart.index')->with('error', 'Failed to remove item from cart: ' . $e->getMessage());
+        $cart = Cart::findOrFail($cartId);
+        
+        // Ensure user can only remove their own cart items
+        if ($cart->user_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'You are not authorized to remove this cart item.');
         }
+        
+        $cart->delete();
+        
+        // If AJAX request, return JSON response with updated cart count
+        if ($request->ajax()) {
+            $cartCount = Auth::user()->cart->count();
+            return response()->json([
+                'success' => true, 
+                'message' => 'Item removed from cart successfully!',
+                'cart_count' => $cartCount
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Item removed from cart successfully!');
     }
 
-    public function clear()
+    /**
+     * Clear all items from the cart
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clear(Request $request)
     {
-        try {
-            Log::info('Clearing cart', ['user_id' => Auth::id()]);
-            
-            $count = Cart::where('user_id', Auth::id())->count();
-            Cart::where('user_id', Auth::id())->delete();
-            
-            Log::info('Cart cleared successfully', ['user_id' => Auth::id(), 'items_removed' => $count]);
-            return redirect()->route('cart.index')->with('success', 'Cart cleared successfully!');
-        } catch (\Exception $e) {
-            Log::error('Error clearing cart', [
-                'user_id' => Auth::id(), 
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        Cart::where('user_id', Auth::id())->delete();
+        
+        // If AJAX request, return JSON response with updated cart count
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true, 
+                'message' => 'Cart cleared successfully!',
+                'cart_count' => 0
             ]);
-            return redirect()->route('cart.index')->with('error', 'Failed to clear cart.');
         }
+        
+        return redirect()->back()->with('success', 'Cart cleared successfully!');
     }
 
     public function checkout()

@@ -14,6 +14,7 @@ use App\Http\Controllers\web\AdminController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\PreferencesController;
+use App\Http\Controllers\RatingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -142,6 +143,7 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
 Route::get('/category', [ProductsController::class, 'category'])->name('products.category');
 Route::get('/category/{category}', [ProductsController::class, 'ListByCategory'])->name('products.byCategory');
 Route::get('/products', [ProductsController::class, 'index'])->name('products.list');
+Route::get('/products/search', [ProductsController::class, 'search'])->name('products.search');
 Route::get('/test-products', [App\Http\Controllers\web\TestProductController::class, 'index'])->name('test.products');
 Route::get('/product/{id}', [ProductsController::class, 'productDetails'])->name('products.details');
 
@@ -202,5 +204,19 @@ Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketControlle
 Route::get('/3d-customizer', function () {
     return redirect('/3D_Customizer/');
 })->name('3d-customizer');
+
+// Language switching route
+Route::get('locale/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'ar'])) {
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+});
+
+// Rating routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/products/{product}/rate', [RatingController::class, 'store'])->name('products.rate');
+    Route::delete('/ratings/{rating}', [RatingController::class, 'destroy'])->name('ratings.destroy');
+});
 
 

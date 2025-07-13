@@ -647,3 +647,123 @@ a:hover {
     color: var(--text-secondary);
     font-size: 0.875rem;
 } 
+
+/* Add styles for the notification system */
+
+/* Notifications */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--surface);
+    border-left: 4px solid var(--primary);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    min-width: 280px;
+    max-width: 400px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.notification-content i {
+    font-size: 1.25rem;
+}
+
+.notification-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.notification-close:hover {
+    color: var(--text-primary);
+}
+
+/* Notification types */
+.notification-success {
+    border-left-color: var(--secondary);
+}
+
+.notification-success i {
+    color: var(--secondary);
+}
+
+.notification-error {
+    border-left-color: #dc3545;
+}
+
+.notification-error i {
+    color: #dc3545;
+}
+
+.notification-warning {
+    border-left-color: #ffc107;
+}
+
+.notification-warning i {
+    color: #ffc107;
+}
+
+.notification-info {
+    border-left-color: var(--primary);
+}
+
+.notification-info i {
+    color: var(--primary);
+}
+
+/* RTL support for notifications */
+html[dir="rtl"] .notification {
+    right: auto;
+    left: 20px;
+    border-left: none;
+    border-right: 4px solid var(--primary);
+}
+
+html[dir="rtl"] .notification-close {
+    right: auto;
+    left: 8px;
+}
+
+html[dir="rtl"] .notification-success {
+    border-right-color: var(--secondary);
+}
+
+html[dir="rtl"] .notification-error {
+    border-right-color: #dc3545;
+}
+
+html[dir="rtl"] .notification-warning {
+    border-right-color: #ffc107;
+}
+
+html[dir="rtl"] .notification-info {
+    border-right-color: var(--primary);
+} 

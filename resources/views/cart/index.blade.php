@@ -73,25 +73,26 @@
                                     <td>{{ $item->size ? $item->size->name : 'N/A' }}</td>
                                     <td><span class="price-value" data-base-price="{{ $item->product->price }}">{{ formatPrice($item->product->price) }}</span></td>
                                     <td>
-                                        <div class="input-group input-group-sm" style="width: 100px;">
-                                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-flex">
+                                        <div class="d-flex align-items-center">
+                                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="cart-quantity-form">
                                                 @csrf
-                                                <input type="number" name="quantity" class="form-control" value="{{ $item->quantity }}" min="1" max="{{ $item->product->quantity }}">
-                                                <button type="submit" class="btn btn-outline-secondary">
-                                                    <i class="bi bi-arrow-clockwise"></i>
-                                                </button>
+                                                @method('PATCH')
+                                                <div class="input-group input-group-sm" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="decrease">-</button>
+                                                    <input type="number" class="form-control text-center" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->product->quantity }}">
+                                                    <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="increase">+</button>
+                                                </div>
+                                                <button type="submit" class="btn btn-sm btn-primary mt-2 update-cart-btn">{{ __('general.update') }}</button>
                                             </form>
                                         </div>
                                     </td>
-                                    <td><span class="price-value" data-base-price="{{ $item->product->price * $item->quantity }}">{{ formatPrice($item->product->price * $item->quantity) }}</span></td>
-                                    <td>
-                                        <form action="{{ route('cart.remove', $item->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                    <td class="text-end">
+                                        <span class="fw-bold item-total">{{ number_format($item->quantity * $item->product->price, 2) }} {{ config('app.currency_symbol', '$') }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ route('cart.remove', $item->id) }}" class="btn btn-sm btn-outline-danger remove-from-cart-btn" data-method="DELETE">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -101,16 +102,18 @@
                 </div>
             </div>
             
-            <div class="d-flex gap-2">
+            <div class="d-flex justify-content-between">
                 <a href="{{ route('products.list') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left me-2"></i>{{ __('general.continue_shopping') }}
+                    <i class="bi bi-arrow-left me-1"></i> {{ __('general.continue_shopping') }}
                 </a>
-                <form action="{{ route('cart.clear') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="bi bi-trash me-2"></i>{{ __('general.clear_cart') }}
-                    </button>
-                </form>
+                <div>
+                    <a href="{{ route('cart.clear') }}" class="btn btn-outline-danger me-2 clear-cart-btn" data-method="DELETE">
+                        <i class="bi bi-trash me-1"></i> {{ __('general.clear_cart') }}
+                    </a>
+                    <a href="{{ route('checkout.index') }}" class="btn btn-primary">
+                        {{ __('general.proceed_to_checkout') }} <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
             </div>
         </div>
         
