@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'login' => 'تسجيل الدخول',
+    'register' => 'إنشاء حساب',
+    'logout' => 'تسجيل الخروج',
+    'email' => 'البريد الإلكتروني',
+    'password' => 'كلمة المرور',
+    'confirm_password' => 'تأكيد كلمة المرور',
+    'remember_me' => 'تذكرني',
+    'forgot_password' => 'نسيت كلمة المرور؟',
+    'reset_password' => 'إعادة تعيين كلمة المرور',
+    'send_reset_link' => 'إرسال رابط إعادة تعيين كلمة المرور',
+    'name' => 'الاسم',
+    'login_with_google' => 'تسجيل الدخول باستخدام جوجل',
+    'login_with_facebook' => 'تسجيل الدخول باستخدام فيسبوك',
+    'login_with_github' => 'تسجيل الدخول باستخدام جيثب',
+    'register_with_google' => 'التسجيل باستخدام جوجل',
+    'register_with_facebook' => 'التسجيل باستخدام فيسبوك',
+    'register_with_github' => 'التسجيل باستخدام جيثب',
+    'already_registered' => 'لديك حساب بالفعل؟',
+    'dont_have_account' => 'ليس لديك حساب؟',
+    'verification_sent' => 'تم إرسال رابط التحقق إلى عنوان بريدك الإلكتروني.',
+    'verification_check' => 'قبل المتابعة، يرجى التحقق من بريدك الإلكتروني للحصول على رابط التحقق.',
+    'verification_not_received' => 'إذا لم تستلم البريد الإلكتروني',
+    'verification_request_another' => 'انقر هنا لطلب آخر',
+    'verify_email' => 'تحقق من عنوان بريدك الإلكتروني',
+]; 

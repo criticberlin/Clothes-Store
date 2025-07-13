@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'login' => 'Login',
+    'register' => 'Register',
+    'logout' => 'Logout',
+    'email' => 'Email Address',
+    'password' => 'Password',
+    'confirm_password' => 'Confirm Password',
+    'remember_me' => 'Remember Me',
+    'forgot_password' => 'Forgot Your Password?',
+    'reset_password' => 'Reset Password',
+    'send_reset_link' => 'Send Password Reset Link',
+    'name' => 'Name',
+    'login_with_google' => 'Login with Google',
+    'login_with_facebook' => 'Login with Facebook',
+    'login_with_github' => 'Login with GitHub',
+    'register_with_google' => 'Register with Google',
+    'register_with_facebook' => 'Register with Facebook',
+    'register_with_github' => 'Register with GitHub',
+    'already_registered' => 'Already registered?',
+    'dont_have_account' => 'Don\'t have an account?',
+    'verification_sent' => 'A verification link has been sent to your email address.',
+    'verification_check' => 'Before proceeding, please check your email for a verification link.',
+    'verification_not_received' => 'If you did not receive the email',
+    'verification_request_another' => 'click here to request another',
+    'verify_email' => 'Verify Your Email Address',
+]; 
