@@ -93,12 +93,21 @@ class User extends Authenticatable
      * 
      * @return string
      */
-    public function getProfilePhotoUrlAttribute()
+    public function getProfilePhotoUrlAttribute(): string
     {
         if ($this->profile_photo) {
-            return asset('storage/' . $this->profile_photo);
+            // Check if it's a storage path
+            if (file_exists(public_path('storage/' . $this->profile_photo))) {
+                return asset('storage/' . $this->profile_photo);
+            }
+            
+            // Check if it's in the users directory
+            if (file_exists(public_path('images/users/' . $this->profile_photo))) {
+                return asset('images/users/' . $this->profile_photo);
+            }
         }
         
+        // Default avatar
         return asset('images/default-avatar.png');
     }
     

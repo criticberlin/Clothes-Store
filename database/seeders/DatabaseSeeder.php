@@ -179,5 +179,13 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             CurrencySeeder::class,
         ]);
+        
+        // Create the storage link if it doesn't exist
+        if (!file_exists(public_path('storage'))) {
+            $this->command->call('storage:link');
+        }
+        
+        // Copy sample images to storage
+        $this->command->call('images:copy-samples');
     }
 }

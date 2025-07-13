@@ -28,6 +28,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Initialize dynamic select elements
+ */
+function initDynamicSelect() {
+    const dynamicSelects = document.querySelectorAll('.dynamic-select');
+    
+    if (dynamicSelects.length === 0) {
+        return;
+    }
+    
+    dynamicSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const value = this.value;
+            const name = this.name;
+            
+            // Create and dispatch a custom event
+            const event = new CustomEvent('categoryChanged', {
+                detail: {
+                    name: name,
+                    value: value
+                },
+                bubbles: true
+            });
+            
+            this.dispatchEvent(event);
+        });
+    });
+    
+    console.log('Dynamic select initialized');
+}
+
+/**
  * Initialize the live search functionality
  */
 function initializeSearch() {

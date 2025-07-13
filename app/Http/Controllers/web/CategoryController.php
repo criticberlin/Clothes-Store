@@ -5,6 +5,7 @@ namespace App\Http\Controllers\web;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -52,12 +53,17 @@ class CategoryController extends Controller
         $category->slug = Str::slug($validated['name']);
         $category->description = $validated['description'] ?? null;
 
-        // Handle photo upload if present
-        if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            $filename = time() . '_' . Str::slug($validated['name']) . '.' . $photo->getClientOriginalExtension();
-            $path = $photo->storeAs('categories', $filename, 'public');
-            $category->photo = $path;
+        // Handle photo upload if present with better error handling
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            try {
+                $photo = $request->file('photo');
+                $filename = time() . '_' . Str::slug($validated['name']) . '.' . $photo->getClientOriginalExtension();
+                $path = $photo->storeAs('categories', $filename, 'public');
+                $category->photo = $path;
+            } catch (\Exception $e) {
+                // Log the error but don't fail the save operation
+                Log::error('Category image upload failed: ' . $e->getMessage());
+            }
         }
 
         $category->save();

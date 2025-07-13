@@ -18,23 +18,28 @@ class CategorySeeder extends Seeder
         $categories = [
             [
                 'name' => 'Men',
-                'description' => 'Men\'s clothing collection'
+                'description' => 'Men\'s clothing collection',
+                'photo' => 'categories/men.jpg'
             ],
             [
                 'name' => 'Women',
-                'description' => 'Women\'s clothing collection'
+                'description' => 'Women\'s clothing collection',
+                'photo' => 'categories/women.jpg'
             ],
             [
                 'name' => 'Kids',
-                'description' => 'Kids clothing collection'
+                'description' => 'Kids clothing collection',
+                'photo' => 'categories/kids.jpg'
             ],
             [
                 'name' => 'Accessories',
-                'description' => 'Fashion accessories'
+                'description' => 'Fashion accessories',
+                'photo' => 'categories/accessories.jpg'
             ],
             [
                 'name' => 'Footwear',
-                'description' => 'Shoes and footwear'
+                'description' => 'Shoes and footwear',
+                'photo' => 'categories/footwear.jpg'
             ]
         ];
 

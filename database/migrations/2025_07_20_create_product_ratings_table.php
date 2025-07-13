@@ -15,13 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->integer('rating')->comment('Rating from 1-5');
+            $table->integer('rating')->comment('1-5 stars');
             $table->text('review')->nullable();
             $table->boolean('is_approved')->default(true);
             $table->timestamps();
-            
-            // Prevent duplicate ratings from the same user for the same product
-            $table->unique(['user_id', 'product_id']);
         });
     }
 

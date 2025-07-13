@@ -32,10 +32,8 @@ class ProductsController extends Controller
         $price = $product->price;
         $formattedPrice = number_format($price, 2) . ' ' . config('app.currency_symbol', '$');
         
-        // Get image URL
-        $imageUrl = !empty($product->photo) 
-            ? asset('storage/' . $product->photo) 
-            : asset('images/products/default.jpg');
+        // Get image URL using the accessor
+        $imageUrl = $product->image_url;
         
         // Get rating information
         $averageRating = $product->average_rating;

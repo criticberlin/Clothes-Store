@@ -49,11 +49,8 @@ class SearchController extends Controller
         // Get the results
         $results = $products->limit(20)->get();
         
-        // Transform the results
+        // Transform the results with improved image handling
         $transformedResults = $results->map(function($product) {
-            // Use a placeholder image if the product photo is not available
-            $imagePath = $product->photo ? 'img/products/' . $product->photo : 'images/placeholder.jpg';
-            
             return [
                 'id' => $product->id,
                 'name' => $product->name,
@@ -61,7 +58,7 @@ class SearchController extends Controller
                 'description' => Str::limit($product->description, 100),
                 'price' => $product->price,
                 'formatted_price' => number_format($product->price, 2) . ' ' . config('app.currency_symbol', '$'),
-                'image' => asset($imagePath),
+                'image' => $product->image_url, // Use the accessor
                 'quantity' => $product->quantity,
                 'category_name' => ucfirst($product->category)
             ];

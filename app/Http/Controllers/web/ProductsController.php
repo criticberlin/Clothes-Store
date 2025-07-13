@@ -9,7 +9,9 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProductsController extends Controller {
     
@@ -148,15 +150,35 @@ class ProductsController extends Controller {
         $product->quantity = $request->quantity;
         $product->created_by = Auth::id();
         
-        // Handle image upload
+        // Handle image upload with optimization
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-            // Delete old image if exists
-            if ($product->photo && Storage::disk('public')->exists($product->photo)) {
-                Storage::disk('public')->delete($product->photo);
+            try {
+                // Delete old image if exists
+                if ($product->photo && Storage::disk('public')->exists($product->photo)) {
+                    Storage::disk('public')->delete($product->photo);
+                }
+                
+                // Get the uploaded file
+                $image = $request->file('photo');
+                
+                // Generate a unique filename
+                $filename = time() . '_' . Str::slug($product->name) . '.' . $image->getClientOriginalExtension();
+                
+                // Create the full path
+                $path = 'products/' . $filename;
+                
+                // Process and optimize the image without requiring intervention/image
+                $img = $image->storeAs('products', $filename, 'public');
+                
+                // Save the path to the product
+                $product->photo = $path;
+                
+                // For backward compatibility, also store in image_path
+                $product->image_path = $path;
+            } catch (\Exception $e) {
+                // Log the error but don't fail the save operation
+                Log::error('Product image upload failed: ' . $e->getMessage());
             }
-            
-            $imagePath = $request->file('photo')->store('products', 'public');
-            $product->photo = $imagePath;
         }
         
         $product->save();

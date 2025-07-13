@@ -50,4 +50,57 @@ class Product extends Model {
     public function getRatingsCountAttribute(): int {
         return $this->ratings()->where('is_approved', true)->count();
     }
+    
+    /**
+     * Get the image URL for this product
+     */
+    public function getImageUrlAttribute(): string {
+        // First try image_path (new field)
+        if ($this->image_path && file_exists(public_path('storage/' . $this->image_path))) {
+            return asset('storage/' . $this->image_path);
+        }
+        
+        // Then try photo (old field)
+        if ($this->photo) {
+            // Check if it's a full path or just a filename
+            if (str_starts_with($this->photo, 'products/') && file_exists(public_path('storage/' . $this->photo))) {
+                return asset('storage/' . $this->photo);
+            }
+            
+            // Check if it's in the default products directory
+            if (file_exists(public_path('images/products/' . $this->photo))) {
+                return asset('images/products/' . $this->photo);
+            }
+        }
+        
+        // Default image
+        return asset('images/products/default.jpg');
+    }
+    
+    /**
+     * Get the thumbnail URL for this product
+     */
+    public function getThumbnailUrlAttribute(): string {
+        // Similar logic as getImageUrlAttribute but for thumbnails
+        // First try image_path (new field)
+        if ($this->image_path && file_exists(public_path('storage/' . $this->image_path))) {
+            return asset('storage/' . $this->image_path);
+        }
+        
+        // Then try photo (old field)
+        if ($this->photo) {
+            // Check if it's a full path or just a filename
+            if (str_starts_with($this->photo, 'products/') && file_exists(public_path('storage/' . $this->photo))) {
+                return asset('storage/' . $this->photo);
+            }
+            
+            // Check if it's in the default products directory
+            if (file_exists(public_path('images/products/' . $this->photo))) {
+                return asset('images/products/' . $this->photo);
+            }
+        }
+        
+        // Default thumbnail
+        return asset('images/products/default-thumbnail.jpg');
+    }
 }

@@ -38,15 +38,15 @@ class ProductSeeder extends Seeder
             Size::firstOrCreate(['name' => $size]);
         }
         
-        // Create sample products with prices in EGP
+        // Create sample products with prices in EGP and proper image paths
         $products = [
             [
                 'code' => 'MEN-TSHIRT-001',
                 'name' => 'Men\'s Basic T-Shirt',
                 'price' => 999.50, // Price in EGP
                 'description' => 'A comfortable cotton t-shirt for everyday wear.',
-                'photo' => 'men-tshirt.jpg',
-                'category' => 'men',
+                'photo' => 'products/men-tshirt.jpg',
+                'image_path' => 'products/men-tshirt.jpg',
                 'quantity' => 100,
             ],
             [
@@ -54,8 +54,8 @@ class ProductSeeder extends Seeder
                 'name' => 'Men\'s Slim Fit Jeans',
                 'price' => 2499.50, // Price in EGP
                 'description' => 'Classic slim fit jeans for a modern look.',
-                'photo' => 'men-jeans.jpg',
-                'category' => 'men',
+                'photo' => 'products/men-jeans.jpg',
+                'image_path' => 'products/men-jeans.jpg',
                 'quantity' => 75,
             ],
             [
@@ -63,8 +63,8 @@ class ProductSeeder extends Seeder
                 'name' => 'Women\'s Summer Dress',
                 'price' => 1999.50, // Price in EGP
                 'description' => 'Light and comfortable summer dress.',
-                'photo' => 'women-dress.jpg',
-                'category' => 'women',
+                'photo' => 'products/women-dress.jpg',
+                'image_path' => 'products/women-dress.jpg',
                 'quantity' => 50,
             ],
             [
@@ -72,8 +72,8 @@ class ProductSeeder extends Seeder
                 'name' => 'Women\'s Casual Blouse',
                 'price' => 1499.50, // Price in EGP
                 'description' => 'Elegant blouse for casual and formal occasions.',
-                'photo' => 'women-blouse.jpg',
-                'category' => 'women',
+                'photo' => 'products/women-blouse.jpg',
+                'image_path' => 'products/women-blouse.jpg',
                 'quantity' => 60,
             ],
             [
@@ -81,8 +81,8 @@ class ProductSeeder extends Seeder
                 'name' => 'Kids\' Cartoon T-Shirt',
                 'price' => 749.50, // Price in EGP
                 'description' => 'Fun and colorful t-shirt for kids.',
-                'photo' => 'kids-tshirt.jpg',
-                'category' => 'kids',
+                'photo' => 'products/kids-tshirt.jpg',
+                'image_path' => 'products/kids-tshirt.jpg',
                 'quantity' => 80,
             ],
         ];

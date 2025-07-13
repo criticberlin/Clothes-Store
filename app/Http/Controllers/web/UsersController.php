@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 //use Laravel\Socialite\Facades\Socialite;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerificationEmail;
 use App\Mail\PasswordResetEmail;
+use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
