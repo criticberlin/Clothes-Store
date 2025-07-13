@@ -18,12 +18,17 @@ class PreferenceController extends Controller
         $newTheme = $currentTheme === 'dark' ? 'light' : 'dark';
         
         Session::put('theme', $newTheme);
+        Session::put('theme_mode', $newTheme); // Also update theme_mode for consistency
+        
+        // Set theme cookie that persists for a year
+        $cookie = cookie('theme', $newTheme, 60 * 24 * 365);
         
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'theme' => $newTheme]);
+            return response()->json(['success' => true, 'theme' => $newTheme])
+                ->withCookie($cookie);
         }
         
-        return redirect()->back();
+        return redirect()->back()->withCookie($cookie);
     }
     
     /**
@@ -35,17 +40,31 @@ class PreferenceController extends Controller
         
         if (in_array($theme, ['light', 'dark'])) {
             Session::put('theme_mode', $theme);
+            Session::put('theme', $theme); // Also update theme for consistency
+            
+            // Set theme cookie that persists for a year
+            $cookie = cookie('theme', $theme, 60 * 24 * 365);
         }
         
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'theme' => $theme]);
+            $response = response()->json(['success' => true, 'theme' => $theme]);
+            
+            if (isset($cookie)) {
+                $response->withCookie($cookie);
+            }
+            
+            return $response;
         }
         
-        if ($request->has('redirect')) {
-            return redirect($request->redirect);
+        $redirect = $request->has('redirect') 
+            ? redirect($request->redirect)
+            : redirect()->back();
+            
+        if (isset($cookie)) {
+            $redirect->withCookie($cookie);
         }
         
-        return redirect()->back();
+        return $redirect;
     }
     
     /**

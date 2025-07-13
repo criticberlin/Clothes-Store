@@ -20,9 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add to cart buttons with AJAX
     initializeCartButtons();
     
-    // Initialize theme toggle 
-    initializeThemeToggle();
-    
     // Initialize cart functionality
     initCartFunctionality();
 });
@@ -299,40 +296,6 @@ function initializeCartButtons() {
 }
 
 /**
- * Initialize theme toggle functionality
- */
-function initializeThemeToggle() {
-    const themeToggle = document.querySelector('.theme-toggle-btn');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const url = this.getAttribute('href');
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Toggle theme class on html element
-                        document.documentElement.className = 
-                            document.documentElement.className.replace(/theme-\w+/, `theme-${data.theme}`);
-                        
-                        // Update icon
-                        const icon = this.querySelector('i');
-                        if (icon) {
-                            if (data.theme === 'dark') {
-                                icon.className = icon.className.replace('bi-moon-stars-fill', 'bi-sun-fill');
-                            } else {
-                                icon.className = icon.className.replace('bi-sun-fill', 'bi-moon-stars-fill');
-                            }
-                        }
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        });
-    }
-}
-
-/**
  * Initialize cart functionality with AJAX support
  */
 function initCartFunctionality() {
@@ -347,6 +310,12 @@ function initCartFunctionality() {
                 e.preventDefault();
                 const url = this.getAttribute('href');
                 
+                // Add loading state
+                this.classList.add('loading');
+                const originalContent = this.innerHTML;
+                this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+                this.disabled = true;
+                
                 // Send AJAX request
                 fetch(url, {
                     method: 'POST',
@@ -358,17 +327,32 @@ function initCartFunctionality() {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     if (data.success) {
-                        // Update cart count
-                        updateCartCount(data.cart_count);
+                        // Update cart count with bounce animation
+                        updateCartCount(data.cart_count, true);
                         
                         // Show success message
-                        showNotification('success', data.message);
+                        showNotification('success', data.message || 'Item added to cart!');
+                        
+                        // Show cart preview if available
+                        if (typeof showCartPreview === 'function') {
+                            showCartPreview(data.product);
+                        }
                     } else {
                         showNotification('error', data.message || 'Error adding item to cart');
                     }
                 })
                 .catch(error => {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     console.error('Error:', error);
                     showNotification('error', 'An error occurred. Please try again.');
                 });
@@ -386,6 +370,12 @@ function initCartFunctionality() {
             updateButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 
+                // Add loading state
+                this.classList.add('loading');
+                const originalContent = this.innerHTML;
+                this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+                this.disabled = true;
+                
                 const formData = new FormData(form);
                 const url = form.getAttribute('action');
                 
@@ -399,25 +389,36 @@ function initCartFunctionality() {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     if (data.success) {
                         // Update cart count
                         updateCartCount(data.cart_count);
                         
                         // Update item total if available
-                        const itemTotalElement = form.closest('tr').querySelector('.item-total');
+                        const itemTotalElement = form.closest('.cart-item').querySelector('.item-total');
                         if (itemTotalElement && data.item_total) {
-                            itemTotalElement.textContent = data.item_total;
+                            // Animate the price change
+                            animateNumberChange(itemTotalElement, data.item_total);
                         }
                         
                         // Recalculate cart totals if needed
                         recalculateCartTotals();
                         
-                        showNotification('success', data.message);
+                        showNotification('success', data.message || 'Cart updated successfully');
                     } else {
                         showNotification('error', data.message || 'Error updating cart');
                     }
                 })
                 .catch(error => {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     console.error('Error:', error);
                     showNotification('error', 'An error occurred. Please try again.');
                 });
@@ -434,6 +435,12 @@ function initCartFunctionality() {
             const url = this.getAttribute('href') || this.getAttribute('data-url');
             if (!url) return;
             
+            // Add loading state
+            this.classList.add('loading');
+            const originalContent = this.innerHTML;
+            this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+            this.disabled = true;
+            
             fetch(url, {
                 method: 'DELETE',
                 headers: {
@@ -447,26 +454,49 @@ function initCartFunctionality() {
                     // Update cart count
                     updateCartCount(data.cart_count);
                     
-                    // Remove the row from the cart table
-                    const row = this.closest('tr');
-                    if (row) {
-                        row.remove();
+                    // Remove the row from the cart table with animation
+                    const cartItem = this.closest('.cart-item');
+                    if (cartItem) {
+                        cartItem.style.transition = 'all 0.3s ease';
+                        cartItem.style.opacity = '0';
+                        cartItem.style.transform = 'translateX(20px)';
                         
-                        // Recalculate cart totals
-                        recalculateCartTotals();
-                        
-                        // If cart is empty, refresh the page to show empty cart message
-                        if (data.cart_count === 0) {
-                            window.location.reload();
-                        }
+                        setTimeout(() => {
+                            cartItem.style.height = '0';
+                            cartItem.style.padding = '0';
+                            cartItem.style.margin = '0';
+                            cartItem.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                cartItem.remove();
+                                
+                                // Recalculate cart totals
+                                recalculateCartTotals();
+                                
+                                // If cart is empty, refresh the page to show empty cart message
+                                if (data.cart_count === 0) {
+                                    window.location.reload();
+                                }
+                            }, 300);
+                        }, 300);
                     }
                     
-                    showNotification('success', data.message);
+                    showNotification('success', data.message || 'Item removed from cart');
                 } else {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     showNotification('error', data.message || 'Error removing item from cart');
                 }
             })
             .catch(error => {
+                // Remove loading state
+                this.classList.remove('loading');
+                this.innerHTML = originalContent;
+                this.disabled = false;
+                
                 console.error('Error:', error);
                 showNotification('error', 'An error occurred. Please try again.');
             });
@@ -479,8 +509,18 @@ function initCartFunctionality() {
         clearCartButton.addEventListener('click', function(e) {
             e.preventDefault();
             
+            if (!confirm('Are you sure you want to clear your cart?')) {
+                return;
+            }
+            
             const url = this.getAttribute('href') || this.getAttribute('data-url');
             if (!url) return;
+            
+            // Add loading state
+            this.classList.add('loading');
+            const originalContent = this.innerHTML;
+            this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Clearing...`;
+            this.disabled = true;
             
             fetch(url, {
                 method: 'DELETE',
@@ -495,15 +535,28 @@ function initCartFunctionality() {
                     // Update cart count
                     updateCartCount(0);
                     
-                    // Refresh the page to show empty cart
-                    window.location.reload();
+                    // Show success message before reload
+                    showNotification('success', data.message || 'Cart cleared successfully');
                     
-                    showNotification('success', data.message);
+                    // Refresh the page with a slight delay to show empty cart
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
+                    // Remove loading state
+                    this.classList.remove('loading');
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
                     showNotification('error', data.message || 'Error clearing cart');
                 }
             })
             .catch(error => {
+                // Remove loading state
+                this.classList.remove('loading');
+                this.innerHTML = originalContent;
+                this.disabled = false;
+                
                 console.error('Error:', error);
                 showNotification('error', 'An error occurred. Please try again.');
             });
@@ -512,10 +565,11 @@ function initCartFunctionality() {
 }
 
 /**
- * Update the cart count badge in the header
+ * Update the cart count badge in the header with animation
  * @param {number} count - The new cart count
+ * @param {boolean} animate - Whether to show bounce animation
  */
-function updateCartCount(count) {
+function updateCartCount(count, animate = false) {
     const cartBadge = document.querySelector('.cart-badge');
     
     if (cartBadge) {
@@ -525,11 +579,14 @@ function updateCartCount(count) {
         // Show/hide badge based on count
         if (count > 0) {
             cartBadge.classList.remove('d-none');
-            // Add a small animation
-            cartBadge.classList.add('animate-pulse');
-            setTimeout(() => {
-                cartBadge.classList.remove('animate-pulse');
-            }, 500);
+            
+            // Add animation if requested
+            if (animate) {
+                cartBadge.classList.add('animate-bounce');
+                setTimeout(() => {
+                    cartBadge.classList.remove('animate-bounce');
+                }, 1000);
+            }
         } else {
             cartBadge.classList.add('d-none');
         }
@@ -538,16 +595,121 @@ function updateCartCount(count) {
         const cartIcon = document.querySelector('.header-icon-btn i.bi-cart');
         if (cartIcon) {
             const badge = document.createElement('span');
-            badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge animate-pulse';
+            badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge';
+            if (animate) {
+                badge.classList.add('animate-bounce');
+            }
             badge.textContent = count;
             cartIcon.parentNode.appendChild(badge);
             
             // Remove animation after a short delay
-            setTimeout(() => {
-                badge.classList.remove('animate-pulse');
-            }, 500);
+            if (animate) {
+                setTimeout(() => {
+                    badge.classList.remove('animate-bounce');
+                }, 1000);
+            }
         }
     }
+    
+    // Update cart icon animation
+    const cartIconBtn = document.querySelector('.cart-icon');
+    if (cartIconBtn && animate) {
+        cartIconBtn.classList.add('animate-tada');
+        setTimeout(() => {
+            cartIconBtn.classList.remove('animate-tada');
+        }, 1000);
+    }
+}
+
+/**
+ * Animate a number change in an element
+ * @param {HTMLElement} element - The element containing the number
+ * @param {string|number} newValue - The new value to display
+ */
+function animateNumberChange(element, newValue) {
+    // Get current text and extract number
+    const currentText = element.textContent;
+    const currentNumber = parseFloat(currentText.replace(/[^0-9.-]+/g, ''));
+    
+    // Parse new value
+    const newNumber = parseFloat(String(newValue).replace(/[^0-9.-]+/g, ''));
+    
+    // If both are valid numbers, animate the change
+    if (!isNaN(currentNumber) && !isNaN(newNumber)) {
+        // Highlight the change
+        element.classList.add('text-primary');
+        element.style.transition = 'all 0.3s ease';
+        element.style.transform = 'scale(1.1)';
+        
+        // Update the value
+        element.textContent = newValue;
+        
+        // Reset after animation
+        setTimeout(() => {
+            element.classList.remove('text-primary');
+            element.style.transform = 'scale(1)';
+        }, 500);
+    } else {
+        // Fallback if not numbers
+        element.textContent = newValue;
+    }
+}
+
+/**
+ * Show a cart preview when item is added
+ * @param {Object} product - The product that was added
+ */
+function showCartPreview(product) {
+    if (!product) return;
+    
+    // Create cart preview element if it doesn't exist
+    let cartPreview = document.getElementById('cart-preview');
+    if (!cartPreview) {
+        cartPreview = document.createElement('div');
+        cartPreview.id = 'cart-preview';
+        cartPreview.className = 'cart-preview';
+        document.body.appendChild(cartPreview);
+    }
+    
+    // Set content
+    cartPreview.innerHTML = `
+        <div class="cart-preview-header">
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+            Item Added to Cart
+            <button class="cart-preview-close">&times;</button>
+        </div>
+        <div class="cart-preview-body">
+            <div class="d-flex">
+                <img src="${product.image}" alt="${product.name}" class="cart-preview-img">
+                <div class="ms-3">
+                    <h6 class="mb-1">${product.name}</h6>
+                    <div class="text-primary fw-bold">${product.formatted_price}</div>
+                </div>
+            </div>
+        </div>
+        <div class="cart-preview-footer">
+            <a href="/cart" class="btn btn-primary btn-sm">View Cart</a>
+            <a href="/checkout" class="btn btn-outline-primary btn-sm">Checkout</a>
+        </div>
+    `;
+    
+    // Show preview
+    cartPreview.classList.add('show');
+    
+    // Add close button functionality
+    const closeBtn = cartPreview.querySelector('.cart-preview-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            cartPreview.classList.remove('show');
+        });
+    }
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+        if (cartPreview.classList.contains('show')) {
+            cartPreview.classList.remove('show');
+        }
+    }, 5000);
 }
 
 /**

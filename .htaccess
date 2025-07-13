@@ -1,9 +1,15 @@
 <IfModule mod_rewrite.c>
-    RewriteEngine on
-    RewriteCond %{REQUEST_URI} !^(public)
+    RewriteEngine On
+    
+    # If the request is not for an existing file or directory
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirect to the public folder
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
+# PHP 8.2 Handler
 <IfModule mime_module>
   AddHandler application/x-httpd-ea-php82 .php .php8 .phtml
 </IfModule>

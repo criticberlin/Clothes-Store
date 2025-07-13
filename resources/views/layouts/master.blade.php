@@ -6,6 +6,7 @@
     <meta name="description" content="MyClothes - Modern fashion store for all your style needs">
     <meta name="theme-color" content="#7F5AF0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <base href="{{ url('/') }}/">
     @yield('meta')
     <title>MyClothes - @yield('title')</title>
 
@@ -29,6 +30,7 @@
     
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
+    <script src="{{ asset('js/theme-manager.js') }}" defer></script>
     <script src="{{ asset('js/custom.js') }}" defer></script>
 
     <style>
@@ -1249,12 +1251,12 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                 <li>
-                                    <a class="dropdown-item {{ $currentLocale == 'en' ? 'active' : '' }}" href="{{ url('locale/en') }}">
+                                    <a class="dropdown-item {{ $currentLocale == 'en' ? 'active' : '' }}" href="{{ asset('switch_language.php') }}?lang=en&redirect={{ urlencode(url()->current()) }}">
                                         <span class="fi fi-us me-2"></span> English
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item {{ $currentLocale == 'ar' ? 'active' : '' }}" href="{{ url('locale/ar') }}">
+                                    <a class="dropdown-item {{ $currentLocale == 'ar' ? 'active' : '' }}" href="{{ asset('switch_language.php') }}?lang=ar&redirect={{ urlencode(url()->current()) }}">
                                         <span class="fi fi-eg me-2"></span> العربية
                                     </a>
                                 </li>
@@ -1396,47 +1398,7 @@
         
         // Live search functionality
         document.addEventListener('DOMContentLoaded', function() {
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('themeToggle');
-            if(themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    const html = document.documentElement;
-                    const currentTheme = html.classList.contains('theme-light') ? 'light' : 'dark';
-                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                    
-                    html.classList.remove(`theme-${currentTheme}`);
-                    html.classList.add(`theme-${newTheme}`);
-                    
-                    // Save theme preference
-                    fetch('/theme/switch/' + newTheme, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    
-                    // Update icon
-                    const icon = themeToggle.querySelector('i');
-                    if(newTheme === 'light') {
-                        icon.classList.remove('bi-moon-fill');
-                        icon.classList.add('bi-sun-fill');
-                    } else {
-                        icon.classList.remove('bi-sun-fill');
-                        icon.classList.add('bi-moon-fill');
-                    }
-                });
-                
-                // Set initial icon based on current theme
-                const currentTheme = document.documentElement.classList.contains('theme-light') ? 'light' : 'dark';
-                const icon = themeToggle.querySelector('i');
-                if(currentTheme === 'light') {
-                    icon.classList.remove('bi-circle-half');
-                    icon.classList.add('bi-sun-fill');
-                } else {
-                    icon.classList.remove('bi-circle-half');
-                    icon.classList.add('bi-moon-fill');
-                }
-            }
+            // Theme toggle functionality has been moved to theme-manager.js
             
             const searchInput = document.getElementById('searchInput');
             const searchResults = document.getElementById('searchResults');

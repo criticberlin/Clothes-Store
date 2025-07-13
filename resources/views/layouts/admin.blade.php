@@ -6,6 +6,7 @@
     <meta name="description" content="MyClothes Admin Dashboard">
     <meta name="theme-color" content="#7F5AF0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <base href="{{ url('/') }}/">
     <title>MyClothes Admin - @yield('title')</title>
 
     <!-- Google Fonts -->
@@ -30,6 +31,7 @@
     
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
+    <script src="{{ asset('js/theme-manager.js') }}" defer></script>
     <script src="{{ asset('js/custom.js') }}" defer></script>
     
     <!-- DataTables CSS -->
@@ -536,33 +538,23 @@
                 <div class="header-utils">
                     <!-- Theme Switcher -->
                     <div class="dropdown">
-                        <button class="btn dropdown-toggle" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            @if(session('theme_mode', 'dark') == 'dark')
-                                <i class="bi bi-moon-stars-fill"></i>
-                            @else
+                        <button class="btn dropdown-toggle theme-toggle-btn" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if($currentTheme == 'dark')
                                 <i class="bi bi-sun-fill"></i>
+                            @else
+                                <i class="bi bi-moon-stars-fill"></i>
                             @endif
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeDropdown">
                             <li>
-                                <form action="{{ route('preferences.theme') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="theme" value="light">
-                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                    <button type="submit" class="dropdown-item {{ session('theme_mode', 'dark') == 'light' ? 'active' : '' }}">
-                                        <i class="bi bi-sun-fill me-2"></i> {{ __('general.light_mode') }}
-                                    </button>
-                                </form>
+                                <a href="{{ route('theme.set', 'light') }}" class="dropdown-item {{ $currentTheme == 'light' ? 'active' : '' }}">
+                                    <i class="bi bi-sun-fill me-2"></i> {{ __('general.light_mode') }}
+                                </a>
                             </li>
                             <li>
-                                <form action="{{ route('preferences.theme') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="theme" value="dark">
-                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                    <button type="submit" class="dropdown-item {{ session('theme_mode', 'dark') == 'dark' ? 'active' : '' }}">
-                                        <i class="bi bi-moon-stars-fill me-2"></i> {{ __('general.dark_mode') }}
-                                    </button>
-                                </form>
+                                <a href="{{ route('theme.set', 'dark') }}" class="dropdown-item {{ $currentTheme == 'dark' ? 'active' : '' }}">
+                                    <i class="bi bi-moon-stars-fill me-2"></i> {{ __('general.dark_mode') }}
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -570,7 +562,7 @@
                     <!-- Language Switcher -->
                     <div class="dropdown">
                         <button class="btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            @if(app()->getLocale() == 'ar')
+                            @if($currentLocale == 'ar')
                                 <span class="fi fi-eg"></span>
                             @else
                                 <span class="fi fi-gb"></span>
@@ -578,24 +570,14 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                             <li>
-                                <form action="{{ route('preferences.language') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="language" value="en">
-                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                    <button type="submit" class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}">
-                                        <span class="fi fi-gb me-2"></span> English
-                                    </button>
-                                </form>
+                                <a href="{{ asset('switch_language.php') }}?lang=en&redirect={{ urlencode(url()->current()) }}" class="dropdown-item {{ $currentLocale == 'en' ? 'active' : '' }}">
+                                    <span class="fi fi-gb me-2"></span> English
+                                </a>
                             </li>
                             <li>
-                                <form action="{{ route('preferences.language') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="language" value="ar">
-                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
-                                    <button type="submit" class="dropdown-item {{ app()->getLocale() == 'ar' ? 'active' : '' }}">
-                                        <span class="fi fi-eg me-2"></span> العربية
-                                    </button>
-                                </form>
+                                <a href="{{ asset('switch_language.php') }}?lang=ar&redirect={{ urlencode(url()->current()) }}" class="dropdown-item {{ $currentLocale == 'ar' ? 'active' : '' }}">
+                                    <span class="fi fi-eg me-2"></span> العربية
+                                </a>
                             </li>
                         </ul>
                     </div>

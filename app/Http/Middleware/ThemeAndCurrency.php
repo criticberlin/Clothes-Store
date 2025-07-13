@@ -18,12 +18,20 @@ class ThemeAndCurrency
      */
     public function handle(Request $request, Closure $next)
     {
-        // Handle theme
-        $theme = Session::get('theme_mode', 'dark');
+        // Handle theme - check cookie first, then session
+        $theme = $request->cookie('theme') ?? Session::get('theme', Session::get('theme_mode', 'dark'));
+        
+        // If theme comes from cookie, update session for consistency
+        if ($request->cookie('theme')) {
+            Session::put('theme_mode', $request->cookie('theme'));
+            Session::put('theme', $request->cookie('theme'));
+        }
+        
+        // Share theme with all views
         view()->share('currentTheme', $theme);
         
-        // Handle currency
-        $currencyCode = Session::get('currency_code');
+        // Handle currency - check cookie first, then session
+        $currencyCode = $request->cookie('currency') ?? Session::get('currency_code');
         
         if (!$currencyCode) {
             // Set default currency if not set
@@ -40,6 +48,14 @@ class ThemeAndCurrency
                 Session::put('currency_code', 'EGP');
                 Session::put('currency_symbol', 'ج.م');
                 Session::put('currency_rate', 1);
+            }
+        } else {
+            // Get currency details if we have a code
+            $currency = Currency::where('code', $currencyCode)->where('is_active', true)->first();
+            
+            if ($currency) {
+                Session::put('currency_symbol', $currency->symbol);
+                Session::put('currency_rate', $currency->exchange_rate);
             }
         }
         

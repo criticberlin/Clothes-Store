@@ -15,6 +15,7 @@ use App\Http\Controllers\PreferenceController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\LanguageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,32 +30,22 @@ use App\Http\Controllers\RatingController;
 
 // Preferences Routes
 Route::post('/preferences/language', [PreferencesController::class, 'language'])->name('preferences.language');
+Route::get('/preferences/language', [PreferencesController::class, 'language'])->name('preferences.language.get');
+Route::get('/set-language/{lang}', [PreferencesController::class, 'setLanguage'])->name('set.language');
 Route::post('/preferences/theme', [PreferencesController::class, 'theme'])->name('preferences.theme');
 Route::get('/theme/toggle', [PreferencesController::class, 'themeToggle'])->name('theme.toggle');
+Route::get('/theme/{theme}', [PreferencesController::class, 'theme'])->name('theme.set');
 Route::post('/preferences/currency', [PreferencesController::class, 'currency'])->name('preferences.currency');
+Route::get('/preferences/clear', [PreferencesController::class, 'clearPreferences'])->name('preferences.clear');
 Route::get('/currencies/list', function() {
     return response()->json(App\Models\Currency::getActiveCurrencies());
 })->name('currencies.list');
 
+// Language Routes
+Route::get('/locale/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
+
 // Create a new HomeController for the root route
 Route::get('/', [HomeController::class, 'index'])->name('home');
-
-// Theme, Language and Currency preferences
-Route::get('/theme/toggle', [PreferenceController::class, 'toggleTheme'])->name('theme.toggle');
-Route::get('/theme/{theme}', [PreferenceController::class, 'setTheme'])->name('theme.set');
-Route::get('/language/{locale}', [PreferenceController::class, 'setLanguage'])->name('language.set');
-Route::get('/currency/{currency}', [PreferenceController::class, 'setCurrency'])->name('currency.set');
-Route::get('/currencies', [PreferenceController::class, 'getCurrencies'])->name('currencies.list');
-// Routes for POST preferences
-Route::post('/preferences/theme', [PreferenceController::class, 'setTheme'])->name('preferences.theme');
-Route::post('/preferences/language', [PreferenceController::class, 'setLanguage'])->name('preferences.language');
-Route::post('/preferences/currency', [PreferenceController::class, 'setCurrency'])->name('preferences.currency');
-// Accept JSON requests for preferences
-Route::middleware('api')->group(function() {
-    Route::post('/api/preferences/theme', [PreferenceController::class, 'setTheme']);
-    Route::post('/api/preferences/language', [PreferenceController::class, 'setLanguage']);
-    Route::post('/api/preferences/currency', [PreferenceController::class, 'setCurrency']);
-});
 
 //  User Authentication
 Route::get('register', [UsersController::class, 'register'])->name('register');
@@ -204,14 +195,6 @@ Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketControlle
 Route::get('/3d-customizer', function () {
     return redirect('/3D_Customizer/');
 })->name('3d-customizer');
-
-// Language switching route
-Route::get('locale/{locale}', function ($locale) {
-    if (in_array($locale, ['en', 'ar'])) {
-        session()->put('locale', $locale);
-    }
-    return redirect()->back();
-});
 
 // Rating routes
 Route::middleware(['auth'])->group(function () {
