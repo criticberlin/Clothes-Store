@@ -1,18 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', isset($product->id) ? 'Edit Product' : 'Add New Product')
-
-@section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('admin.products.list') }}">Products</a></li>
-    <li class="breadcrumb-item active">{{ isset($product->id) ? 'Edit Product' : 'Add New Product' }}</li>
-@endsection
+@section('description', isset($product->id) ? 'Update product information' : 'Create a new product')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">{{ isset($product->id) ? 'Edit Product' : 'Add New Product' }}</h1>
-            <p class="text-secondary mb-0">{{ isset($product->id) ? 'Update product information' : 'Create a new product' }}</p>
-        </div>
         <div>
             <a href="{{ route('admin.products.list') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-2"></i> Back to Products

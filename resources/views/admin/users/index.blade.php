@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'User Management')
+@section('description', 'Manage all users in the system')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">User Management</h1>
-            <p class="text-secondary mb-0">Manage all users in the system</p>
-        </div>
         <div>
             <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
                 <i class="bi bi-person-plus me-2"></i> Add New User
@@ -18,11 +15,11 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <span>Users List</span>
-            <span class="badge bg-primary">{{ $users->total() }} Users</span>
+            <span class="badge bg-primary">{{ $users->count() }} Users</span>
         </div>
         <div class="admin-card-body">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table admin-datatable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -34,7 +31,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($users as $user)
+                        @foreach($users as $user)
                             <tr>
                                 <td>{{ $user->id }}</td>
                                 <td>{{ $user->name }}</td>
@@ -65,17 +62,9 @@
                                     </form>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center">No users found</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
-            </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $users->links() }}
             </div>
         </div>
     </div>

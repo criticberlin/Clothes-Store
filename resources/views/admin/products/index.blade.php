@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Product Management')
+@section('description', 'Manage all products in your store')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Product Management</h1>
-            <p class="text-secondary mb-0">Manage all products in your store</p>
-        </div>
         <div>
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg me-2"></i> Add New Product
@@ -18,11 +15,11 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <span>Products List</span>
-            <span class="badge bg-primary">{{ $products->total() }} Products</span>
+            <span class="badge bg-primary">{{ $products->count() }} Products</span>
         </div>
         <div class="admin-card-body">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table admin-datatable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -35,7 +32,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($products as $product)
+                        @foreach($products as $product)
                             <tr>
                                 <td>{{ $product->id }}</td>
                                 <td>
@@ -85,17 +82,9 @@
                                     </form>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">No products found</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
-            </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $products->links() }}
             </div>
         </div>
     </div>

@@ -31,6 +31,14 @@
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ asset('js/custom.js') }}" defer></script>
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    
+    <!-- jQuery and DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js" defer></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js" defer></script>
 
     <style>
         /* Light Theme Colors */
@@ -179,6 +187,23 @@
             letter-spacing: 0.1em;
             color: var(--text-tertiary);
             font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .sidebar-nav .nav-section-title:hover {
+            color: var(--text-primary);
+        }
+
+        .sidebar-nav .collapse .nav-link {
+            padding-left: 2.5rem;
+        }
+
+        .sidebar-nav .nav-section-title .bi-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-nav .nav-section-title[aria-expanded="true"] .bi-chevron-down {
+            transform: rotate(180deg);
         }
 
         .sidebar-nav .nav-link {
@@ -350,63 +375,84 @@
                     </a>
                 </div>
                 
+                <!-- User Management Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ __('User Management') }}</div>
-                    <a href="{{ route('admin.users.list') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                        <span class="nav-icon"><i class="bi bi-people"></i></span>
-                        <span>{{ __('All Users') }}</span>
-                    </a>
-                    <a href="{{ route('admin.users.create') }}" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-person-plus"></i></span>
-                        <span>{{ __('Add User') }}</span>
-                    </a>
-                    <a href="{{ route('admin.users.list') }}" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-person-gear"></i></span>
-                        <span>{{ __('Roles & Permissions') }}</span>
-                    </a>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#usersCollapse" role="button" aria-expanded="false" aria-controls="usersCollapse">
+                        <span>{{ __('User Management') }}</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse {{ request()->routeIs('admin.users.*') ? 'show' : '' }}" id="usersCollapse">
+                        <a href="{{ route('admin.users.list') }}" class="nav-link {{ request()->routeIs('admin.users.list') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-people"></i></span>
+                            <span>{{ __('All Users') }}</span>
+                        </a>
+                        <a href="{{ route('admin.users.create') }}" class="nav-link {{ request()->routeIs('admin.users.create') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-person-plus"></i></span>
+                            <span>{{ __('Add User') }}</span>
+                        </a>
+                    </div>
                 </div>
                 
+                <!-- Product Management Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ __('Products') }}</div>
-                    <a href="{{ route('admin.products.list') }}" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-grid"></i></span>
-                        <span>{{ __('All Products') }}</span>
-                    </a>
-                    <a href="{{ route('admin.products.create') }}" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-plus-circle"></i></span>
-                        <span>{{ __('Add Product') }}</span>
-                    </a>
-                    <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-                        <span class="nav-icon"><i class="bi bi-tags"></i></span>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="false" aria-controls="productsCollapse">
+                        <span>{{ __('Products') }}</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse {{ (request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*')) ? 'show' : '' }}" id="productsCollapse">
+                        <a href="{{ route('admin.products.list') }}" class="nav-link {{ request()->routeIs('admin.products.list') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-grid"></i></span>
+                            <span>{{ __('All Products') }}</span>
+                        </a>
+                        <a href="{{ route('admin.products.create') }}" class="nav-link {{ request()->routeIs('admin.products.create') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-plus-circle"></i></span>
+                            <span>{{ __('Add Product') }}</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Categories Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#categoriesCollapse" role="button" aria-expanded="false" aria-controls="categoriesCollapse">
                         <span>{{ __('Categories') }}</span>
-                    </a>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse {{ request()->routeIs('admin.categories.*') ? 'show' : '' }}" id="categoriesCollapse">
+                        <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.index') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-tags"></i></span>
+                            <span>{{ __('All Categories') }}</span>
+                        </a>
+                        <a href="{{ route('admin.categories.create') }}" class="nav-link {{ request()->routeIs('admin.categories.create') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-plus-circle"></i></span>
+                            <span>{{ __('Add Category') }}</span>
+                        </a>
+                    </div>
                 </div>
                 
+                <!-- Orders Section -->
                 <div class="nav-section">
                     <div class="nav-section-title">{{ __('Orders') }}</div>
-                    <a href="{{ route('admin.orders.list') }}" class="nav-link">
+                    <a href="{{ route('admin.orders.list') }}" class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-box"></i></span>
                         <span>{{ __('All Orders') }}</span>
                     </a>
                 </div>
                 
+                <!-- Support Section -->
                 <div class="nav-section">
                     <div class="nav-section-title">{{ __('Support') }}</div>
-                    <a href="{{ route('admin.support.index') }}" class="nav-link">
+                    <a href="{{ route('admin.support.index') }}" class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-headset"></i></span>
                         <span>{{ __('Support Tickets') }}</span>
                     </a>
                 </div>
                 
+                <!-- Settings Section -->
                 <div class="nav-section">
                     <div class="nav-section-title">{{ __('Settings') }}</div>
-                    <a href="{{ route('admin.settings') }}" class="nav-link">
+                    <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-gear"></i></span>
                         <span>{{ __('Store Settings') }}</span>
-                    </a>
-                    <a href="{{ route('admin.currencies') }}" class="nav-link {{ request()->routeIs('admin.currencies') ? 'active' : '' }}">
-                        <span class="nav-icon"><i class="bi bi-currency-exchange"></i></span>
-                        <span>{{ __('Currencies') }}</span>
                     </a>
                 </div>
                 
@@ -427,13 +473,8 @@
         <main class="admin-content">
             <div class="admin-header">
                 <div>
-                    <h1>@yield('title', __('Dashboard'))</h1>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Admin') }}</a></li>
-                            @yield('breadcrumbs')
-                        </ol>
-                    </nav>
+                    <h1 class="mb-3">@yield('title', __('Dashboard'))</h1>
+                    <p class="text-secondary fs-5 mb-0">@yield('description')</p>
                 </div>
                 <div class="d-flex align-items-center">
                     <!-- Theme Switcher -->
@@ -540,6 +581,25 @@
                     adminSidebar.classList.toggle('show');
                 });
             }
+            
+            // Initialize DataTables
+            $('.admin-datatable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                language: {
+                    search: "<i class='bi bi-search'></i> _INPUT_",
+                    searchPlaceholder: "Search records...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    paginate: {
+                        first: "<i class='bi bi-chevron-double-left'></i>",
+                        last: "<i class='bi bi-chevron-double-right'></i>",
+                        next: "<i class='bi bi-chevron-right'></i>",
+                        previous: "<i class='bi bi-chevron-left'></i>"
+                    }
+                }
+            });
             
             // Theme Switcher
             const themeToggleBtn = document.getElementById('adminThemeToggle');

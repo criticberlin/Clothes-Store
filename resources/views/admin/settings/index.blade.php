@@ -1,16 +1,12 @@
 @extends('layouts.admin')
 
 @section('title', __('general.store_settings'))
-
-@section('breadcrumbs')
-<li class="breadcrumb-item active">{{ __('general.settings') }}</li>
-@endsection
+@section('description', __('general.store_settings_description'))
 
 @section('content')
     <div class="admin-header">
         <div>
-            <h1 class="mb-2">{{ __('general.store_settings') }}</h1>
-            <p class="text-secondary mb-0">{{ __('general.store_settings_description') }}</p>
+            <!-- Empty div for layout consistency -->
         </div>
     </div>
 

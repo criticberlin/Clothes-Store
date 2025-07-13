@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Add New Category')
+@section('description', 'Create a new product category')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Add New Category</h1>
-            <p class="text-secondary mb-0">Create a new product category</p>
-        </div>
         <div>
             <a href="{{ route('admin.categories.index') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-2"></i> Back to Categories

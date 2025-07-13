@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Order Management')
+@section('description', 'Manage all customer orders')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Order Management</h1>
-            <p class="text-secondary mb-0">Manage all customer orders</p>
-        </div>
         <div>
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -27,11 +24,11 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <span>Orders List</span>
-            <span class="badge bg-primary">{{ $orders->total() }} Orders</span>
+            <span class="badge bg-primary">{{ $orders->count() }} Orders</span>
         </div>
         <div class="admin-card-body">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table admin-datatable">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -44,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($orders as $order)
+                        @foreach($orders as $order)
                             <tr>
                                 <td>#{{ $order->id }}</td>
                                 <td>{{ $order->user->name }}</td>
@@ -74,17 +71,9 @@
                                     </a>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">No orders found</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
-            </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $orders->links() }}
             </div>
         </div>
     </div>
@@ -100,7 +89,7 @@
                         <div class="stats-icon green">
                             <i class="bi bi-cart"></i>
                         </div>
-                        <div class="stats-value">{{ $orders->total() }}</div>
+                        <div class="stats-value">{{ $orders->count() }}</div>
                         <div class="stats-label">Total Orders</div>
                     </div>
                 </div>

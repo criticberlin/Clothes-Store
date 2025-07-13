@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Category Management')
+@section('description', 'Manage product categories')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Category Management</h1>
-            <p class="text-secondary mb-0">Manage product categories</p>
-        </div>
         <div>
             <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg me-2"></i> Add New Category
@@ -25,11 +22,11 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <span>Categories List</span>
-            <span class="badge bg-primary">{{ $categories->total() }} Categories</span>
+            <span class="badge bg-primary">{{ $categories->count() }} Categories</span>
         </div>
         <div class="admin-card-body">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table admin-datatable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -41,7 +38,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($categories as $category)
+                        @foreach($categories as $category)
                             <tr>
                                 <td>{{ $category->id }}</td>
                                 <td>
@@ -74,17 +71,9 @@
                                     </form>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center">No categories found</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
-            </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $categories->links() }}
             </div>
         </div>
     </div>

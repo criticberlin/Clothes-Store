@@ -1,18 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', isset($user->id) ? 'Edit User' : 'Add New User')
-
-@section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('admin.users.list') }}">Users</a></li>
-    <li class="breadcrumb-item active">{{ isset($user->id) ? 'Edit User' : 'Add New User' }}</li>
-@endsection
+@section('description', isset($user->id) ? 'Update user information' : 'Create a new user account')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">{{ isset($user->id) ? 'Edit User' : 'Add New User' }}</h1>
-            <p class="text-secondary mb-0">{{ isset($user->id) ? 'Update user information' : 'Create a new user account' }}</p>
-        </div>
         <div>
             <a href="{{ route('admin.users.list') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-2"></i> Back to Users

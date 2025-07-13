@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Support Tickets')
+@section('description', 'Manage customer support tickets')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Support Tickets</h1>
-            <p class="text-secondary mb-0">Manage customer support tickets</p>
-        </div>
         <div>
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">

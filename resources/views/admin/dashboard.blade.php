@@ -1,13 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard')
+@section('description', 'Welcome back, ' . Auth::user()->name)
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Dashboard</h1>
-            <p class="text-secondary mb-0">Welcome back, {{ Auth::user()->name }}</p>
-        </div>
         <div>
             <div class="dropdown">
                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="reportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
