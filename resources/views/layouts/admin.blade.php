@@ -334,6 +334,63 @@
             color: var(--text-secondary);
             font-size: 0.875rem;
         }
+        
+        /* Header Utilities */
+        .header-utils {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-utils .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            padding: 0;
+            border-radius: var(--radius-md);
+            background-color: var(--surface-alt);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            transition: all var(--transition-normal);
+        }
+        
+        .header-utils .btn:hover {
+            background-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .header-utils .dropdown-toggle::after {
+            display: none;
+        }
+        
+        .header-utils .dropdown-menu {
+            min-width: 200px;
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background-color: var(--surface);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .header-utils .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            color: var(--text-secondary);
+        }
+        
+        .header-utils .dropdown-item:hover {
+            background-color: var(--surface-alt);
+            color: var(--text-primary);
+        }
+        
+        .header-utils .dropdown-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
 
         /* Mobile Responsive */
         @media (max-width: 992px) {
@@ -476,79 +533,102 @@
                     <h1 class="mb-3">@yield('title', __('Dashboard'))</h1>
                     <p class="text-secondary fs-5 mb-0">@yield('description')</p>
                 </div>
-                <div class="d-flex align-items-center">
+                <div class="header-utils">
                     <!-- Theme Switcher -->
-                    <div class="theme-switcher">
-                        <button type="button" class="theme-toggle-btn border-0 bg-transparent" id="adminThemeToggle">
-                                @if(session('theme_mode', 'dark') == 'dark')
-                                <i class="bi bi-sun-fill"></i>
-                                @else
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if(session('theme_mode', 'dark') == 'dark')
                                 <i class="bi bi-moon-stars-fill"></i>
-                                @endif
-                            </button>
+                            @else
+                                <i class="bi bi-sun-fill"></i>
+                            @endif
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeDropdown">
+                            <li>
+                                <form action="{{ route('preferences.theme') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="theme" value="light">
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="dropdown-item {{ session('theme_mode', 'dark') == 'light' ? 'active' : '' }}">
+                                        <i class="bi bi-sun-fill me-2"></i> {{ __('general.light_mode') }}
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('preferences.theme') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="theme" value="dark">
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="dropdown-item {{ session('theme_mode', 'dark') == 'dark' ? 'active' : '' }}">
+                                        <i class="bi bi-moon-stars-fill me-2"></i> {{ __('general.dark_mode') }}
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                     
                     <!-- Language Switcher -->
-                    <div class="language-switcher mx-3">
-                        <div class="dropdown">
-                            <button class="theme-toggle-btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                @if(app()->getLocale() == 'ar')
-                                    <span class="fi fi-eg me-1"></span>
-                                @else
-                                    <span class="fi fi-gb me-1"></span>
-                                @endif
-                                {{ strtoupper(app()->getLocale()) }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                                <li>
-                                    <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'en' ? 'active' : '' }}" data-language="en">
-                                            <span class="fi fi-gb me-2"></span> English
-                                        </button>
-                                </li>
-                                <li>
-                                    <button type="button" class="dropdown-item language-option {{ app()->getLocale() == 'ar' ? 'active' : '' }}" data-language="ar">
-                                            <span class="fi fi-eg me-2"></span> العربية
-                                        </button>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if(app()->getLocale() == 'ar')
+                                <span class="fi fi-eg"></span>
+                            @else
+                                <span class="fi fi-gb"></span>
+                            @endif
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                            <li>
+                                <form action="{{ route('preferences.language') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="language" value="en">
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}">
+                                        <span class="fi fi-gb me-2"></span> English
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('preferences.language') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="language" value="ar">
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="dropdown-item {{ app()->getLocale() == 'ar' ? 'active' : '' }}">
+                                        <span class="fi fi-eg me-2"></span> العربية
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                     
                     <!-- Currency Switcher -->
-                    <div class="currency-switcher">
-                        <div class="dropdown">
-                            <button class="theme-toggle-btn dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                @php
-                                    $currency = App\Models\Currency::where('code', session('currency_code', 'EGP'))->first();
-                                    $symbol = $currency ? $currency->symbol : 'ج.م';
-                                @endphp
-                                {{ $symbol }} {{ session('currency_code', 'EGP') }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
-                                @foreach(App\Models\Currency::where('is_active', true)->get() as $currency)
-                                <li>
-                                    <button type="button" class="dropdown-item currency-option {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}" 
-                                            data-currency-code="{{ $currency->code }}" 
-                                            data-currency-symbol="{{ $currency->symbol }}">
-                                            {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
-                                        </button>
-                                </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- User Menu -->
-                    <div class="dropdown ms-3">
-                        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i> {{ Auth::user()->name }}
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            @php
+                                $currency = App\Models\Currency::where('code', session('currency_code', 'EGP'))->first();
+                                $symbol = $currency ? $currency->symbol : 'ج.م';
+                            @endphp
+                            {{ $symbol }}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                            <li><a class="dropdown-item" href="{{ route('profile', Auth::id()) }}"><i class="bi bi-person me-2"></i> {{ __('My Profile') }}</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ route('do_logout') }}"><i class="bi bi-box-arrow-right me-2"></i> {{ __('Logout') }}</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+                            @foreach(App\Models\Currency::where('is_active', true)->get() as $currency)
+                            <li>
+                                <form action="{{ route('preferences.currency') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="currency_code" value="{{ $currency->code }}">
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="dropdown-item {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}">
+                                        {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
+                                    </button>
+                                </form>
+                            </li>
+                            @endforeach
                         </ul>
                     </div>
+                    
+                    <!-- Logout Button -->
+                    <a href="{{ route('do_logout') }}" class="btn" title="{{ __('Logout') }}">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
                 </div>
             </div>
             
@@ -600,180 +680,6 @@
                     }
                 }
             });
-            
-            // Theme Switcher
-            const themeToggleBtn = document.getElementById('adminThemeToggle');
-            
-            if (themeToggleBtn) {
-                themeToggleBtn.addEventListener('click', function() {
-                    // Get current theme
-                    const htmlElement = document.documentElement;
-                    const isDarkTheme = htmlElement.classList.contains('theme-dark');
-                    const newTheme = isDarkTheme ? 'light' : 'dark';
-                    
-                    // Update theme class
-                    htmlElement.classList.remove('theme-dark', 'theme-light');
-                    htmlElement.classList.add(`theme-${newTheme}`);
-                    
-                    // Update icon
-                    const icon = themeToggleBtn.querySelector('i');
-                    if (icon) {
-                        if (newTheme === 'dark') {
-                            icon.classList.remove('bi-moon-stars-fill');
-                            icon.classList.add('bi-sun-fill');
-                        } else {
-                            icon.classList.remove('bi-sun-fill');
-                            icon.classList.add('bi-moon-stars-fill');
-                        }
-                    }
-                    
-                    // Save to localStorage
-                    localStorage.setItem('theme', newTheme);
-                    
-                    // Update server-side via fetch API
-                    fetch('/preferences/theme', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({ theme: newTheme })
-                    }).catch(error => {
-                        console.error('Failed to update theme preference:', error);
-                    });
-                    
-                    // Add a nice transition effect
-                    document.body.style.transition = 'background-color 0.5s ease, color 0.5s ease';
-                    setTimeout(() => {
-                        document.body.style.transition = '';
-                    }, 500);
-                });
-                
-                // Apply saved theme from localStorage on page load
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme) {
-                    const htmlElement = document.documentElement;
-                    htmlElement.classList.remove('theme-light', 'theme-dark');
-                    htmlElement.classList.add(`theme-${savedTheme}`);
-                    
-                    // Update icon
-                    const icon = themeToggleBtn.querySelector('i');
-                    if (icon) {
-                        if (savedTheme === 'dark') {
-                            icon.classList.remove('bi-moon-stars-fill');
-                            icon.classList.add('bi-sun-fill');
-                        } else {
-                            icon.classList.remove('bi-sun-fill');
-                            icon.classList.add('bi-moon-stars-fill');
-                        }
-                    }
-                }
-            }
-
-            // Language Switcher
-            const languageDropdownBtn = document.getElementById('languageDropdown');
-            const languageOptions = document.querySelectorAll('.language-option');
-
-            if (languageDropdownBtn) {
-                languageDropdownBtn.addEventListener('click', function(event) {
-                    event.stopPropagation(); // Prevent dropdown from closing
-                    const dropdownMenu = new bootstrap.Dropdown(languageDropdownBtn);
-                    dropdownMenu.toggle();
-                });
-
-                languageOptions.forEach(option => {
-                    option.addEventListener('click', function() {
-                        const selectedLanguage = this.dataset.language;
-                        const currentLanguage = languageDropdownBtn.textContent.trim().split(' ')[0];
-
-                        if (selectedLanguage !== currentLanguage) {
-                            // Update the button text
-                            languageDropdownBtn.textContent = this.textContent;
-                            languageDropdownBtn.setAttribute('data-bs-original-title', this.textContent); // Keep original title for tooltip
-
-                            // Update the flag icon
-                            const flagIcon = languageDropdownBtn.querySelector('.fi');
-                            if (flagIcon) {
-                                if (selectedLanguage === 'en') {
-                                    flagIcon.classList.remove('fi-eg');
-                                    flagIcon.classList.add('fi-gb');
-                                } else {
-                                    flagIcon.classList.remove('fi-gb');
-                                    flagIcon.classList.add('fi-eg');
-                                }
-                            }
-
-                            // Update the URL without page reload
-                            const currentUrl = new URL(window.location.href);
-                            currentUrl.searchParams.set('lang', selectedLanguage);
-                            window.history.pushState({}, '', currentUrl);
-
-                            // Update server-side via fetch API
-                            fetch('/preferences/language', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify({ language: selectedLanguage })
-                            }).catch(error => {
-                                console.error('Failed to update language preference:', error);
-                            });
-                        }
-                    });
-                });
-            }
-
-            // Currency Switcher
-            const currencyDropdownBtn = document.getElementById('currencyDropdown');
-            const currencyOptions = document.querySelectorAll('.currency-option');
-
-            if (currencyDropdownBtn) {
-                currencyDropdownBtn.addEventListener('click', function(event) {
-                    event.stopPropagation(); // Prevent dropdown from closing
-                    const dropdownMenu = new bootstrap.Dropdown(currencyDropdownBtn);
-                    dropdownMenu.toggle();
-                });
-
-                currencyOptions.forEach(option => {
-                    option.addEventListener('click', function() {
-                        const selectedCurrencyCode = this.dataset.currencyCode;
-                        const currentCurrencyCode = currencyDropdownBtn.textContent.trim().split(' ')[1];
-
-                        if (selectedCurrencyCode !== currentCurrencyCode) {
-                            // Update the button text
-                            currencyDropdownBtn.textContent = this.textContent;
-                            currencyDropdownBtn.setAttribute('data-bs-original-title', this.textContent); // Keep original title for tooltip
-
-                            // Update the currency symbol
-                            const currencySymbol = this.dataset.currencySymbol;
-                            const currentSymbol = currencyDropdownBtn.textContent.trim().split(' ')[0];
-                            if (currencySymbol !== currentSymbol) {
-                                const textContent = this.textContent.replace(currencySymbol, '').trim();
-                                currencyDropdownBtn.textContent = textContent;
-                                currencyDropdownBtn.setAttribute('data-bs-original-title', textContent);
-                            }
-
-                            // Update the URL without page reload
-                            const currentUrl = new URL(window.location.href);
-                            currentUrl.searchParams.set('currency_code', selectedCurrencyCode);
-                            window.history.pushState({}, '', currentUrl);
-
-                            // Update server-side via fetch API
-                            fetch('/preferences/currency', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify({ currency_code: selectedCurrencyCode })
-                            }).catch(error => {
-                                console.error('Failed to update currency preference:', error);
-                            });
-                        }
-                    });
-                });
-            }
         });
     </script>
     

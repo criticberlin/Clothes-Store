@@ -1,18 +1,10 @@
 @extends('layouts.admin')
 
 @section('title', 'Add New User')
-
-@section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('admin.users.list') }}">Users</a></li>
-    <li class="breadcrumb-item active">Add New User</li>
-@endsection
+@section('description', 'Create a new user account')
 
 @section('content')
     <div class="admin-header">
-        <div>
-            <h1 class="mb-2">Add New User</h1>
-            <p class="text-secondary mb-0">Create a new user account</p>
-        </div>
         <div>
             <a href="{{ route('admin.users.list') }}" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-2"></i> Back to Users
@@ -248,40 +240,40 @@
             dropzone.addEventListener(eventName, function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-            }, false);
+            });
         });
         
         ['dragenter', 'dragover'].forEach(eventName => {
             dropzone.addEventListener(eventName, function() {
                 this.classList.add('dragover');
-            }, false);
+            });
         });
         
         ['dragleave', 'drop'].forEach(eventName => {
             dropzone.addEventListener(eventName, function() {
                 this.classList.remove('dragover');
-            }, false);
+            });
         });
         
+        // Handle file drop
         dropzone.addEventListener('drop', function(e) {
-            const files = e.dataTransfer.files;
-            if (files && files.length) {
-                fileInput.files = files;
-                
-                // Trigger change event
-                const event = new Event('change', { bubbles: true });
-                fileInput.dispatchEvent(event);
-            }
-        }, false);
+            fileInput.files = e.dataTransfer.files;
+            
+            // Trigger change event
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        });
         
         // Handle remove button
-        removeButton.addEventListener('click', function(e) {
-            e.stopPropagation();
-            fileInput.value = '';
-            imagePreview.style.backgroundImage = '';
-            prompt.style.display = 'block';
-            preview.style.display = 'none';
-        });
+        if (removeButton) {
+            removeButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fileInput.value = '';
+                imagePreview.style.backgroundImage = '';
+                prompt.style.display = 'block';
+                preview.style.display = 'none';
+            });
+        }
     });
 </script>
 @endpush 

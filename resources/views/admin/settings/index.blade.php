@@ -144,7 +144,9 @@
                                             <td>{{ $currency->symbol }}</td>
                                             <td>
                                                 <input type="number" name="currencies[{{ $loop->index }}][exchange_rate]" value="{{ $currency->exchange_rate }}" step="0.000001" min="0.000001" class="form-control form-control-sm" {{ $currency->is_default ? 'readonly' : '' }}>
-                                                <small class="text-muted">{{ $currency->code == 'EGP' ? __('general.base_currency') : '' }}</small>
+                                                @if($currency->is_default)
+                                                    <small class="text-muted">{{ __('general.base_currency') }}</small>
+                                                @endif
                                             </td>
                                             <td>
                                                 <div class="form-check form-switch">
@@ -181,8 +183,29 @@
                                         <div class="card-body">
                                             <h6>{{ $currency->name }} ({{ $currency->code }})</h6>
                                             <p class="mb-1">{{ __('general.symbol') }}: <strong>{{ $currency->symbol }}</strong></p>
-                                            <p class="mb-1">{{ __('general.exchange_rate') }}: <strong>1 EGP = {{ number_format(1 / $currency->exchange_rate, 4) }} {{ $currency->code }}</strong></p>
-                                            <p class="mb-0">{{ __('general.example') }}: <strong>{{ $currency->symbol }}{{ number_format(1000 * $currency->exchange_rate, 2) }}</strong></p>
+                                            @php
+                                                $baseRate = 1;
+                                                $baseCurrency = $currencies->where('is_default', true)->first();
+                                                
+                                                if ($baseCurrency) {
+                                                    if ($currency->is_default) {
+                                                        $rate = 1;
+                                                        $inverseRate = 1;
+                                                    } else {
+                                                        $rate = $currency->exchange_rate;
+                                                        $inverseRate = 1 / $rate;
+                                                    }
+                                                    
+                                                    $baseCode = $baseCurrency->code;
+                                                } else {
+                                                    $rate = $currency->exchange_rate;
+                                                    $inverseRate = 1 / $rate;
+                                                    $baseCode = 'EGP';
+                                                }
+                                            @endphp
+                                            <p class="mb-1">{{ __('general.exchange_rate') }}: <strong>1 {{ $baseCode }} = {{ number_format($rate, 4) }} {{ $currency->code }}</strong></p>
+                                            <p class="mb-1">{{ __('general.inverse_rate') }}: <strong>1 {{ $currency->code }} = {{ number_format($inverseRate, 4) }} {{ $baseCode }}</strong></p>
+                                            <p class="mb-0">{{ __('general.example') }}: <strong>{{ $currency->symbol }}{{ number_format(1000 * $rate, 2) }}</strong></p>
                                         </div>
                                     </div>
                                 </div>

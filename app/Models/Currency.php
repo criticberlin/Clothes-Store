@@ -2,67 +2,80 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
 class Currency extends Model
 {
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'code',
         'name',
         'symbol',
         'exchange_rate',
         'is_default',
-        'is_active',
+        'is_active'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
+        'exchange_rate' => 'float',
         'is_default' => 'boolean',
         'is_active' => 'boolean',
     ];
 
     /**
-     * Convert a price from base currency (EGP) to the target currency
+     * Get all active currencies.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function convert(float $amount): float
+    public static function getActiveCurrencies()
     {
-        return $amount / $this->exchange_rate;
+        return self::where('is_active', true)->get();
     }
 
     /**
-     * Convert a price from any currency back to base currency (EGP)
+     * Get the default currency.
+     *
+     * @return \App\Models\Currency|null
      */
-    public function convertToBase(float $amount): float
+    public static function getDefaultCurrency()
+    {
+        return self::where('is_default', true)->first();
+    }
+
+    /**
+     * Convert an amount from the base currency to this currency.
+     *
+     * @param float $amount
+     * @return float
+     */
+    public function convert($amount)
     {
         return $amount * $this->exchange_rate;
     }
 
     /**
-     * Format a price with the currency symbol
+     * Format an amount in this currency.
+     *
+     * @param float $amount
+     * @param bool $includeSymbol
+     * @return string
      */
-    public function format(float $amount, bool $convertFromBase = false, bool $includeCode = false): string
+    public function format($amount, $includeSymbol = true)
     {
-        // If needed, convert from base currency to this currency
-        if ($convertFromBase && !$this->is_default) {
-            $amount = $amount * $this->exchange_rate;
-        }
+        $formattedAmount = number_format($this->convert($amount), 2);
         
-        $formatted = $this->symbol . number_format($amount, 2);
-        
-        if ($includeCode) {
-            $formatted .= ' ' . $this->code;
-        }
-        
-        return $formatted;
-    }
-
-    /**
-     * Get the default currency
-     */
-    public static function getDefault()
-    {
-        return Cache::remember('default_currency', 60 * 24, function () {
-            return self::where('is_default', true)->first() ?? self::first();
-        });
+        return $includeSymbol ? $this->symbol . $formattedAmount : $formattedAmount;
     }
 }
