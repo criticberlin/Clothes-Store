@@ -198,4 +198,9 @@ Route::get('/support/add', [App\Http\Controllers\web\SupportTicketController::cl
 Route::post('/support', [App\Http\Controllers\web\SupportTicketController::class, 'store'])->name('support.store');
 Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketController::class, 'show'])->name('support.show');
 
+// 3D Customizer route
+Route::get('/3d-customizer', function () {
+    return redirect('/3D_Customizer/');
+})->name('3d-customizer');
+
 

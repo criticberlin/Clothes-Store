@@ -123,6 +123,12 @@
             padding: 0.75rem 0;
             transition: all var(--transition-normal);
         }
+        
+        html.theme-light .navbar-custom {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
 
         .navbar .nav-link {
             color: var(--text-primary) !important;
@@ -465,6 +471,12 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('pages.contact') ? 'active' : '' }}" href="{{ route('pages.contact') }}">{{ __('Contact') }}</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('3d-customizer') ? 'active' : '' }}" href="{{ route('3d-customizer') }}">
+                            <i class="bi bi-palette-fill me-1"></i>{{ __('3D Customizer') }}
+                            <span class="badge bg-primary ms-1">New</span>
+                        </a>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     @include('partials.theme_switcher')
@@ -530,6 +542,7 @@
                         <li class="mb-2"><a href="{{ route('products.byCategory', 'men') }}" class="text-reset">{{ __('Men') }}</a></li>
                         <li class="mb-2"><a href="{{ route('products.byCategory', 'women') }}" class="text-reset">{{ __('Women') }}</a></li>
                         <li class="mb-2"><a href="{{ route('products.byCategory', 'kids') }}" class="text-reset">{{ __('Kids') }}</a></li>
+                        <li class="mb-2"><a href="{{ route('3d-customizer') }}" class="text-reset">{{ __('3D Customizer') }} <span class="badge bg-primary">New</span></a></li>
                         <li><a href="{{ route('products.list') }}" class="text-reset">{{ __('All Products') }}</a></li>
                     </ul>
                 </div>
