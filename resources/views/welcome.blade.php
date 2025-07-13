@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Hero Section -->
-<section class="hero mb-6">
+<section class="hero mt-4 mb-5">
     <div class="container">
         <div class="hero-wrapper position-relative overflow-hidden rounded-4">
             <div class="row g-0 align-items-center">
@@ -42,7 +42,7 @@
 </section>
 
 <!-- Categories Section -->
-<section id="collections" class="my-6">
+<section id="collections" class="my-5">
     <div class="container">
         <div class="section-header text-center mb-5">
             <h6 class="text-primary text-uppercase fw-bold tracking-wide mb-2">Collections</h6>
@@ -91,21 +91,17 @@
 </section>
 
 <!-- 3D Customizer Section -->
-<section class="my-5">
+<section class="my-5 py-2">
     <div class="container">
         <div class="customizer-card rounded-4 position-relative overflow-hidden">
-            <div class="customizer-edge-component">
-                <i class="bi bi-palette-fill"></i>
+            <div class="customizer-ribbon">
+                <span>NEW</span>
             </div>
             <div class="customizer-content p-4 py-5">
                 <div class="row g-4 align-items-center">
                     <div class="col-lg-7 position-relative z-2">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="customizer-badge">
-                                <span>New</span>
-                                <div class="customizer-badge-glow"></div>
-                            </div>
-                            <div class="customizer-tag ms-3">Design Your Own</div>
+                            <div class="customizer-tag">Design Your Own</div>
                         </div>
                         <h2 class="display-6 fw-bold mb-4">Customize Your <span class="text-gradient">Fashion</span> in 3D</h2>
                         <p class="mb-4 lead">Create clothing that's uniquely yours with our interactive 3D designer. Express yourself like never before.</p>
@@ -131,11 +127,11 @@
                             </div>
                             <div class="feature-item">
                                 <div class="feature-icon">
-                                    <i class="bi bi-fonts"></i>
+                                    <i class="bi bi-type"></i>
                                 </div>
                                 <div class="feature-text">
-                                    <strong>Typography</strong>
-                                    <span>100+ premium fonts</span>
+                                    <strong>Texts & Shapes</strong>
+                                    <span>Add custom elements & designs</span>
                                 </div>
                             </div>
                             <div class="feature-item highlight">
@@ -170,18 +166,13 @@
                             <div class="customizer-decoration"></div>
                             <div class="customizer-image-container">
                                 <img src="{{ asset('images/3d-customizer.jpg') }}" alt="3D Customizer" class="customizer-image">
-                                <div class="image-overlay">
-                                    <div class="play-icon">
-                                        <i class="bi bi-play-fill"></i>
-                                    </div>
-                                </div>
                             </div>
                             <div class="customizer-dots"></div>
                             <div class="tshirt-icon">
                                 <i class="bi bi-tshirt"></i>
                             </div>
                             <div class="hoodie-icon">
-                                <i class="fa fa-hoodie"></i>
+                                <i class="bi bi-person-fill"></i>
                             </div>
                         </div>
                     </div>
@@ -195,43 +186,45 @@
 </section>
 
 <!-- Features Section -->
-<section class="my-6 py-5 bg-surface rounded-4">
+<section class="my-5">
     <div class="container">
-        <div class="row g-4 text-center">
-            <div class="col-md-3 col-6">
-                <div class="feature-item px-3">
-                    <div class="icon-wrapper mb-3">
-                        <i class="bi bi-truck text-primary fs-2"></i>
+        <div class="features-wrapper rounded-4 p-4 p-md-5">
+            <div class="row row-cols-2 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="feature-item d-flex flex-column align-items-center text-center h-100">
+                        <div class="feature-icon-wrapper mb-3">
+                            <i class="bi bi-truck fs-4"></i>
+                        </div>
+                        <h4 class="feature-title">Free Shipping</h4>
+                        <p class="feature-text">On all orders over $50</p>
                     </div>
-                    <h4 class="h6 mb-2">Free Shipping</h4>
-                    <p class="text-secondary small m-0">On all orders over $50</p>
                 </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="feature-item px-3">
-                    <div class="icon-wrapper mb-3">
-                        <i class="bi bi-arrow-repeat text-primary fs-2"></i>
+                <div class="col">
+                    <div class="feature-item d-flex flex-column align-items-center text-center h-100">
+                        <div class="feature-icon-wrapper mb-3">
+                            <i class="bi bi-arrow-repeat fs-4"></i>
+                        </div>
+                        <h4 class="feature-title">Easy Returns</h4>
+                        <p class="feature-text">30-day return policy</p>
                     </div>
-                    <h4 class="h6 mb-2">Easy Returns</h4>
-                    <p class="text-secondary small m-0">30-day return policy</p>
                 </div>
-            </div>
-            <div class="col-md-3 col-6 mt-4 mt-md-0">
-                <div class="feature-item px-3">
-                    <div class="icon-wrapper mb-3">
-                        <i class="bi bi-shield-check text-primary fs-2"></i>
+                <div class="col">
+                    <div class="feature-item d-flex flex-column align-items-center text-center h-100">
+                        <div class="feature-icon-wrapper mb-3">
+                            <i class="bi bi-shield-check fs-4"></i>
+                        </div>
+                        <h4 class="feature-title">Secure Checkout</h4>
+                        <p class="feature-text">100% protected payments</p>
                     </div>
-                    <h4 class="h6 mb-2">Secure Checkout</h4>
-                    <p class="text-secondary small m-0">100% protected payments</p>
                 </div>
-            </div>
-            <div class="col-md-3 col-6 mt-4 mt-md-0">
-                <div class="feature-item px-3">
-                    <div class="icon-wrapper mb-3">
-                        <i class="bi bi-headset text-primary fs-2"></i>
+                <div class="col">
+                    <div class="feature-item d-flex flex-column align-items-center text-center h-100">
+                        <div class="feature-icon-wrapper mb-3">
+                            <i class="bi bi-headset fs-4"></i>
+                        </div>
+                        <h4 class="feature-title">Dedicated Support</h4>
+                        <p class="feature-text">24/7 customer service</p>
                     </div>
-                    <h4 class="h6 mb-2">Dedicated Support</h4>
-                    <p class="text-secondary small m-0">24/7 customer service</p>
                 </div>
             </div>
         </div>
@@ -239,7 +232,7 @@
 </section>
 
 <!-- Newsletter Section -->
-<section class="my-6">
+<section class="my-5">
     <div class="container">
         <div class="newsletter-box rounded-4 p-5 position-relative overflow-hidden">
             <div class="row align-items-center">
@@ -271,6 +264,11 @@
 
 <!-- Extra styling for new components -->
 <style>
+    .my-5 {
+        margin-top: 4rem !important;
+        margin-bottom: 4rem !important;
+    }
+    
     .my-6 {
         margin-top: 5rem;
         margin-bottom: 5rem;
@@ -377,6 +375,7 @@
         overflow: hidden;
         transition: all var(--transition-normal);
         min-height: 320px;
+        margin-top: 15px;
     }
 
     .customizer-card:hover {
@@ -390,28 +389,57 @@
         z-index: 2;
     }
     
-    .customizer-edge-component {
+    .customizer-ribbon {
         position: absolute;
-        top: -25px;
-        left: -25px;
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: white;
-        z-index: 3;
-        box-shadow: var(--shadow-md);
-        transform: rotate(-15deg);
-        animation: float 6s ease-in-out infinite alternate;
+        top: -5px;
+        left: -5px;
+        z-index: 9;
+        overflow: hidden;
+        width: 100px;
+        height: 100px;
+        text-align: right;
     }
     
-    .customizer-edge-component i {
-        margin-top: 25px;
-        margin-left: 25px;
+    .customizer-ribbon span {
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        line-height: 28px;
+        transform: rotate(-45deg);
+        width: 140px;
+        display: block;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        position: absolute;
+        top: 22px;
+        left: -30px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .customizer-ribbon span::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 100%;
+        z-index: -1;
+        border-left: 3px solid var(--primary-dark);
+        border-right: 3px solid transparent;
+        border-bottom: 3px solid transparent;
+        border-top: 3px solid var(--primary-dark);
+    }
+    
+    .customizer-ribbon span::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 100%;
+        z-index: -1;
+        border-left: 3px solid transparent;
+        border-right: 3px solid var(--primary-dark);
+        border-bottom: 3px solid transparent;
+        border-top: 3px solid var(--primary-dark);
     }
     
     .customizer-badge {
@@ -445,7 +473,28 @@
         font-weight: 600;
         font-size: 0.8rem;
         box-shadow: var(--shadow-sm);
-        animation: pulse 2s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .customizer-tag::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(transparent, rgba(255, 255, 255, 0.3), transparent);
+        transform: rotate(45deg);
+        animation: shimmer 3s infinite;
+    }
+    
+    .customizer-tag::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: wave 2s ease-in-out infinite;
     }
     
     .text-gradient {
@@ -645,43 +694,6 @@
         transform: scale(1.05);
     }
     
-    .image-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: all var(--transition-normal);
-    }
-    
-    .play-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transform: scale(0.8);
-        transition: all var(--transition-normal);
-    }
-    
-    .play-icon i {
-        color: var(--primary);
-        font-size: 1.8rem;
-        margin-left: 3px;
-    }
-    
-    .customizer-image-container:hover .image-overlay {
-        opacity: 1;
-    }
-    
-    .customizer-image-container:hover .play-icon {
-        transform: scale(1);
-    }
-    
     .customizer-image-container:hover .customizer-image {
         transform: scale(1);
     }
@@ -729,6 +741,86 @@
         }
         100% {
             background-position: 0% 50%;
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            left: -150%;
+        }
+        100% {
+            left: 150%;
+        }
+    }
+    
+    @keyframes wave {
+        0%, 100% {
+            transform: scaleX(1);
+        }
+        50% {
+            transform: scaleX(0.95);
+        }
+    }
+
+    .feature-card {
+        background-color: var(--surface);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .features-wrapper {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .feature-item {
+        padding: 1rem 0.5rem;
+        height: 100%;
+    }
+    
+    .feature-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: rgba(127, 90, 240, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-normal);
+        color: var(--primary);
+    }
+    
+    .feature-icon-wrapper i {
+        font-size: 1.5rem;
+    }
+    
+    .feature-title {
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-text {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+    
+    @media (hover: hover) {
+        .feature-icon-wrapper:hover {
+            transform: translateY(-5px);
+            background-color: rgba(127, 90, 240, 0.2);
+            box-shadow: var(--shadow-glow);
         }
     }
 </style>
