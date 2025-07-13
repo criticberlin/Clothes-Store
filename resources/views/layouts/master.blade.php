@@ -213,26 +213,44 @@
             pointer-events: none;
         }
 
+        /* Search Results Dropdown - Fixed Positioning */
         .search-results {
             position: absolute;
             top: 100%;
-            left: 0;
+            left: 80px; /* Align with the search input, not the category dropdown */
             right: 0;
             background-color: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            margin-top: 0.5rem;
+            margin-top: 5px;
             max-height: 400px;
             overflow-y: auto;
-            z-index: 1050;
+            z-index: 2000;
             box-shadow: var(--shadow-md);
             display: none;
             padding: 0.5rem 0;
         }
 
+        /* Search Results Dropdown - Improved Positioning */
+        .search-results {
+            position: absolute;
+            top: calc(100% + 5px); /* Position below the search bar with a small gap */
+            left: 80px; /* Align with the search input, not the category dropdown */
+            right: 0;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 2000;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            padding: 0.5rem 0;
+            animation: fadeInDown 0.2s ease-out;
+        }
+        
         .search-results.show {
-            display: block;
-            animation: fadeInDown 0.3s ease-out forwards;
+            display: block !important;
         }
 
         @keyframes fadeInDown {
@@ -963,7 +981,7 @@
             border-left: none;
         }
 
-        /* Category Dropdown */
+        /* Category Dropdown - New Implementation */
         .category-dropdown {
             position: relative;
             height: 46px;
@@ -973,7 +991,7 @@
             border-right: none;
             min-width: 80px;
             cursor: pointer;
-            z-index: 9999 !important; /* Extremely high z-index to ensure visibility */
+            z-index: 1500;
         }
         
         .dropdown-header {
@@ -997,12 +1015,12 @@
         }
         
         .category-dropdown .dropdown-menu {
-            position: absolute !important;
-            top: 100% !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-            width: 100% !important;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
             padding: 5px 0;
+            margin-top: 1px;
             background-color: var(--surface);
             border: 1px solid var(--border);
             border-radius: 0 0 var(--radius-lg) var(--radius-lg);
@@ -1011,32 +1029,126 @@
             overflow-y: auto;
             overflow-x: hidden;
             display: none;
+            z-index: 1500;
         }
 
         .category-dropdown.open .dropdown-menu {
             display: block !important;
         }
 
+        /* Category Dropdown - Fixed Implementation */
+        .category-dropdown {
+            position: relative;
+            height: 46px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+            border-right: none;
+            min-width: 80px;
+            cursor: pointer;
+            z-index: 1500;
+        }
+        
+        .search-bar-container {
+            position: relative;
+        }
+        
+        .category-dropdown-menu {
+            position: absolute;
+            top: 46px;
+            left: 0;
+            width: 180px; /* Narrower to match category dropdown width */
+            padding: 8px 0;
+            margin-top: 2px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            z-index: 3000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .category-dropdown-menu.show {
+            display: block !important;
+            animation: fadeInDown 0.2s ease-out;
+        }
+
+        /* Enhanced Category Dropdown */
+        .category-dropdown-menu {
+            position: absolute;
+            top: 46px;
+            left: 0;
+            width: 200px;
+            padding: 8px 0;
+            margin-top: 2px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            z-index: 3000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .category-dropdown-menu.show {
+            display: block !important;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .category-dropdown-menu .dropdown-item {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+        
+        .category-dropdown-menu .dropdown-item:hover,
+        .category-dropdown-menu .dropdown-item.active {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        
+        /* Make sure the dropdown button looks active when dropdown is open */
+        .category-dropdown.open .dropdown-header {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+        }
+
+        /* General Dropdown Item Styles */
         .dropdown-item {
             padding: 8px 15px;
             white-space: nowrap;
             cursor: pointer;
-            transition: background-color 0.15s ease, color 0.15s ease;
+            transition: background-color 0.15s ease;
         }
-
+        
         .dropdown-item:hover,
         .dropdown-item.active {
             background-color: var(--surface-alt);
             color: var(--primary);
         }
-
+        
         /* Theme-specific styles */
-        :root.theme-light .category-dropdown .dropdown-menu {
+        :root.theme-light .dropdown-menu {
             background-color: var(--surface);
             border-color: var(--border);
         }
-
-        :root.theme-dark .category-dropdown .dropdown-menu {
+        
+        :root.theme-dark .dropdown-menu {
             background-color: var(--surface);
             border-color: var(--border);
         }
@@ -1044,7 +1156,6 @@
         /* Fix search bar integration with dropdown */
         .search-input-group {
             position: relative;
-            z-index: 100;
         }
 
         /* Create smooth transition between dropdown and search */
@@ -1082,9 +1193,9 @@
                     <div class="search-bar-container mx-2">
                         <form action="{{ route('products.search') }}" method="GET" class="d-flex">
                             <div class="input-group search-input-group">
-                                <!-- Dropdown -->
+                                <!-- Category Dropdown - New Implementation -->
                                 <div class="category-dropdown" id="categoryDropdown">
-                                    <div class="dropdown-header">
+                                    <div class="dropdown-header" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                                         <span id="selectedCategory">
                                             @if(request()->has('category_id') && request('category_id') != '')
                                                 {{ App\Models\Category::find(request('category_id'))->name ?? 'All' }}
@@ -1093,14 +1204,6 @@
                                             @endif
                                         </span>
                                         <i class="bi bi-chevron-down"></i>
-                                    </div>
-                                    <div class="dropdown-menu">
-                                        <div class="dropdown-item {{ !request()->has('category_id') || request('category_id') == '' ? 'active' : '' }}" data-value="">All</div>
-                                        @foreach(App\Models\Category::all() as $category)
-                                            <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" data-value="{{ $category->id }}">
-                                                {{ $category->name }}
-                                            </div>
-                                        @endforeach
                                     </div>
                                     <input type="hidden" name="category_id" id="categoryInput" value="{{ request('category_id', '') }}">
                                 </div>
@@ -1112,6 +1215,23 @@
                                 </button>
                             </div>
                         </form>
+                        
+                        <!-- Dropdown menu positioned outside the search bar -->
+                        <div class="dropdown-menu category-dropdown-menu" id="categoryDropdownMenu" role="menu">
+                            <div class="dropdown-item {{ !request()->has('category_id') || request('category_id') == '' ? 'active' : '' }}" 
+                                 data-value="" 
+                                 role="menuitem" 
+                                 tabindex="-1">All</div>
+                            @foreach(App\Models\Category::all() as $category)
+                                <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" 
+                                     data-value="{{ $category->id }}" 
+                                     role="menuitem" 
+                                     tabindex="-1">
+                                    {{ $category->name }}
+                                </div>
+                            @endforeach
+                        </div>
+                        
                         <div class="search-results" id="searchResults"></div>
                     </div>
                     
@@ -1252,6 +1372,28 @@
     </footer>
     
     <script>
+        // Helper function to get the correct base URL for the application
+        function getBaseUrl() {
+            // Get the current URL path
+            const path = window.location.pathname;
+            
+            // Check if we're in the Clothes_Store/public directory
+            if (path.includes('/Clothes_Store/public')) {
+                return window.location.origin + '/Clothes_Store/public';
+            } 
+            // Check if we're just in the Clothes_Store directory
+            else if (path.includes('/Clothes_Store')) {
+                return window.location.origin + '/Clothes_Store';
+            }
+            // Otherwise, assume we're at the root
+            return window.location.origin;
+        }
+        
+        // Helper function to get the API URL
+        function getApiUrl(endpoint) {
+            return getBaseUrl() + '/api/' + endpoint;
+        }
+        
         // Live search functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Theme toggle functionality
@@ -1333,7 +1475,9 @@
                     searchResults.classList.add('show');
                     
                     // Build API URL with parameters
-                    let apiUrl = `/api/search?q=${encodeURIComponent(searchTerm)}`;
+                    // Use the helper function to get the correct API URL
+                    const baseUrl = getBaseUrl();
+                    let apiUrl = getApiUrl('search') + `?q=${encodeURIComponent(searchTerm)}`;
                     
                     if (categoryId) {
                         apiUrl += `&category_id=${categoryId}`;
@@ -1379,7 +1523,7 @@
                                         productsByCategory[category].forEach(product => {
                                             if (count < maxResults) {
                                                 html += `
-                                                    <a href="/product/${product.slug}" class="text-decoration-none">
+                                                    <a href="${baseUrl}/product/${product.slug}" class="text-decoration-none">
                                                         <div class="search-result-item d-flex align-items-center">
                                                             <div class="flex-shrink-0">
                                                                 <img src="${product.image}" alt="${product.name}" class="me-3">
@@ -1410,7 +1554,7 @@
                                     
                                     data.related.forEach(product => {
                                         html += `
-                                            <a href="/product/${product.slug}" class="text-decoration-none">
+                                            <a href="${baseUrl}/product/${product.slug}" class="text-decoration-none">
                                                 <div class="search-result-item d-flex align-items-center">
                                                     <div class="flex-shrink-0">
                                                         <img src="${product.image}" alt="${product.name}" class="me-3">
@@ -1434,7 +1578,7 @@
                                     }
                                     
                                     html += `
-                                        <a href="/products/search?${searchParams.toString()}" class="text-decoration-none">
+                                        <a href="${baseUrl}/products/search?${searchParams.toString()}" class="text-decoration-none">
                                             <div class="search-result-item text-center">
                                                 <strong class="text-primary">{{ __('general.view_all_results') }} (${data.products.length})</strong>
                                             </div>
@@ -1549,288 +1693,295 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize dropdown
-        const dropdown = document.getElementById('categoryDropdown');
-        const header = dropdown ? dropdown.querySelector('.dropdown-header') : null;
-        const items = dropdown ? dropdown.querySelectorAll('.dropdown-item') : [];
-        const input = document.getElementById('categoryInput');
-        const selectedCategory = document.getElementById('selectedCategory');
-        
-        if (dropdown && header && items.length && input && selectedCategory) {
-            console.log('Dropdown elements found');
+        // New Category Dropdown Implementation
+        function initCategoryDropdown() {
+            const dropdown = document.getElementById('categoryDropdown');
+            if (!dropdown) return;
             
-            // Force close dropdown initially
-            dropdown.classList.remove('open');
+            const header = dropdown.querySelector('.dropdown-header');
+            const dropdownMenu = document.getElementById('categoryDropdownMenu');
+            const items = dropdownMenu.querySelectorAll('.dropdown-item');
+            const input = document.getElementById('categoryInput');
+            const selectedCategory = document.getElementById('selectedCategory');
             
-            // Toggle dropdown with direct DOM manipulation
+            if (!header || !items.length || !input || !selectedCategory || !dropdownMenu) {
+                console.error('Missing dropdown elements');
+                return;
+            }
+            
+            console.log('Category dropdown initialized');
+            
+            // Ensure dropdown is closed initially
+            dropdownMenu.classList.remove('show');
+            
+            // Toggle dropdown
             header.addEventListener('click', function(e) {
-                console.log('Dropdown header clicked');
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Toggle the open class
-                const isOpen = dropdown.classList.contains('open');
+                // Toggle dropdown visibility
+                dropdownMenu.classList.toggle('show');
                 dropdown.classList.toggle('open');
                 
-                // Get dropdown menu
-                const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-                if (!dropdownMenu) return;
-                
-                // Force display style
-                if (!isOpen) {
-                    // Opening the dropdown
-                    dropdownMenu.style.display = 'block';
-                    dropdownMenu.style.visibility = 'visible';
-                    dropdownMenu.style.opacity = '1';
-                } else {
-                    // Closing the dropdown
-                    dropdownMenu.style.display = 'none';
-                    dropdownMenu.style.visibility = 'hidden';
-                    dropdownMenu.style.opacity = '0';
-                }
+                console.log('Toggle dropdown:', dropdownMenu.classList.contains('show'));
             });
             
-            // Select item
+            // Handle item selection
             items.forEach(item => {
                 item.addEventListener('click', function(e) {
-                    console.log('Item clicked:', this.textContent);
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // Update display
+                    // Update display and value
                     selectedCategory.textContent = this.textContent.trim();
-                    
-                    // Update input
                     input.value = this.dataset.value;
                     
-                    // Update active class
+                    // Update active state
                     items.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                     
                     // Close dropdown
+                    dropdownMenu.classList.remove('show');
                     dropdown.classList.remove('open');
-                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-                    if (dropdownMenu) {
-                        dropdownMenu.style.display = 'none';
-                        dropdownMenu.style.visibility = 'hidden';
-                    }
                     
-                    // Dispatch custom event
+                    // Trigger category changed event
                     const event = new CustomEvent('categoryChanged', {
                         bubbles: true,
                         detail: { value: this.dataset.value }
                     });
                     document.dispatchEvent(event);
-                    
-                    // Trigger search if needed
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput && searchInput.value.trim().length >= 2) {
-                        // Manually trigger search
-                        const searchEvent = new Event('input');
-                        searchInput.dispatchEvent(searchEvent);
-                    }
                 });
             });
             
-            // Close dropdown when clicking outside
+            // Close when clicking outside
             document.addEventListener('click', function(e) {
-                if (dropdown.classList.contains('open') && !dropdown.contains(e.target)) {
+                if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
                     dropdown.classList.remove('open');
-                    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-                    if (dropdownMenu) {
-                        dropdownMenu.style.display = 'none';
-                        dropdownMenu.style.visibility = 'hidden';
-                    }
                 }
             });
-        } else {
-            console.error('Dropdown elements not found:', {
-                dropdown: !!dropdown,
-                header: !!header,
-                items: items.length,
-                input: !!input,
-                selectedCategory: !!selectedCategory
-            });
         }
-
-        // Initialize search functionality
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
         
-        if(searchInput && searchResults) {
-            let typingTimer;
-            const doneTypingInterval = 300; // Wait 300ms after user stops typing
-            let currentProductId = null; // Store the current product ID if on a product page
+        // Initialize the dropdown
+        initCategoryDropdown();
+
+        // New Search Suggestions Implementation
+        function initSearchSuggestions() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const categoryInput = document.getElementById('categoryInput');
             
-            // Check if we're on a product page
-            const productIdMeta = document.querySelector('meta[name="product-id"]');
-            if (productIdMeta) {
-                currentProductId = productIdMeta.getAttribute('content');
+            if (!searchInput || !searchResults) {
+                console.error('Search elements not found');
+                return;
             }
             
-            // Function to handle search
-            const performSearch = function() {
-                const searchTerm = searchInput.value.trim();
-                const categoryId = input ? input.value : ''; // Use the hidden input for category
+            console.log('Search suggestions initialized');
+            
+            let searchTimer;
+            const searchDelay = 300; // ms delay after typing stops
+            
+            // Search function
+            function doSearch() {
+                const query = searchInput.value.trim();
                 
-                if(searchTerm.length < 2) {
+                // Don't search if query is too short
+                if (query.length < 2) {
                     searchResults.classList.remove('show');
+                    searchResults.style.display = 'none';
                     return;
                 }
                 
-                console.log('Performing search for:', searchTerm, 'Category:', categoryId);
+                // Get selected category
+                const categoryId = categoryInput ? categoryInput.value : '';
                 
-                // Show loading indicator
+                // Show loading state
                 searchResults.innerHTML = `
                     <div class="search-result-item text-center">
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <span class="ms-2">Searching...</span>
+                        <span class="ms-2">Searching${categoryId ? ' in selected category' : ''}...</span>
                     </div>
                 `;
                 searchResults.classList.add('show');
+                searchResults.style.display = 'block';
                 
-                // Build API URL with parameters
-                let apiUrl = `/api/search?q=${encodeURIComponent(searchTerm)}`;
+                // Use the helper function to get the correct API URL
+                const baseUrl = getBaseUrl();
+                let searchUrl = getApiUrl('search') + `?q=${encodeURIComponent(query)}`;
                 
+                // Always include category_id if available to filter results
                 if (categoryId) {
-                    apiUrl += `&category_id=${categoryId}`;
+                    searchUrl += `&category_id=${categoryId}`;
+                    console.log('Searching in category:', categoryId);
                 }
                 
-                if (currentProductId) {
-                    apiUrl += `&product_id=${currentProductId}`;
-                }
+                console.log('Fetching:', searchUrl);
                 
-                // Simplified fetch without headers that might cause issues
-                fetch(apiUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok: ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Search results:', data);
-                        
-                        let html = '';
-                        
-                        if(data.products && data.products.length > 0) {
-                            // Group products by category for better organization
-                            const productsByCategory = {};
-                            
-                            data.products.forEach(product => {
-                                const category = product.category_name || 'Uncategorized';
-                                if (!productsByCategory[category]) {
-                                    productsByCategory[category] = [];
-                                }
-                                productsByCategory[category].push(product);
-                            });
-                            
-                            // Show only first 5 results
-                            let count = 0;
-                            const maxResults = 5;
-                            
-                            // Display products grouped by category
-                            for (const category in productsByCategory) {
-                                if (count < maxResults) {
-                                    // Add category header
-                                    html += `
-                                        <div class="search-category-header">
-                                            <small class="text-tertiary">${category}</small>
-                                        </div>
-                                    `;
-                                    
-                                    // Add products in this category
-                                    productsByCategory[category].forEach(product => {
-                                        if (count < maxResults) {
-                                            // Use default image if none provided
-                                            const imageUrl = product.image || '/images/placeholder.jpg';
-                                            // Use formatted price or fallback to raw price
-                                            const price = product.formatted_price || `$${product.price}`;
-                                            
-                                            html += `
-                                                <a href="/product/${product.slug || product.id}" class="text-decoration-none">
-                                                    <div class="search-result-item d-flex align-items-center">
-                                                        <div class="flex-shrink-0">
-                                                            <img src="${imageUrl}" alt="${product.name}" class="me-3" width="40" height="40">
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <div class="product-title">${product.name}</div>
-                                                            <div class="product-price">${price}</div>
-                                                            <div class="product-availability ${product.quantity > 0 ? 'text-success' : 'text-danger'}">
-                                                                ${product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            `;
-                                            count++;
-                                        }
-                                    });
-                                }
-                            }
-                            
-                            // Add "View all results" link with search parameters
-                            if(data.products.length > maxResults) {
-                                const searchParams = new URLSearchParams();
-                                searchParams.append('q', searchTerm);
-                                if (categoryId) {
-                                    searchParams.append('category_id', categoryId);
-                                }
-                                
-                                html += `
-                                    <a href="/products/search?${searchParams.toString()}" class="text-decoration-none">
-                                        <div class="search-result-item text-center">
-                                            <strong class="text-primary">View all results (${data.products.length})</strong>
-                                        </div>
-                                    </a>
-                                `;
-                            }
-                        } else {
-                            html = `
-                                <div class="search-result-item text-center">
-                                    No results found
-                                </div>
-                            `;
-                        }
-                        
-                        searchResults.innerHTML = html;
-                        searchResults.classList.add('show');
-                    })
-                    .catch(error => {
-                        console.error('Error searching products:', error);
-                        searchResults.innerHTML = `
-                            <div class="search-result-item text-center text-danger">
-                                Search error. Please try again.
-                            </div>
-                        `;
-                    });
-            };
+                // Simple fetch with minimal headers and better error handling
+                fetch(searchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Search request failed: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Search results:', data);
+                    renderSearchResults(data);
+                    // Ensure dropdown is visible
+                    searchResults.classList.add('show');
+                    searchResults.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    searchResults.innerHTML = `
+                        <div class="search-result-item text-center text-danger">
+                            Search failed. Please try again later.
+                        </div>
+                    `;
+                    // Still show the error message
+                    searchResults.classList.add('show');
+                    searchResults.style.display = 'block';
+                });
+            }
             
-            // Search on typing
+            // Render search results
+            function renderSearchResults(data) {
+                // Check if we have valid data
+                if (!data || !data.products) {
+                    searchResults.innerHTML = `
+                        <div class="search-result-item text-center">
+                            No results found
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const products = data.products;
+                
+                if (products.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="search-result-item text-center">
+                            No results found
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group products by category
+                const productsByCategory = {};
+                products.forEach(product => {
+                    const category = product.category_name || 'Uncategorized';
+                    if (!productsByCategory[category]) {
+                        productsByCategory[category] = [];
+                    }
+                    productsByCategory[category].push(product);
+                });
+                
+                // Build HTML
+                let html = '';
+                let count = 0;
+                const maxResults = 5;
+                
+                // Loop through categories
+                for (const category in productsByCategory) {
+                    if (count >= maxResults) break;
+                    
+                    // Category header
+                    html += `
+                        <div class="search-category-header">
+                            <small class="text-tertiary">${category}</small>
+                        </div>
+                    `;
+                    
+                    // Products in this category
+                    productsByCategory[category].forEach(product => {
+                        if (count >= maxResults) return;
+                        
+                        // Safe access to properties with fallbacks
+                        const name = product.name || 'Unnamed Product';
+                        const image = product.image || '/images/placeholder.jpg';
+                        const price = product.formatted_price || `$${product.price || 0}`;
+                        const slug = product.slug || product.id || '#';
+                        const inStock = product.quantity > 0;
+                        
+                        html += `
+                            <a href="${baseUrl}/product/${slug}" class="text-decoration-none">
+                                <div class="search-result-item d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <img src="${image}" alt="${name}" class="me-3" width="40" height="40">
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="product-title">${name}</div>
+                                        <div class="product-price">${price}</div>
+                                        <div class="product-availability ${inStock ? 'text-success' : 'text-danger'}">
+                                            ${inStock ? 'In Stock' : 'Out of Stock'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        `;
+                        count++;
+                    });
+                }
+                
+                // Add "view all" link if there are more results
+                if (products.length > maxResults) {
+                    const query = searchInput.value.trim();
+                    const categoryId = categoryInput ? categoryInput.value : '';
+                    
+                    const params = new URLSearchParams();
+                    params.append('q', query);
+                    if (categoryId) {
+                        params.append('category_id', categoryId);
+                    }
+                    
+                    html += `
+                        <a href="${baseUrl}/products/search?${params.toString()}" class="text-decoration-none">
+                            <div class="search-result-item text-center">
+                                <strong class="text-primary">View all results (${products.length})</strong>
+                            </div>
+                        </a>
+                    `;
+                }
+                
+                // Update DOM
+                searchResults.innerHTML = html;
+            }
+            
+            // Event listeners
             searchInput.addEventListener('input', function() {
-                console.log('Search input changed');
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(performSearch, doneTypingInterval);
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(doSearch, searchDelay);
             });
             
             // Listen for category changes
             document.addEventListener('categoryChanged', function(e) {
-                console.log('Category changed event received:', e.detail.value);
                 if (searchInput.value.trim().length >= 2) {
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(performSearch, doneTypingInterval);
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(doSearch, searchDelay);
                 }
             });
             
-            // Hide search results when clicking outside
-            document.addEventListener('click', function(event) {
-                if(!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                     searchResults.classList.remove('show');
+                    searchResults.style.display = 'none';
                 }
             });
         }
+        
+        // Initialize search suggestions
+        initSearchSuggestions();
     });
     </script>
 </body>

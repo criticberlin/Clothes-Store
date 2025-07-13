@@ -6,49 +6,26 @@
 <div class="container py-4">
     <h2 class="mb-4 text-capitalize">{{ isset($category) ? $category . ' Collection' : 'All Products' }}</h2>
 
-    <!-- Enhanced Search and Filter Form -->
-    <div class="card mb-4 bg-surface">
-        <div class="card-body">
-            <form action="{{ route('products.list') }}" method="GET" class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label for="searchQuery" class="form-label">{{ __('general.search') }}</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-transparent">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="searchQuery" name="query" 
-                            placeholder="{{ __('general.search_products') }}" value="{{ request()->get('query') }}">
-                    </div>
-                </div>
+    <!-- Clean Sort By Dropdown -->
+    <div class="d-flex justify-content-end mb-4">
+        <div class="sort-dropdown">
+            <form action="{{ route('products.list') }}" method="GET" class="d-flex align-items-center">
+                <!-- Preserve any existing query parameters -->
+                @if(request()->has('query'))
+                    <input type="hidden" name="query" value="{{ request()->get('query') }}">
+                @endif
+                @if(request()->has('category_id'))
+                    <input type="hidden" name="category_id" value="{{ request()->get('category_id') }}">
+                @endif
                 
-                <div class="col-md-3">
-                    <label for="categoryFilter" class="form-label">{{ __('general.category') }}</label>
-                    <select class="form-select" id="categoryFilter" name="category_id">
-                        <option value="">{{ __('general.all_categories') }}</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ request()->get('category_id') == $cat->id ? 'selected' : '' }}>
-                                {{ $cat->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <label for="sortOrder" class="form-label">{{ __('general.sort_by') }}</label>
-                    <select class="form-select" id="sortOrder" name="sort">
-                        <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
-                        <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
-                        <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
-                        <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
-                        <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-filter"></i>
-                    </button>
-                </div>
+                <label for="sortOrder" class="me-2 text-nowrap">{{ __('general.sort_by') }}:</label>
+                <select class="form-select form-select-sm" id="sortOrder" name="sort" onchange="this.form.submit()">
+                    <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
+                    <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
+                    <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
+                    <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
+                    <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
+                </select>
             </form>
         </div>
     </div>

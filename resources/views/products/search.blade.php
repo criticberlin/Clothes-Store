@@ -16,70 +16,36 @@
         </div>
     </div>
 
-    <!-- Enhanced Search and Filter Form -->
-    <div class="card mb-4 bg-surface">
-        <div class="card-body">
-            <form action="{{ route('products.search') }}" method="GET" class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label for="searchQuery" class="form-label">{{ __('general.search') }}</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-transparent">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="searchQuery" name="q" 
-                            placeholder="{{ __('general.search_products') }}" value="{{ $query }}">
-                    </div>
-                </div>
+    <!-- Clean Sort By Dropdown -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="text-secondary">{{ count($products) }} {{ __('general.products_found') }}</span>
+            @if($selectedCategory)
+                <span class="ms-2 badge bg-primary">{{ $selectedCategory->name }}</span>
+            @endif
+        </div>
+        
+        <div class="sort-dropdown">
+            <form action="{{ route('products.search') }}" method="GET" class="d-flex align-items-center">
+                <!-- Preserve existing query parameters -->
+                <input type="hidden" name="q" value="{{ $query }}">
+                @if(request()->has('category_id'))
+                    <input type="hidden" name="category_id" value="{{ request()->get('category_id') }}">
+                @endif
                 
-                <div class="col-md-3">
-                    <label for="categoryFilter" class="form-label">{{ __('general.category') }}</label>
-                    <select class="form-select" id="categoryFilter" name="category_id">
-                        <option value="">{{ __('general.all_categories') }}</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ request()->get('category_id') == $cat->id ? 'selected' : '' }}>
-                                {{ $cat->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <label for="sortOrder" class="form-label">{{ __('general.sort_by') }}</label>
-                    <select class="form-select" id="sortOrder" name="sort">
-                        <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
-                        <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
-                        <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
-                        <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
-                        <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-filter"></i>
-                    </button>
-                </div>
+                <label for="sortOrder" class="me-2 text-nowrap">{{ __('general.sort_by') }}:</label>
+                <select class="form-select form-select-sm" id="sortOrder" name="sort" onchange="this.form.submit()">
+                    <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
+                    <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
+                    <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
+                    <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
+                    <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
+                </select>
             </form>
         </div>
     </div>
 
     @if(isset($products) && count($products) > 0)
-        <!-- Filter and sort options -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card bg-surface p-3">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center">
-                        <div>
-                            <span class="text-secondary">{{ count($products) }} {{ __('general.products_found') }}</span>
-                            @if($selectedCategory)
-                                <span class="ms-2 badge bg-primary">{{ $selectedCategory->name }}</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Products grid with category grouping -->
         @php
             $productsByCategory = $products->groupBy(function($product) {
