@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\CurrencyService;
 use Illuminate\Http\Request;
 
 class ProductsController extends Controller
@@ -28,9 +29,10 @@ class ProductsController extends Controller
             $categoryName = $product->categories()->first()->name;
         }
         
-        // Format the product price based on current currency
-        $price = $product->price;
-        $formattedPrice = number_format($price, 2) . ' ' . config('app.currency_symbol', '$');
+        // Use the CurrencyService to format the price
+        $currencyService = app(CurrencyService::class);
+        $price = $product->price; // Base price in EGP
+        $formattedPrice = $currencyService->formatPrice($price);
         
         // Get image URL using the accessor
         $imageUrl = $product->image_url;

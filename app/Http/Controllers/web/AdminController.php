@@ -139,13 +139,35 @@ class AdminController extends Controller
     }
     
     /**
-     * Display admin settings
+     * Display store information settings
      */
-    public function settings()
+    public function storeInformation()
     {
-        $currencies = Currency::orderBy('is_default', 'desc')->get();
-        
-        return view('admin.settings.index', compact('currencies'));
+        return view('admin.settings.store-information');
+    }
+    
+    /**
+     * Display payment settings
+     */
+    public function paymentSettings()
+    {
+        return view('admin.settings.payment');
+    }
+    
+    /**
+     * Display shipping settings
+     */
+    public function shippingSettings()
+    {
+        return view('admin.settings.shipping');
+    }
+    
+    /**
+     * Display email settings
+     */
+    public function emailSettings()
+    {
+        return view('admin.settings.email');
     }
     
     /**
@@ -153,8 +175,14 @@ class AdminController extends Controller
      */
     public function currencies()
     {
-        // Redirect to settings page with currencies section active
-        return redirect()->route('admin.settings', ['section' => 'currencies']);
+        // Now directly return the currencies index view
+        $currencies = Currency::orderBy('is_default', 'desc')->get();
+        $defaultCurrency = Currency::where('is_default', true)->first();
+        
+        return view('admin.currencies.index', [
+            'currencies' => $currencies,
+            'defaultCurrency' => $defaultCurrency
+        ]);
     }
     
     /**
@@ -165,7 +193,9 @@ class AdminController extends Controller
         $validator = Validator::make($request->all(), [
             'currencies' => 'required|array',
             'currencies.*.id' => 'required|exists:currencies,id',
-            'currencies.*.exchange_rate' => 'required|numeric|min:0',
+            'currencies.*.rate' => 'required|numeric|min:0.000001',
+            'currencies.*.symbol_en' => 'required|string|max:10',
+            'currencies.*.symbol_ar' => 'required|string|max:10',
             'currencies.*.is_active' => 'boolean',
             'default_currency' => 'required|exists:currencies,id'
         ]);
@@ -176,17 +206,12 @@ class AdminController extends Controller
                 ->withInput();
         }
         
-        // Update all currencies
-        foreach ($request->currencies as $currencyData) {
-            $currency = Currency::find($currencyData['id']);
-            $currency->exchange_rate = $currencyData['exchange_rate'];
-            $currency->is_active = $currencyData['is_active'] ?? false;
-            $currency->is_default = ($currencyData['id'] == $request->default_currency);
-            $currency->save();
-        }
+
         
-        return redirect()->route('admin.currencies')
-            ->with('success', 'Currencies updated successfully!');
+        // Flash success message
+        session()->flash('success', 'Currencies updated successfully!');
+        
+        return redirect()->route('admin.currencies.index');
     }
     
     /**

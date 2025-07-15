@@ -51,7 +51,7 @@
                 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="price" class="form-label">Price ($)</label>
+                        <label for="price" class="form-label">Price (EGP)</label>
                         <input type="number" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price') }}" step="0.01" min="0" required>
                         @error('price')
                             <div class="invalid-feedback">{{ $message }}</div>

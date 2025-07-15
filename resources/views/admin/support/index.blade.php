@@ -32,7 +32,7 @@
         <div class="admin-card-body">
             @if(isset($tickets) && $tickets->count() > 0)
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table admin-datatable">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -52,25 +52,35 @@
                                     <td>{{ $ticket->user->name }}</td>
                                     <td>{{ $ticket->created_at->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ 
-                                            $ticket->status === 'open' ? 'danger' : 
-                                            ($ticket->status === 'pending' ? 'warning' : 'success') 
+                                        <span class="status-badge {{ 
+                                            $ticket->status === 'open' ? 'cancelled' : 
+                                            ($ticket->status === 'pending' ? 'pending' : 'completed') 
                                         }}">
+                                            <i class="bi bi-{{ 
+                                                $ticket->status === 'open' ? 'exclamation-circle' : 
+                                                ($ticket->status === 'pending' ? 'hourglass-split' : 'check-circle') 
+                                            }}"></i>
                                             {{ ucfirst($ticket->status) }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ 
-                                            $ticket->priority === 'high' ? 'danger' : 
-                                            ($ticket->priority === 'medium' ? 'warning' : 'info') 
+                                        <span class="status-badge {{ 
+                                            $ticket->priority === 'high' ? 'cancelled' : 
+                                            ($ticket->priority === 'medium' ? 'pending' : 'info') 
                                         }}">
+                                            <i class="bi bi-{{ 
+                                                $ticket->priority === 'high' ? 'exclamation-triangle' : 
+                                                ($ticket->priority === 'medium' ? 'dash-circle' : 'info-circle') 
+                                            }}"></i>
                                             {{ ucfirst($ticket->priority) }}
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.support.show', $ticket) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i> View
-                                        </a>
+                                        <div class="action-btns">
+                                            <a href="{{ route('admin.support.show', $ticket) }}" class="action-btn" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

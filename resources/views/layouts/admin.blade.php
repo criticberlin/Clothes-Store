@@ -22,6 +22,7 @@
     <!-- Core Styles -->
     <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-unified.css') }}">
     
     @if(isset($isRTL) && $isRTL)
     <link rel="stylesheet" href="{{ asset('css/rtl.css') }}">
@@ -33,6 +34,7 @@
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ asset('js/theme-manager.js') }}" defer></script>
     <script src="{{ asset('js/custom.js') }}" defer></script>
+    <script src="{{ asset('js/admin-tables.js') }}" defer></script>
     
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
@@ -436,11 +438,11 @@
                 
                 <!-- User Management Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#usersCollapse" role="button" aria-expanded="false" aria-controls="usersCollapse">
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#usersCollapse" role="button" aria-expanded="true" aria-controls="usersCollapse">
                         <span>{{ __('User Management') }}</span>
                         <i class="bi bi-chevron-down small"></i>
                     </div>
-                    <div class="collapse {{ request()->routeIs('admin.users.*') ? 'show' : '' }}" id="usersCollapse">
+                    <div class="collapse show" id="usersCollapse">
                         <a href="{{ route('admin.users.list') }}" class="nav-link {{ request()->routeIs('admin.users.list') ? 'active' : '' }}">
                             <span class="nav-icon"><i class="bi bi-people"></i></span>
                             <span>{{ __('All Users') }}</span>
@@ -454,11 +456,11 @@
                 
                 <!-- Product Management Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="false" aria-controls="productsCollapse">
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#productsCollapse" role="button" aria-expanded="true" aria-controls="productsCollapse">
                         <span>{{ __('Products') }}</span>
                         <i class="bi bi-chevron-down small"></i>
                     </div>
-                    <div class="collapse {{ (request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*')) ? 'show' : '' }}" id="productsCollapse">
+                    <div class="collapse show {{ (request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*')) ? 'show' : '' }}" id="productsCollapse">
                         <a href="{{ route('admin.products.list') }}" class="nav-link {{ request()->routeIs('admin.products.list') ? 'active' : '' }}">
                             <span class="nav-icon"><i class="bi bi-grid"></i></span>
                             <span>{{ __('All Products') }}</span>
@@ -472,11 +474,11 @@
                 
                 <!-- Categories Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#categoriesCollapse" role="button" aria-expanded="false" aria-controls="categoriesCollapse">
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#categoriesCollapse" role="button" aria-expanded="true" aria-controls="categoriesCollapse">
                         <span>{{ __('Categories') }}</span>
                         <i class="bi bi-chevron-down small"></i>
                     </div>
-                    <div class="collapse {{ request()->routeIs('admin.categories.*') ? 'show' : '' }}" id="categoriesCollapse">
+                    <div class="collapse show {{ request()->routeIs('admin.categories.*') ? 'show' : '' }}" id="categoriesCollapse">
                         <a href="{{ route('admin.categories.index') }}" class="nav-link {{ request()->routeIs('admin.categories.index') ? 'active' : '' }}">
                             <span class="nav-icon"><i class="bi bi-tags"></i></span>
                             <span>{{ __('All Categories') }}</span>
@@ -490,29 +492,60 @@
                 
                 <!-- Orders Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ __('Orders') }}</div>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#ordersCollapse" role="button" aria-expanded="true" aria-controls="ordersCollapse">
+                        <span>{{ __('Orders') }}</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse show" id="ordersCollapse">
                     <a href="{{ route('admin.orders.list') }}" class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-box"></i></span>
                         <span>{{ __('All Orders') }}</span>
                     </a>
+                    </div>
                 </div>
                 
                 <!-- Support Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ __('Support') }}</div>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#supportCollapse" role="button" aria-expanded="true" aria-controls="supportCollapse">
+                        <span>{{ __('Support') }}</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse show" id="supportCollapse">
                     <a href="{{ route('admin.support.index') }}" class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="bi bi-headset"></i></span>
                         <span>{{ __('Support Tickets') }}</span>
                     </a>
+                    </div>
                 </div>
                 
                 <!-- Settings Section -->
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ __('Settings') }}</div>
-                    <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
-                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
-                        <span>{{ __('Store Settings') }}</span>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#settingsCollapse" role="button" aria-expanded="true" aria-controls="settingsCollapse">
+                        <span>{{ __('Settings') }}</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="collapse show {{ (request()->routeIs('admin.settings') || request()->routeIs('admin.currencies.*') || request()->routeIs('admin.settings.*')) ? 'show' : '' }}" id="settingsCollapse">
+                        <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') && !request('section') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-shop"></i></span>
+                            <span>{{ __('Store Information') }}</span>
                     </a>
+                        <a href="{{ route('admin.currencies.index') }}" class="nav-link {{ (request()->routeIs('admin.currencies.*')) ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-currency-exchange"></i></span>
+                        <span>{{ __('Currency Management') }}</span>
+                    </a>
+                        <a href="{{ route('admin.settings.payment') }}" class="nav-link {{ request()->routeIs('admin.settings.payment') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
+                            <span>{{ __('Payment Settings') }}</span>
+                        </a>
+                        <a href="{{ route('admin.settings.shipping') }}" class="nav-link {{ request()->routeIs('admin.settings.shipping') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-truck"></i></span>
+                            <span>{{ __('Shipping Settings') }}</span>
+                        </a>
+                        <a href="{{ route('admin.settings.email') }}" class="nav-link {{ request()->routeIs('admin.settings.email') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-envelope"></i></span>
+                            <span>{{ __('Email Settings') }}</span>
+                        </a>
+                    </div>
                 </div>
                 
                 <div class="nav-section mt-4">
@@ -587,9 +620,9 @@
                         <button class="btn dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             @php
                                 $currency = App\Models\Currency::where('code', session('currency_code', 'EGP'))->first();
-                                $symbol = $currency ? $currency->symbol : 'ج.م';
+                                $symbol = $currency ? ($currentLocale == 'ar' ? $currency->symbol_ar : $currency->symbol_en) : 'EGP';
                             @endphp
-                            {{ $symbol }}
+                            <i class="bi bi-currency-exchange"></i> {{ $symbol }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
                             @foreach(App\Models\Currency::where('is_active', true)->get() as $currency)
@@ -599,7 +632,16 @@
                                     <input type="hidden" name="currency_code" value="{{ $currency->code }}">
                                     <input type="hidden" name="redirect" value="{{ url()->current() }}">
                                     <button type="submit" class="dropdown-item {{ session('currency_code', 'EGP') == $currency->code ? 'active' : '' }}">
-                                        {{ $currency->symbol }} {{ $currency->code }} - {{ $currency->name }}
+                                        @if($currency->code == 'USD')
+                                            <i class="bi bi-currency-dollar me-2"></i>
+                                        @elseif($currency->code == 'EUR')
+                                            <i class="bi bi-currency-euro me-2"></i>
+                                        @elseif($currency->code == 'GBP')
+                                            <i class="bi bi-currency-pound me-2"></i>
+                                        @else
+                                            <i class="bi bi-currency-exchange me-2"></i>
+                                        @endif
+                                        {{ $currentLocale == 'ar' ? $currency->symbol_ar : $currency->symbol_en }} {{ $currency->code }} - {{ $currency->name }}
                                     </button>
                                 </form>
                             </li>
@@ -643,25 +685,6 @@
                     adminSidebar.classList.toggle('show');
                 });
             }
-            
-            // Initialize DataTables
-            $('.admin-datatable').DataTable({
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                language: {
-                    search: "<i class='bi bi-search'></i> _INPUT_",
-                    searchPlaceholder: "Search records...",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    paginate: {
-                        first: "<i class='bi bi-chevron-double-left'></i>",
-                        last: "<i class='bi bi-chevron-double-right'></i>",
-                        next: "<i class='bi bi-chevron-right'></i>",
-                        previous: "<i class='bi bi-chevron-left'></i>"
-                    }
-                }
-            });
         });
     </script>
     

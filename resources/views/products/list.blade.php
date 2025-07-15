@@ -129,7 +129,7 @@
                             @endif
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <div class="product-price fw-bold">
-                                    {{ number_format($product->price, 2) }} {{ config('app.currency_symbol', '$') }}
+                                    {!! display_price($product->price) !!}
                                 </div>
                                 <div class="product-rating">
                                     <i class="bi bi-star-fill text-warning"></i>

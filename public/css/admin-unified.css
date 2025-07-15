@@ -1,0 +1,329 @@
+/* Admin Unified Styles - Dark Mode Compatible
+ * This stylesheet provides consistent styling for all admin tables, lists, cards, and components
+ * with proper dark/light mode support
+ */
+
+:root {
+    /* Status colors - compatible with both themes */
+    --success: #2CB67D;
+    --success-light: rgba(44, 182, 125, 0.2);
+    --warning: #FF7F50;
+    --warning-light: rgba(255, 127, 80, 0.2);
+    --danger: #E45858;
+    --danger-light: rgba(228, 88, 88, 0.2);
+    --info: #7F5AF0;
+    --info-light: rgba(127, 90, 240, 0.2);
+}
+
+/* Table cells with proper theming */
+.admin-datatable {
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+.admin-datatable thead tr {
+    background-color: var(--surface-alt);
+}
+
+.admin-datatable thead th {
+    background-color: var(--surface-alt);
+    color: var(--text-secondary);
+    border-color: var(--border);
+    padding: 12px 16px;
+    border-bottom-width: 1px;
+    font-weight: 600;
+}
+
+.admin-datatable thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.admin-datatable thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.admin-datatable tbody td {
+    border-color: var(--border);
+    background-color: var(--surface);
+    padding: 12px 16px;
+    vertical-align: middle;
+    color: var(--text-primary);
+}
+
+.admin-datatable tbody tr:hover td {
+    background-color: var(--surface-alt);
+}
+
+/* Improved Action buttons */
+.action-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.action-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.action-btn:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn.delete:hover {
+    background-color: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Enhanced Status badges with proper theming */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: all var(--transition-normal);
+}
+
+.status-badge.completed {
+    background-color: var(--success-light);
+    color: var(--success);
+}
+
+.status-badge.pending {
+    background-color: var(--warning-light);
+    color: var(--warning);
+}
+
+.status-badge.cancelled {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.status-badge.info {
+    background-color: var(--info-light);
+    color: var(--info);
+}
+
+.status-badge i {
+    margin-right: 6px;
+    font-size: 0.9rem;
+}
+
+/* Fixed Search bar placeholder */
+.dataTables_filter input {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    transition: all var(--transition-normal);
+}
+
+.dataTables_filter input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+    outline: none;
+}
+
+.dataTables_filter input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Enhanced Pagination */
+.dataTables_paginate {
+    margin-top: 15px;
+}
+
+.dataTables_paginate .paginate_button {
+    color: var(--text-primary) !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm);
+    margin: 0 2px;
+    transition: all var(--transition-normal);
+}
+
+.dataTables_paginate .paginate_button.current,
+.dataTables_paginate .paginate_button:hover {
+    background-color: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+    box-shadow: var(--shadow-sm);
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dataTables_info {
+    color: var(--text-secondary);
+    margin-top: 15px;
+}
+
+/* Regular Pagination (Laravel) */
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-item .page-link {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.pagination .page-item .page-link:hover:not(.disabled) {
+    background-color: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--text-tertiary);
+}
+
+/* Product thumbnails with proper theming */
+.product-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background-color: var(--surface-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+}
+
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+}
+
+/* Stats cards with proper theming */
+.stats-card {
+    background-color: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stats-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+
+.stats-icon.green {
+    background-color: var(--success-light);
+    color: var(--success);
+}
+
+.stats-icon.orange {
+    background-color: var(--warning-light);
+    color: var(--warning);
+}
+
+.stats-icon.purple {
+    background-color: var(--info-light);
+    color: var(--info);
+}
+
+.stats-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Fixed dropdown menu */
+.dropdown-menu {
+    background-color: var(--surface);
+    border-color: var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .action-btns {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .action-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .stats-card {
+        margin-bottom: 15px;
+    }
+} 

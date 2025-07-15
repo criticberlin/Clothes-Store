@@ -17,6 +17,10 @@
             <span>Product Information</span>
         </div>
         <div class="admin-card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> All product prices are stored in EGP (Egyptian Pound) as the base currency. Currency conversion happens dynamically at display time.
+            </div>
+            
             <form method="POST" action="{{ isset($product->id) ? route('admin.products.save', $product) : route('admin.products.store') }}" enctype="multipart/form-data">
                 @csrf
                 
@@ -41,7 +45,7 @@
                     <div class="col-md-6">
                         <label for="price" class="form-label">Price</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">EGP</span>
                             <input type="number" step="0.01" min="0" class="form-control @error('price') is-invalid @enderror" id="price" name="price" value="{{ old('price', $product->price ?? '') }}" required>
                             @error('price')
                                 <div class="invalid-feedback">{{ $message }}</div>

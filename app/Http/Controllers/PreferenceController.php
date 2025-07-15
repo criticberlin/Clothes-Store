@@ -97,20 +97,46 @@ class PreferenceController extends Controller
     {
         $currencyCode = $request->currency_code ?? $request->currency;
         
-        $currency = Currency::where('code', $currencyCode)->where('is_active', true)->first();
+        // Use the currency service to validate the currency
+        $currencyService = app(\App\Services\CurrencyService::class);
+        
+        // Find the requested currency
+        $currency = \App\Models\Currency::where('code', $currencyCode)
+            ->where('is_active', true)
+            ->first();
         
         if ($currency) {
+            // Store in session
             Session::put('currency_code', $currencyCode);
+            
+            // Create a cookie that lasts for a year
+            $cookie = cookie('currency', $currencyCode, 60 * 24 * 365);
+            
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true, 
+                    'currency' => $currencyCode,
+                    'symbol' => $currency->getSymbolForCurrentLocale(),
+                    'exchange_rate' => $currency->rate,
+                    'is_default' => $currency->is_default
+                ])->withCookie($cookie);
+            }
+            
+            // Redirect with cookie for regular requests
+            if ($request->has('redirect')) {
+                return redirect($request->redirect)->withCookie($cookie);
+            }
+            
+            return redirect()->back()->withCookie($cookie);
         }
         
+        // Currency not found, return error response
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true, 
-                'currency' => $currencyCode,
-                'symbol' => $currency ? $currency->symbol : null
-            ]);
+            return response()->json(['success' => false, 'message' => 'Invalid currency']);
         }
         
+        // Redirect without setting cookie
         if ($request->has('redirect')) {
             return redirect($request->redirect);
         }

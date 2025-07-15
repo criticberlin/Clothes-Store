@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ $currentLocale }}" dir="{{ $isRTL ? 'rtl' : 'ltr' }}" class="theme-{{ $currentTheme }}" data-currency="{{ $currentCurrency }}">
+<html lang="{{ $currentLocale }}" dir="{{ $isRTL ? 'rtl' : 'ltr' }}" class="theme-{{ $currentTheme }}" data-currency="{{ $currentCurrency }}"
+      data-currency-code="{{ app(\App\Services\CurrencyService::class)->getCurrentCurrencyCode() }}" 
+      data-currency-symbol="{{ app(\App\Services\CurrencyService::class)->getCurrentCurrency()->getSymbolForCurrentLocale() }}"
+      data-currency-rate="{{ app(\App\Services\CurrencyService::class)->getCurrentCurrency()->rate }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,8 +33,30 @@
     
     <!-- Scripts -->
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ asset('js/theme-manager.js') }}" defer></script>
-    <script src="{{ asset('js/custom.js') }}" defer></script>
+    <script>
+        // This script needs to run before Bootstrap initializes to override dropdown behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define baseUrl globally for search functionality
+            window.baseUrl = function() {
+                const path = window.location.pathname;
+                if (path.includes('/Clothes_Store/public')) {
+                    return window.location.origin + '/Clothes_Store/public';
+                } else if (path.includes('/Clothes_Store')) {
+                    return window.location.origin + '/Clothes_Store';
+                }
+                return window.location.origin;
+            }();
+            
+            // Prevent dropdown from closing when clicking on theme toggle
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('#direct-theme-toggle')) {
+                    e.stopPropagation();
+                }
+            }, true);
+        });
+    </script>
+    <script src="{{ asset('js/theme-manager.js') }}"></script>
+    <script src="{{ asset('js/custom.js') }}"></script>
 
     <style>
         :root {
@@ -264,6 +289,54 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+        
+        /* Search Loading Indicator */
+        .search-loading-indicator {
+            transition: opacity 0.2s ease-out;
+            z-index: 5;
+        }
+        
+        .search-loading-indicator .spinner-grow {
+            width: 1rem;
+            height: 1rem;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+        
+        /* Loading Spinner Animation */
+        @keyframes pulse-opacity {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .search-result-item .spinner-border {
+            animation: spinner-border 0.75s linear infinite, pulse-opacity 1.5s ease-in-out infinite;
+        }
+        
+        /* Improve focus styles for keyboard navigation */
+        .search-results a:focus {
+            outline: none;
+        }
+        
+        .search-results a:focus .search-result-item {
+            background-color: var(--surface-alt);
+            box-shadow: inset 3px 0 0 var(--primary);
+        }
+        
+        /* Empty state styling */
+        .search-result-item.empty-state {
+            color: var(--text-secondary);
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .search-result-item.empty-state i {
+            font-size: 1.5rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+            display: block;
         }
 
         .search-category-header {
@@ -506,6 +579,29 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
+        }
+        
+        /* Nested dropdown submenu */
+        .dropdown-submenu {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            display: none;
+        }
+        
+        .dropdown-item:hover + .dropdown-submenu,
+        .dropdown-submenu:hover {
+            display: block;
+        }
+        
+        /* Mobile responsive submenu */
+        @media (max-width: 991.98px) {
+            .dropdown-submenu {
+                position: static;
+                margin-left: 1rem;
+                box-shadow: none;
+                border-left: 1px solid var(--border);
+            }
         }
 
         .modal-header {
@@ -768,15 +864,33 @@
             color: var(--text-primary);
         }
         
-        /* Profile Dropdown */
+        /* Enhanced Profile Dropdown */
         .profile-dropdown {
-            border-radius: var(--radius-md);
-            overflow: hidden;
+            min-width: 220px;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+            box-shadow: var(--shadow-lg);
         }
         
         .profile-dropdown .dropdown-item {
-            border-radius: 0;
+            padding: 0.625rem 1rem;
+            transition: all 0.2s ease;
         }
+        
+        .profile-dropdown .dropdown-item:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        .profile-dropdown .dropdown-header {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .profile-dropdown .dropdown-divider {
+            margin: 0.25rem 0;
+        }
+        
         
         /* Cart Badge */
         .cart-badge {
@@ -1164,6 +1278,250 @@
         .category-dropdown.open + .search-input {
             border-left: none;
         }
+
+        /* Theme Toggle Switch Styles */
+        .theme-toggle-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            transition: background-color var(--transition-fast);
+        }
+        
+        .theme-toggle-item:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        /* Modern Switch Design */
+        .modern-switch {
+            position: relative;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .modern-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+            cursor: pointer;
+        }
+
+        .modern-switch-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 34px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .modern-switch-label:before {
+            content: '';
+            position: absolute;
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            transition: all var(--transition-normal);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Switch states for both themes */
+        html.theme-dark .modern-switch-input:checked + .modern-switch-label {
+            background-color: var(--primary);
+            border-color: var(--primary-dark);
+        }
+
+        html.theme-dark .modern-switch-input:checked + .modern-switch-label:before {
+            transform: translateX(21px);
+            background-color: white;
+            box-shadow: 0 0 8px rgba(127, 90, 240, 0.5);
+        }
+
+        html.theme-light .modern-switch-input:not(:checked) + .modern-switch-label {
+            background-color: var(--border);
+            border-color: var(--text-tertiary);
+        }
+
+        html.theme-light .modern-switch-input:checked + .modern-switch-label {
+            background-color: var(--secondary-light);
+            border-color: var(--secondary);
+        }
+
+        html.theme-light .modern-switch-input:checked + .modern-switch-label:before {
+            transform: translateX(21px);
+            background-color: white;
+            box-shadow: 0 0 4px rgba(44, 182, 125, 0.5);
+        }
+
+        /* Focus and hover states for better UX */
+        .modern-switch-input:focus + .modern-switch-label,
+        .modern-switch-label:hover {
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        /* Theme toggle item hover state */
+        .theme-toggle-item {
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle-item:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        .theme-toggle-item:active {
+            transform: translateY(1px);
+        }
+        
+        /* Add ripple effect to make it more obviously clickable */
+        .theme-toggle-item::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(127, 90, 240, 0.4);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .theme-toggle-item:active::after {
+            animation: ripple 0.5s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                opacity: 1;
+                transform: scale(0, 0) translate(-50%, -50%);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(20, 20) translate(-50%, -50%);
+            }
+        }
+
+        /* Theme toggle icons */
+        #themeToggleIcon {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: transform var(--transition-normal), color var(--transition-normal);
+        }
+
+        /* Theme-specific icon colors */
+        html.theme-dark #themeToggleIcon {
+            color: #f59e0b; /* amber/yellow for sun icon in dark mode */
+        }
+
+        html.theme-light #themeToggleIcon {
+            color: var(--primary); /* purple for moon icon in light mode */
+        }
+
+        /* Prevent dropdown close */
+        .dropdown-menu .dropdown-item[data-prevent-close="true"] {
+            cursor: pointer;
+        }
+
+        /* Theme transition - Prevent flicker */
+        html.theme-transition,
+        html.theme-transition *,
+        html.theme-transition *:before,
+        html.theme-transition *:after {
+            transition: background-color var(--transition-normal), 
+                        color var(--transition-normal), 
+                        border-color var(--transition-normal), 
+                        box-shadow var(--transition-normal), 
+                        opacity var(--transition-normal) !important;
+            transition-delay: 0 !important;
+        }
+
+        /* Theme Loading Indicator */
+        .search-loading-indicator {
+            transition: opacity 0.2s ease-out;
+            z-index: 5;
+        }
+        
+        /* Toggle Switch - New Implementation */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            margin: 0;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        
+        /* Theme Toggle Item */
+        #direct-theme-toggle {
+            cursor: pointer;
+            user-select: none;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        #direct-theme-toggle:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        #theme-icon {
+            font-size: 1.1rem;
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+        }
     </style>
     
     @stack('styles')
@@ -1239,11 +1597,6 @@
                     
                     <!-- Theme, Language, Profile, Cart -->
                     <div class="d-flex align-items-center">
-                        <!-- Compact Theme Switcher -->
-                        <button class="btn header-icon-btn" id="themeToggle">
-                            <i class="bi bi-circle-half"></i>
-                        </button>
-                        
                         <!-- Compact Language Switcher -->
                         <div class="dropdown ms-2">
                             <button class="btn header-icon-btn dropdown-toggle-no-arrow" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1263,10 +1616,35 @@
                             </ul>
                         </div>
                         
+                        <!-- Currency Switcher -->
+                        <div class="dropdown ms-2">
+                            @php
+                                $currencyService = app(\App\Services\CurrencyService::class);
+                                $currentCurrency = $currencyService->getCurrentCurrency();
+                            @endphp
+                            <button class="btn header-icon-btn dropdown-toggle-no-arrow" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ $currentCurrency->getSymbolForCurrentLocale() }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+                                @foreach($currencyService->getActiveCurrencies() as $currency)
+                                    <li>
+                                        <form action="{{ route('preferences.currency') }}" method="POST" class="currency-form">
+                                            @csrf
+                                            <input type="hidden" name="currency_code" value="{{ $currency->code }}">
+                                            <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                            <button type="submit" class="dropdown-item {{ $currentCurrency->code === $currency->code ? 'active' : '' }}">
+                                                {{ $currency->getSymbolForCurrentLocale() }} {{ $currency->code }} - {{ $currency->name }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        
                         <div class="ms-2">
                             @auth
                             <div class="dropdown">
-                                <a href="#" class="header-icon-btn" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a href="#" class="header-icon-btn" id="userDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     @if(Auth::user()->profile_photo)
                                         <img src="{{ Auth::user()->profile_photo_url }}" 
                                              alt="{{ Auth::user()->name }}" 
@@ -1278,15 +1656,58 @@
                                         </div>
                                     @endif
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end profile-dropdown" aria-labelledby="userDropdown">
+                                <ul class="dropdown-menu dropdown-menu-end profile-dropdown" aria-labelledby="userDropdown" id="userDropdownMenu" data-bs-popper="none">
                                     <li class="dropdown-header">{{ Auth::user()->name }}</li>
-                                    <li><a class="dropdown-item" href="{{ route('profile', Auth::id()) }}"><i class="bi bi-person me-1"></i> {{ __('general.my_profile') }}</a></li>
-                                    <li><a class="dropdown-item" href="{{ route('orders.index') }}"><i class="bi bi-bag me-1"></i> {{ __('general.my_orders') }}</a></li>
-                                    @can('admin_dashboard')
-                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i> {{ __('general.admin_dashboard') }}</a></li>
-                                    @endcan
+                                    
+                                    <!-- Admin Dashboard - Always show for user ID 1 or those with permission -->
+                                    @if(Auth::id() == 1 || Auth::user()->can('admin_dashboard'))
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.dashboard') }}">
+                                            <i class="bi bi-speedometer2 me-2"></i> 
+                                            <span>{{ __('general.admin_dashboard') }}</span>
+                                        </a>
+                                    </li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ route('do_logout') }}"><i class="bi bi-box-arrow-right me-1"></i> {{ __('general.logout') }}</a></li>
+                                    @endif
+                                    
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('profile', Auth::id()) }}">
+                                            <i class="bi bi-person me-2"></i> 
+                                            <span>{{ __('general.my_profile') }}</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">
+                                            <i class="bi bi-bag me-2"></i> 
+                                            <span>{{ __('general.my_orders') }}</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <!-- Theme Toggle Switch -->
+                                    <li>
+                                        <div class="dropdown-item d-flex align-items-center justify-content-between" id="direct-theme-toggle">
+                                            <div class="d-flex align-items-center">
+                                                <span id="theme-icon" class="me-2">🌙</span>
+                                                <span id="theme-label">Dark Mode</span>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="theme-toggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </li>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center text-danger" href="{{ route('do_logout') }}">
+                                            <i class="bi bi-box-arrow-right me-2"></i> 
+                                            <span>{{ __('general.logout') }}</span>
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                             @else
@@ -1396,256 +1817,89 @@
             return getBaseUrl() + '/api/' + endpoint;
         }
         
-        // Live search functionality
+        // Theme toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
-            // Theme toggle functionality has been moved to theme-manager.js
+            // Theme toggle functionality
+            const themeSwitch = document.getElementById('themeSwitch');
+            const themeToggleIcon = document.getElementById('themeToggleIcon');
+            const themeToggleLabel = document.getElementById('themeToggleLabel');
+            const themeToggleOption = document.getElementById('themeToggleOption');
+            const html = document.documentElement;
             
-            const searchInput = document.getElementById('searchInput');
-            const searchResults = document.getElementById('searchResults');
-            const categorySelect = document.querySelector('.search-category-select');
-            
-            if(searchInput && searchResults) {
-                let typingTimer;
-                const doneTypingInterval = 300; // Wait 300ms after user stops typing
-                let currentProductId = null; // Store the current product ID if on a product page
+            if (themeSwitch && themeToggleIcon && themeToggleLabel) {
+                // Get current theme from HTML class or localStorage
+                const savedTheme = localStorage.getItem('theme');
+                const currentTheme = html.classList.contains('theme-dark') ? 'dark' : 'light';
                 
-                // Check if we're on a product page
-                const productIdMeta = document.querySelector('meta[name="product-id"]');
-                if (productIdMeta) {
-                    currentProductId = productIdMeta.getAttribute('content');
+                // Initialize theme from localStorage if available
+                if (savedTheme && savedTheme !== currentTheme) {
+                    html.classList.remove('theme-light', 'theme-dark');
+                    html.classList.add('theme-' + savedTheme);
                 }
                 
-                // Function to handle search
-                const performSearch = function() {
-                    const searchTerm = searchInput.value.trim();
-                    const categoryId = categorySelect ? categorySelect.value : '';
-                    
-                    if(searchTerm.length < 2) {
-                        searchResults.classList.remove('show');
-                        return;
-                    }
-                    
-                    // Show loading indicator
-                    searchResults.innerHTML = `
-                        <div class="search-result-item text-center">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <span class="ms-2">{{ __('general.searching') }}...</span>
-                        </div>
-                    `;
-                    searchResults.classList.add('show');
-                    
-                    // Build API URL with parameters
-                    // Use the helper function to get the correct API URL
-                    const baseUrl = getBaseUrl();
-                    let apiUrl = getApiUrl('search') + `?q=${encodeURIComponent(searchTerm)}`;
-                    
-                    if (categoryId) {
-                        apiUrl += `&category_id=${categoryId}`;
-                    }
-                    
-                    if (currentProductId) {
-                        apiUrl += `&product_id=${currentProductId}`;
-                    }
-                    
-                    // Send AJAX request to search products
-                    fetch(apiUrl)
-                        .then(response => response.json())
-                        .then(data => {
-                            let html = '';
-                            
-                            if(data.products.length > 0) {
-                                // Group products by category for better organization
-                                const productsByCategory = {};
-                                
-                                data.products.forEach(product => {
-                                    const category = product.category_name || 'Uncategorized';
-                                    if (!productsByCategory[category]) {
-                                        productsByCategory[category] = [];
-                                    }
-                                    productsByCategory[category].push(product);
-                                });
-                                
-                                // Show only first 5 results
-                                let count = 0;
-                                const maxResults = 5;
-                                
-                                // Display products grouped by category
-                                for (const category in productsByCategory) {
-                                    if (count < maxResults) {
-                                        // Add category header
-                                        html += `
-                                            <div class="search-category-header">
-                                                <small class="text-tertiary">${category}</small>
-                                            </div>
-                                        `;
-                                        
-                                        // Add products in this category
-                                        productsByCategory[category].forEach(product => {
-                                            if (count < maxResults) {
-                                                html += `
-                                                    <a href="${baseUrl}/product/${product.slug}" class="text-decoration-none">
-                                                        <div class="search-result-item d-flex align-items-center">
-                                                            <div class="flex-shrink-0">
-                                                                <img src="${product.image}" alt="${product.name}" class="me-3">
-                                                            </div>
-                                                            <div class="flex-grow-1">
-                                                                <div class="product-title">${product.name}</div>
-                                                                <div class="product-price">${product.formatted_price}</div>
-                                                                <div class="product-availability ${product.quantity > 0 ? 'text-success' : 'text-danger'}">
-                                                                    ${product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                `;
-                                                count++;
-                                            }
-                                        });
-                                    }
-                                }
-                                
-                                // Add related products section if available
-                                if (data.related && data.related.length > 0 && currentProductId) {
-                                    html += `
-                                        <div class="search-category-header mt-2">
-                                            <small class="text-tertiary">{{ __('general.related_products') }}</small>
-                                        </div>
-                                    `;
-                                    
-                                    data.related.forEach(product => {
-                                        html += `
-                                            <a href="${baseUrl}/product/${product.slug}" class="text-decoration-none">
-                                                <div class="search-result-item d-flex align-items-center">
-                                                    <div class="flex-shrink-0">
-                                                        <img src="${product.image}" alt="${product.name}" class="me-3">
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <div class="product-title">${product.name}</div>
-                                                        <div class="product-price">${product.formatted_price}</div>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        `;
-                                    });
-                                }
-                                
-                                // Add "View all results" link with search parameters
-                                if(data.products.length > maxResults) {
-                                    const searchParams = new URLSearchParams();
-                                    searchParams.append('q', searchTerm);
-                                    if (categoryId) {
-                                        searchParams.append('category_id', categoryId);
-                                    }
-                                    
-                                    html += `
-                                        <a href="${baseUrl}/products/search?${searchParams.toString()}" class="text-decoration-none">
-                                            <div class="search-result-item text-center">
-                                                <strong class="text-primary">{{ __('general.view_all_results') }} (${data.products.length})</strong>
-                                            </div>
-                                        </a>
-                                    `;
-                                }
-                            } else {
-                                html = `
-                                    <div class="search-result-item text-center">
-                                        {{ __('general.no_results') }}
-                                    </div>
-                                `;
-                            }
-                            
-                            searchResults.innerHTML = html;
-                            searchResults.classList.add('show');
-                        })
-                        .catch(error => {
-                            console.error('Error searching products:', error);
-                            searchResults.innerHTML = `
-                                <div class="search-result-item text-center text-danger">
-                                    {{ __('general.search_error') }}
-                                </div>
-                            `;
-                        });
-                };
+                // Update UI based on current theme
+                updateThemeUI();
                 
-                // Search on typing
-                searchInput.addEventListener('keyup', function() {
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(performSearch, doneTypingInterval);
-                });
+                // Handle toggle changes - use both change and click events for better support
+                themeSwitch.addEventListener('change', toggleTheme);
                 
-                // Search when category changes
-                if (categorySelect) {
-                    categorySelect.addEventListener('change', function() {
-                        if (searchInput.value.trim().length >= 2) {
-                            clearTimeout(typingTimer);
-                            typingTimer = setTimeout(performSearch, doneTypingInterval);
+                // Make the entire toggle option clickable
+                if (themeToggleOption) {
+                    themeToggleOption.addEventListener('click', function(e) {
+                        // Only toggle if not clicking on the switch itself (it handles its own events)
+                        if (!e.target.closest('.modern-switch')) {
+                            themeSwitch.checked = !themeSwitch.checked;
+                            toggleTheme();
+                            e.stopPropagation(); // Prevent dropdown from closing
                         }
                     });
                 }
                 
-                // Handle keyboard navigation in search results
-                searchInput.addEventListener('keydown', function(e) {
-                    const results = searchResults.querySelectorAll('a');
+                // Main theme toggle function
+                function toggleTheme() {
+                    // Toggle theme
+                    html.classList.add('theme-transition');
+                    html.classList.toggle('theme-dark');
+                    html.classList.toggle('theme-light');
                     
-                    if (!results.length || !searchResults.classList.contains('show')) {
-                        return;
-                    }
+                    // Update localStorage
+                    const newTheme = html.classList.contains('theme-dark') ? 'dark' : 'light';
+                    localStorage.setItem('theme', newTheme);
                     
-                    // Down arrow
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        let focusedItem = searchResults.querySelector('a:focus');
-                        if (!focusedItem) {
-                            results[0].focus();
+                    // Update UI
+                    updateThemeUI();
+                    
+                    // Remove transition class after animation completes
+                    setTimeout(() => {
+                        html.classList.remove('theme-transition');
+                    }, 300);
+                }
+                
+                // Function to update theme toggle UI
+                function updateThemeUI() {
+                    const isDarkTheme = html.classList.contains('theme-dark');
+                    
+                    // Update toggle state
+                    themeSwitch.checked = isDarkTheme;
+                    
+                    // Update icon and label
+                    if (isDarkTheme) {
+                        themeToggleIcon.className = 'bi bi-sun me-2';
+                        themeToggleLabel.textContent = 'Light Mode';
                         } else {
-                            const currentIndex = Array.from(results).indexOf(focusedItem);
-                            if (currentIndex < results.length - 1) {
-                                results[currentIndex + 1].focus();
-                            }
-                        }
+                        themeToggleIcon.className = 'bi bi-moon me-2';
+                        themeToggleLabel.textContent = 'Dark Mode';
                     }
-                    
-                    // Up arrow
-                    if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        let focusedItem = searchResults.querySelector('a:focus');
-                        if (focusedItem) {
-                            const currentIndex = Array.from(results).indexOf(focusedItem);
-                            if (currentIndex > 0) {
-                                results[currentIndex - 1].focus();
-                            } else {
-                                searchInput.focus();
-                            }
-                        }
-                    }
-                    
-                    // Enter key
-                    if (e.key === 'Enter') {
-                        let focusedItem = searchResults.querySelector('a:focus');
-                        if (focusedItem) {
-                            e.preventDefault();
-                            focusedItem.click();
-                        }
-                    }
-                    
-                    // Escape key
-                    if (e.key === 'Escape') {
-                        searchResults.classList.remove('show');
-                        searchInput.blur();
-                    }
-                });
+                }
                 
-                // Hide search results when clicking outside
-                document.addEventListener('click', function(event) {
-                    if(!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
-                        searchResults.classList.remove('show');
-                    }
-                });
+                // Ensure UI is correctly initialized on page load
+                updateThemeUI();
                 
-                // Keep search results open when clicking inside
-                searchResults.addEventListener('click', function(event) {
-                    event.stopPropagation();
+                // Fix for dropdown closing when toggling theme
+                document.querySelectorAll('[data-prevent-close="true"]').forEach(function(el) {
+                    el.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
                 });
             }
         });
@@ -1655,6 +1909,13 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Prevent dropdown from closing when clicking on elements with data-prevent-close attribute
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-prevent-close="true"]')) {
+                e.stopPropagation();
+            }
+        }, true);
+        
         // New Category Dropdown Implementation
         function initCategoryDropdown() {
             const dropdown = document.getElementById('categoryDropdown');
@@ -1945,6 +2206,131 @@
         // Initialize search suggestions
         initSearchSuggestions();
     });
+    </script>
+    
+    <!-- Currency JS -->
+    <script src="{{ asset('js/currency.js') }}"></script>
+    
+    <!-- Direct Theme Toggle Handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
+            const toggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeLabel = document.getElementById('theme-label');
+            const html = document.documentElement;
+            
+            // Theme keys
+            const THEME_KEY = 'site_theme_preference';
+            const DARK_CLASS = 'theme-dark';
+            const LIGHT_CLASS = 'theme-light';
+            
+            // Initialize theme
+            function initTheme() {
+                // Get saved theme or use system preference
+                const savedTheme = localStorage.getItem(THEME_KEY);
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const defaultTheme = prefersDark ? 'dark' : 'light';
+                const currentTheme = savedTheme || defaultTheme;
+                
+                // Apply theme
+                applyTheme(currentTheme);
+                
+                // Update UI
+                updateUI(currentTheme);
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                // Add transition class for smooth change
+                html.classList.add('theme-transition');
+                
+                // Remove both theme classes
+                html.classList.remove(DARK_CLASS, LIGHT_CLASS);
+                
+                // Add correct theme class
+                html.classList.add(theme === 'dark' ? DARK_CLASS : LIGHT_CLASS);
+                
+                // Remove transition class after animation completes
+                setTimeout(() => {
+                    html.classList.remove('theme-transition');
+                }, 300);
+            }
+            
+            // Update UI elements
+            function updateUI(theme) {
+                const isDark = theme === 'dark';
+                
+                // Update toggle state
+                if (toggle) toggle.checked = isDark;
+                
+                // Update icon and label
+                if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌙';
+                if (themeLabel) themeLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+                
+                // Save to localStorage
+                localStorage.setItem(THEME_KEY, theme);
+                
+                // Try to sync with server if available
+                syncWithServer(theme);
+            }
+            
+            // Sync theme with server
+            function syncWithServer(theme) {
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (csrfToken) {
+                        const formData = new FormData();
+                        formData.append('theme', theme);
+                        formData.append('_token', csrfToken);
+                        
+                        fetch('/preferences/theme', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }).catch(() => {
+                            // Silently fail - user still has theme in localStorage
+                        });
+                    }
+                } catch(e) {
+                    console.warn('Could not sync theme with server:', e);
+                }
+            }
+            
+            // Toggle theme
+            function toggleTheme() {
+                const isDark = html.classList.contains(DARK_CLASS);
+                const newTheme = isDark ? 'light' : 'dark';
+                
+                applyTheme(newTheme);
+                updateUI(newTheme);
+            }
+            
+            // Add event listeners
+            if (toggle) {
+                toggle.addEventListener('change', toggleTheme);
+            }
+            
+            const directToggle = document.getElementById('direct-theme-toggle');
+            if (directToggle) {
+                directToggle.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on the actual toggle input
+                    if (e.target !== toggle) {
+                        toggleTheme();
+                        // Update checkbox state
+                        toggle.checked = !toggle.checked;
+                    }
+                    
+                    // Prevent dropdown from closing
+                    e.stopPropagation();
+                });
+            }
+            
+            // Initialize
+            initTheme();
+        });
     </script>
 </body>
 </html>

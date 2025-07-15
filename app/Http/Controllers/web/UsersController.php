@@ -194,61 +194,6 @@ class UsersController extends Controller
         return redirect()->route('login')->with('success', 'Your password has been reset successfully!');
     }
 
-    public function list(Request $request)
-    {
-        if (!Auth::check()) {
-            abort(401);
-        }
-        
-        // Check permission using direct DB query instead of hasPermissionTo
-        $hasPermission = DB::table('model_has_permissions')
-            ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
-            ->where('model_id', Auth::id())
-            ->where('model_type', User::class)
-            ->where('permissions.name', 'view_users')
-            ->exists();
-            
-        if (!$hasPermission) {
-            abort(401);
-        }
-
-        $query = User::select('*');
-
-        // Check if user has Manager role
-        $isManager = DB::table('model_has_roles')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_id', Auth::id())
-            ->where('model_type', User::class)
-            ->where('roles.name', 'Manager')
-            ->exists();
-            
-        if ($isManager) {
-            $query->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Admin');
-            });
-        }
-
-        $query->when($request->keywords, function($q) use ($request) {
-            $q->where(function($query) use ($request) {
-                $query->where('name', 'like', "%{$request->keywords}%")
-                      ->orWhere('email', 'like', "%{$request->keywords}%");
-            });
-        });
-
-        $query->when($request->role, function($q) use ($request) {
-            $q->whereHas('roles', function($query) use ($request) {
-                $query->where('name', $request->role);
-            });
-        });
-
-        $users = $query->paginate(10)->withQueryString();
-        
-        // Get roles from DB directly
-        $roles = DB::table('roles')->get();
-
-        return view('users.list', compact('users', 'roles'));
-    }
-
     public function createRoll(Request $request){
         if(!Auth::check()) return redirect('login');
         
@@ -301,9 +246,13 @@ class UsersController extends Controller
             $validationRules = [
                 'name' => ['required', 'string', 'min:3', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-                'password' => ['nullable', 'string', 'min:8', 'confirmed'],
                 'profile_photo' => ['nullable', 'image', 'max:2048'], // 2MB max
             ];
+
+            // Add password validation if provided
+            if ($request->filled('password')) {
+                $validationRules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+            }
         }
         
         $validated = $request->validate($validationRules);
@@ -313,8 +262,8 @@ class UsersController extends Controller
         $user->email = $validated['email'];
         
         // Update password if provided
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
+        if (!empty($request->password)) {
+            $user->password = bcrypt($request->password);
         }
         
         // Additional fields if they exist in the request
@@ -328,49 +277,82 @@ class UsersController extends Controller
         
         // Handle profile photo upload
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
-            // Delete old photo if exists
-            if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-                Storage::disk('public')->delete($user->profile_photo);
+            // Create directory if it doesn't exist
+            $uploadPath = public_path('images/users');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
             }
             
-            $imagePath = $request->file('profile_photo')->store('users', 'public');
-            $user->profile_photo = $imagePath;
+            // Delete old photo if exists and it's not the default avatar
+            if ($user->profile_photo && $user->profile_photo != 'default-avatar.png' && 
+                file_exists(public_path('images/users/' . $user->profile_photo))) {
+                unlink(public_path('images/users/' . $user->profile_photo));
+            }
+            
+            // Generate a unique filename
+            $fileName = time() . '_' . uniqid() . '.' . $request->file('profile_photo')->extension();
+            
+            // Move uploaded file
+            $request->file('profile_photo')->move($uploadPath, $fileName);
+            
+            // Save filename to database
+            $user->profile_photo = $fileName;
         }
         
         $user->save();
         
-        // Handle role assignment if role is provided
-        if ($request->has('role')) {
-            $user->roles()->sync([$request->input('role')]);
+        // Handle role assignment if roles is provided
+        if ($request->has('roles')) {
+            $user->roles()->sync($request->input('roles'));
         }
         
         if ($request->is('admin/*')) {
             return redirect()->route('admin.users.list')->with('success', 'User saved successfully!');
         }
         
-        return redirect()->route('users.list')->with('success', 'User saved successfully!');
+        return redirect()->back()->with('success', 'Profile updated successfully!');
     }
 
     public function delete(Request $request, User $user){
         if(!Auth::check()) return redirect('login');
         
-        // Don't allow deleting yourself
-        if ($user->id === Auth::id()) {
-            return redirect()->back()->withErrors('You cannot delete your own account.');
+        // Verify password if user is deleting their own account
+        if (Auth::id() == $user->id) {
+            if (!$request->filled('password_confirm') || !Hash::check($request->password_confirm, $user->password)) {
+                return redirect()->back()->withErrors('Password confirmation is required and must match your current password.');
+            }
+        } else {
+            // Check if user has permission to delete other users
+            $hasPermission = DB::table('model_has_permissions')
+                ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
+                ->where('model_id', Auth::id())
+                ->where('model_type', User::class)
+                ->where('permissions.name', 'delete_users')
+                ->exists();
+                
+            if (!$hasPermission) {
+                abort(403, 'Unauthorized action');
+            }
         }
         
-        // Delete profile photo if exists
-        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-            Storage::disk('public')->delete($user->profile_photo);
+        // Delete profile photo if exists and it's not the default avatar
+        if ($user->profile_photo && $user->profile_photo != 'default-avatar.png' && 
+            file_exists(public_path('images/users/' . $user->profile_photo))) {
+            unlink(public_path('images/users/' . $user->profile_photo));
         }
         
         $user->delete();
+        
+        if (Auth::id() == $user->id) {
+            Auth::logout();
+            return redirect('/')->with('success', 'Your account has been deleted.');
+        }
         
         if ($request->is('admin/*')) {
             return redirect()->route('admin.users.list')->with('success', 'User deleted successfully!');
         }
         
-        return redirect()->route('users.list')->with('success', 'User deleted successfully!');
+        return redirect()->route('home')->with('success', 'User deleted successfully!');
     }
 
     public function editPassword(Request $request, ?User $user = null){

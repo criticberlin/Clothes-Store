@@ -45,29 +45,29 @@
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Subtotal:</span>
-                        <span>${{ number_format($order->subtotal ?? $order->total_amount, 2) }}</span>
+                        <span class="price-display" data-base-price="{{ $order->subtotal ?? $order->total_amount }}">{{ format_price($order->subtotal ?? $order->total_amount) }}</span>
                     </div>
                     @if(isset($order->discount) && $order->discount > 0)
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Discount:</span>
-                        <span>-${{ number_format($order->discount, 2) }}</span>
+                        <span class="price-display" data-base-price="{{ -$order->discount }}">{{ format_price(-$order->discount) }}</span>
                     </div>
                     @endif
                     @if(isset($order->tax) && $order->tax > 0)
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Tax:</span>
-                        <span>${{ number_format($order->tax, 2) }}</span>
+                        <span class="price-display" data-base-price="{{ $order->tax }}">{{ format_price($order->tax) }}</span>
                     </div>
                     @endif
                     @if(isset($order->shipping_cost) && $order->shipping_cost > 0)
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Shipping:</span>
-                        <span>${{ number_format($order->shipping_cost, 2) }}</span>
+                        <span class="price-display" data-base-price="{{ $order->shipping_cost }}">{{ format_price($order->shipping_cost) }}</span>
                     </div>
                     @endif
                     <div class="d-flex justify-content-between mb-3 fw-bold">
                         <span>Total:</span>
-                        <span>${{ number_format($order->total_amount, 2) }}</span>
+                        <span class="price-display" data-base-price="{{ $order->total_amount }}">{{ format_price($order->total_amount) }}</span>
                     </div>
                 </div>
             </div>
@@ -103,7 +103,7 @@
                 </div>
                 <div class="admin-card-body">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table admin-datatable">
                             <thead>
                                 <tr>
                                     <th>Product</th>
@@ -118,13 +118,17 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 @if(isset($item->product) && isset($item->product->image))
-                                                    <img src="{{ asset('storage/' . $item->product->image) }}" alt="{{ $item->product->name }}" width="50" class="img-thumbnail me-3">
+                                                    <div class="product-thumbnail">
+                                                        <img src="{{ asset('storage/' . $item->product->image) }}" alt="{{ $item->product->name }}" class="product-img">
+                                                    </div>
                                                 @else
-                                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                                        <i class="bi bi-image"></i>
+                                                    <div class="product-thumbnail">
+                                                        <div class="product-img-placeholder">
+                                                            <i class="bi bi-image"></i>
+                                                        </div>
                                                     </div>
                                                 @endif
-                                                <div>
+                                                <div class="ms-3">
                                                     <h6 class="mb-0">{{ $item->product->name }}</h6>
                                                     @if(isset($item->options))
                                                         <small class="text-muted">
@@ -136,9 +140,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>${{ number_format($item->price, 2) }}</td>
-                                        <td>{{ $item->quantity }}</td>
-                                        <td>${{ number_format($item->price * $item->quantity, 2) }}</td>
+                                        <td><span class="price-display" data-base-price="{{ $item->price }}">{{ format_price($item->price) }}</span></td>
+                                        <td>
+                                            <span class="status-badge completed">
+                                                <i class="bi bi-check-circle"></i> {{ $item->quantity }}
+                                            </span>
+                                        </td>
+                                        <td><span class="price-display" data-base-price="{{ $item->price * $item->quantity }}">{{ format_price($item->price * $item->quantity) }}</span></td>
                                     </tr>
                                 @endforeach
                             </tbody>

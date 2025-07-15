@@ -166,7 +166,7 @@ class ThemeServiceProvider extends ServiceProvider
                         $currencyCode = $defaultCurrency->code;
                         Session::put('currency_code', $defaultCurrency->code);
                         Session::put('currency_symbol', $defaultCurrency->symbol);
-                        Session::put('currency_rate', $defaultCurrency->exchange_rate);
+                        Session::put('currency_rate', $defaultCurrency->rate);
                     } else {
                         $currencyCode = 'EGP';
                         Session::put('currency_code', 'EGP');

@@ -194,7 +194,7 @@
                                 </div>
                             </div>
                             <div class="col-md-2 mb-3 mb-md-0">
-                                <span class="price-value" data-base-price="{{ $item->product->price }}">{{ formatPrice($item->product->price) }}</span>
+                                <span class="price-value" data-base-price="{{ $item->product->price }}">{{ format_price($item->product->price) }}</span>
                             </div>
                             <div class="col-md-2 mb-3 mb-md-0">
                                 <form action="{{ route('cart.update', $item->id) }}" method="POST" class="cart-quantity-form">
@@ -262,20 +262,20 @@
                     
                     <div class="d-flex justify-content-between mb-3">
                         <span>{{ __('general.subtotal') }}</span>
-                        <span class="price-value" data-base-price="{{ $subTotal }}">{{ formatPrice($subTotal) }}</span>
+                        <span class="price-value" data-base-price="{{ $subTotal }}">{{ format_price($subTotal) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span>{{ __('general.shipping') }}</span>
-                        <span class="price-value" data-base-price="{{ $shippingCost }}">{{ formatPrice($shippingCost) }}</span>
+                        <span class="price-value" data-base-price="{{ $shippingCost }}">{{ format_price($shippingCost) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span>{{ __('general.tax') }}</span>
-                        <span class="price-value" data-base-price="{{ $tax }}">{{ formatPrice($tax) }}</span>
+                        <span class="price-value" data-base-price="{{ $tax }}">{{ format_price($tax) }}</span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between mb-3">
                         <strong>{{ __('general.total') }}</strong>
-                        <strong class="price-value" data-base-price="{{ $total }}">{{ formatPrice($total) }}</strong>
+                        <strong class="price-value" data-base-price="{{ $total }}">{{ format_price($total) }}</strong>
                     </div>
                     
                     <!-- Shipping Estimate -->

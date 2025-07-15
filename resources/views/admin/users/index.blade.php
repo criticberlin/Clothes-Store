@@ -38,18 +38,19 @@
                                 <td>{{ $user->email }}</td>
                                 <td>
                                     @foreach($user->roles as $role)
-                                        <span class="badge bg-{{ $role->name === 'Admin' ? 'danger' : 'info' }}">
+                                        <span class="status-badge {{ $role->name === 'Admin' ? 'cancelled' : 'completed' }}">
+                                            <i class="bi bi-{{ $role->name === 'Admin' ? 'shield-lock' : 'person' }}"></i>
                                             {{ $role->name }}
                                         </span>
                                     @endforeach
                                 </td>
                                 <td>{{ $user->created_at->format('M d, Y') }}</td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-outline-primary">
+                                    <div class="action-btns">
+                                        <a href="{{ route('admin.users.edit', $user) }}" class="action-btn" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger" 
+                                        <button type="button" class="action-btn delete" title="Delete"
                                                 onclick="document.getElementById('delete-user-{{ $user->id }}').submit()">
                                             <i class="bi bi-trash"></i>
                                         </button>

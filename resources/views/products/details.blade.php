@@ -47,7 +47,7 @@
             
             <div class="mb-4">
                 <div class="price-block d-flex align-items-center">
-                    <span class="fs-3 fw-bold me-3 price-value" data-base-price="{{ $product->price }}">{{ formatPrice($product->price) }}</span>
+                    <span class="fs-3 fw-bold me-3 price-value" data-base-price="{{ $product->price }}">{{ app(\App\Services\CurrencyService::class)->formatPrice($product->price) }}</span>
                 </div>
             </div>
             

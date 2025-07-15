@@ -47,28 +47,40 @@
                                 <td>{{ $order->user->name }}</td>
                                 <td>{{ $order->created_at->format('M d, Y') }}</td>
                                 <td>
-                                    @if(isset($order->items_count))
-                                        {{ $order->items_count }} items
-                                    @elseif(isset($order->order_items))
-                                        {{ $order->order_items->count() }} items
-                                    @else
-                                        N/A
-                                    @endif
+                                    <span class="status-badge completed">
+                                        <i class="bi bi-box"></i>
+                                        @if(isset($order->items_count))
+                                            {{ $order->items_count }} items
+                                        @elseif(isset($order->order_items))
+                                            {{ $order->order_items->count() }} items
+                                        @else
+                                            N/A
+                                        @endif
+                                    </span>
                                 </td>
-                                <td>${{ number_format($order->total_amount, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ 
-                                        $order->status === 'completed' ? 'success' : 
-                                        ($order->status === 'processing' ? 'warning' : 
-                                        ($order->status === 'cancelled' ? 'danger' : 'info')) 
+                                    <span class="price-display" data-base-price="{{ $order->total_amount }}">{{ format_price($order->total_amount) }}</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge {{ 
+                                        $order->status === 'completed' ? 'completed' : 
+                                        ($order->status === 'processing' ? 'pending' : 
+                                        ($order->status === 'cancelled' ? 'cancelled' : 'pending')) 
                                     }}">
+                                        <i class="bi bi-{{ 
+                                            $order->status === 'completed' ? 'check-circle' : 
+                                            ($order->status === 'processing' ? 'hourglass-split' : 
+                                            ($order->status === 'cancelled' ? 'x-circle' : 'hourglass')) 
+                                        }}"></i>
                                         {{ ucfirst($order->status) }}
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.orders.details', $order) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
+                                    <div class="action-btns">
+                                        <a href="{{ route('admin.orders.details', $order) }}" class="action-btn" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

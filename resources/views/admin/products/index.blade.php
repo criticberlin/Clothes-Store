@@ -36,40 +36,52 @@
                             <tr>
                                 <td>{{ $product->id }}</td>
                                 <td>
+                                    <div class="product-thumbnail">
                                     @if($product->photo)
-                                        <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" width="50" class="img-thumbnail">
+                                            <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" class="product-img">
                                     @else
-                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <div class="product-img-placeholder">
                                             <i class="bi bi-image"></i>
                                         </div>
                                     @endif
+                                    </div>
                                 </td>
                                 <td>{{ $product->name }}</td>
-                                <td>${{ number_format($product->price, 2) }}</td>
+                                <td><span class="price-display" data-base-price="{{ $product->price }}">{{ format_price($product->price) }}</span></td>
                                 <td>
                                     @if($product->quantity > 10)
-                                        <span class="badge bg-success">{{ $product->quantity }}</span>
+                                        <span class="status-badge completed">
+                                            <i class="bi bi-check-circle"></i> {{ $product->quantity }}
+                                        </span>
                                     @elseif($product->quantity > 0)
-                                        <span class="badge bg-warning">{{ $product->quantity }}</span>
+                                        <span class="status-badge pending">
+                                            <i class="bi bi-exclamation-circle"></i> {{ $product->quantity }}
+                                        </span>
                                     @else
-                                        <span class="badge bg-danger">Out of stock</span>
+                                        <span class="status-badge cancelled">
+                                            <i class="bi bi-x-circle"></i> Out of stock
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($product->categories && $product->categories->count() > 0)
                                         @foreach($product->categories as $category)
-                                            <span class="badge bg-info">{{ $category->name }}</span>
+                                            <span class="status-badge completed">
+                                                <i class="bi bi-tag"></i> {{ $category->name }}
+                                            </span>
                                         @endforeach
                                     @else
-                                        <span class="badge bg-secondary">No category</span>
+                                        <span class="status-badge cancelled">
+                                            <i class="bi bi-dash-circle"></i> No category
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-outline-primary">
+                                    <div class="action-btns">
+                                        <a href="{{ route('admin.products.edit', $product) }}" class="action-btn" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger" 
+                                        <button type="button" class="action-btn delete" title="Delete"
                                                 onclick="document.getElementById('delete-product-{{ $product->id }}').submit()">
                                             <i class="bi bi-trash"></i>
                                         </button>

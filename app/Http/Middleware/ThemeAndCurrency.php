@@ -6,9 +6,27 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\Currency;
+use App\Services\CurrencyService;
 
 class ThemeAndCurrency
 {
+    /**
+     * The currency service.
+     *
+     * @var \App\Services\CurrencyService
+     */
+    protected $currencyService;
+    
+    /**
+     * Constructor.
+     *
+     * @param \App\Services\CurrencyService $currencyService
+     */
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+    
     /**
      * Handle an incoming request.
      *
@@ -30,40 +48,14 @@ class ThemeAndCurrency
         // Share theme with all views
         view()->share('currentTheme', $theme);
         
-        // Handle currency - check cookie first, then session
-        $currencyCode = $request->cookie('currency') ?? Session::get('currency_code');
+        // Get current currency using the service
+        $currentCurrency = $this->currencyService->getCurrentCurrency();
         
-        if (!$currencyCode) {
-            // Set default currency if not set
-            $defaultCurrency = Currency::where('is_default', true)->first();
-            
-            if ($defaultCurrency) {
-                $currencyCode = $defaultCurrency->code;
-                Session::put('currency_code', $currencyCode);
-                Session::put('currency_symbol', $defaultCurrency->symbol);
-                Session::put('currency_rate', $defaultCurrency->exchange_rate);
-            } else {
-                // Fallback to EGP if no default currency is set
-                $currencyCode = 'EGP';
-                Session::put('currency_code', 'EGP');
-                Session::put('currency_symbol', 'ج.م');
-                Session::put('currency_rate', 1);
-            }
-        } else {
-            // Get currency details if we have a code
-            $currency = Currency::where('code', $currencyCode)->where('is_active', true)->first();
-            
-            if ($currency) {
-                Session::put('currency_symbol', $currency->symbol);
-                Session::put('currency_rate', $currency->exchange_rate);
-            }
-        }
+        // Get all active currencies
+        $currencies = $this->currencyService->getActiveCurrencies();
         
-        // Get all active currencies for dropdown
-        $currencies = Currency::where('is_active', true)->get();
-        
-        // Share variables with all views
-        view()->share('currentCurrency', $currencyCode);
+        // Share currency information with all views
+        view()->share('currentCurrency', $currentCurrency);
         view()->share('currencies', $currencies);
         
         return $next($request);

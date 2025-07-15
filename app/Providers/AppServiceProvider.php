@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\CurrencyService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 
@@ -19,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
         if (!class_exists('Laravel\Socialite\Facades\Socialite')) {
             class_alias('Illuminate\Support\Facades\Auth', 'Laravel\Socialite\Facades\Socialite');
         }
+
+        // Register the CurrencyService as a singleton
+        $this->app->singleton(CurrencyService::class, function ($app) {
+            return new CurrencyService();
+        });
     }
 
     /**

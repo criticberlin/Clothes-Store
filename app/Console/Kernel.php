@@ -57,6 +57,15 @@ class Kernel extends ConsoleKernel
         // 'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         // 'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
+    
+    /**
+     * Define the application's command schedule.
+     */
+    protected function schedule(Schedule $schedule): void
+    {
+        // Run currency normalization daily
+        $schedule->command('currencies:normalize')->daily();
+    }
 
     /**
      * Register the commands for the application.
@@ -65,9 +74,10 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__.'/Commands');
 
-        // Register the CopySampleImages command
+        // Register commands
         $this->commands([
             \App\Console\Commands\CopySampleImages::class,
+            \App\Console\Commands\NormalizeCurrencies::class,
         ]);
 
         require base_path('routes/console.php');

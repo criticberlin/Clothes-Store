@@ -1,58 +1,115 @@
 @extends('layouts.admin')
 
-@section('title', __('Currency Management'))
-
-@section('header', __('Currency Management'))
-
-@section('breadcrumbs')
-<li class="breadcrumb-item active">{{ __('Currencies') }}</li>
-@endsection
+@section('title', 'Currency Management')
+@section('description', 'Manage all currencies in your store')
 
 @section('content')
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h5 class="mb-0">{{ __('Manage Currencies and Exchange Rates') }}</h5>
+    <div class="admin-header">
+        <div>
+            <a href="{{ route('admin.settings', ['section' => 'currencies']) }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i> Back to Settings
+            </a>
+        </div>
     </div>
-    <div class="admin-card-body">
-        <p class="mb-4">
-            {{ __('Update exchange rates or set the default currency for your store. The base currency (EGP) has an exchange rate of 1.') }}
-        </p>
-
-        <form action="{{ route('admin.currencies.update') }}" method="POST">
-            @csrf
+    
+    @if(session('success'))
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+    
+    @if(session('error'))
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+    
+    <div class="admin-card">
+        <div class="admin-card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-currency-exchange me-2"></i>
+                Currency Management
+            </h5>
+        </div>
+        <div class="admin-card-body">
+            <div class="alert alert-info mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="bi bi-info-circle-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading">How Currency Exchange Works</h5>
+                        <ul class="mb-0">
+                            <li>{{ $defaultCurrency->code ?? 'EGP' }} is the base currency - all prices in the system are stored in {{ $defaultCurrency->code ?? 'EGP' }}.</li>
+                            <li>Rates represent how many units of base currency equal 1 unit of the target currency.</li>
+                            <li>Prices displayed to users are always converted using the current exchange rates.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
             
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table admin-datatable">
                     <thead>
                         <tr>
-                            <th>{{ __('Default') }}</th>
-                            <th>{{ __('Code') }}</th>
-                            <th>{{ __('Name') }}</th>
-                            <th>{{ __('Symbol') }}</th>
-                            <th>{{ __('Exchange Rate') }}</th>
-                            <th>{{ __('Status') }}</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Symbol (EN)</th>
+                            <th>Symbol (AR)</th>
+                            <th>Rate</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($currencies as $currency)
                             <tr>
                                 <td>
-                                    <div class="form-check">
-                                        <input type="radio" name="default_currency" value="{{ $currency->id }}" class="form-check-input" {{ $currency->is_default ? 'checked' : '' }}>
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="hidden" name="currencies[{{ $loop->index }}][id]" value="{{ $currency->id }}">
                                     <strong>{{ $currency->code }}</strong>
+                                    @if($currency->is_default)
+                                        <span class="status-badge completed">
+                                            <i class="bi bi-star-fill"></i> Default
+                                        </span>
+                                    @endif
                                 </td>
                                 <td>{{ $currency->name }}</td>
-                                <td>{{ $currency->symbol }}</td>
+                                <td>{{ $currency->symbol_en }}</td>
+                                <td>{{ $currency->symbol_ar }}</td>
                                 <td>
-                                    <input type="number" name="currencies[{{ $loop->index }}][exchange_rate]" value="{{ $currency->exchange_rate }}" step="0.000001" min="0.000001" class="form-control form-control-sm" {{ $currency->is_default ? 'readonly' : '' }}>
+                                    @if($currency->is_default)
+                                        <span class="badge bg-light text-dark">1.00</span>
+                                    @else
+                                        {{ number_format($currency->rate, 6) }}
+                                    @endif
                                 </td>
                                 <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" name="currencies[{{ $loop->index }}][is_active]" value="1" class="form-check-input" {{ $currency->is_active ? 'checked' : '' }} {{ $currency->is_default ? 'disabled' : '' }}>
+                                    @if($currency->is_active)
+                                        <span class="status-badge completed">
+                                            <i class="bi bi-check-circle"></i> Active
+                                        </span>
+                                    @else
+                                        <span class="status-badge cancelled">
+                                            <i class="bi bi-x-circle"></i> Inactive
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="{{ route('admin.currencies.edit', $currency) }}" class="action-btn" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        
+                                        @if(!$currency->is_default)
+                                            <form action="{{ route('admin.currencies.toggle-status', $currency) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="action-btn {{ $currency->is_active ? 'delete' : '' }}" title="{{ $currency->is_active ? 'Deactivate' : 'Activate' }}">
+                                                    <i class="bi {{ $currency->is_active ? 'bi-toggle-off' : 'bi-toggle-on' }}"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -60,39 +117,6 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">
-                    {{ __('Update Currency Settings') }}
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="admin-card mt-4">
-    <div class="admin-card-header">
-        <h5 class="mb-0">{{ __('Currency Display Guide') }}</h5>
-    </div>
-    <div class="admin-card-body">
-        <p class="mb-2">{{ __('For your reference, here is how prices will be displayed in different currencies:') }}</p>
-        
-        <div class="row">
-            @foreach($currencies as $currency)
-                @if($currency->is_active)
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6>{{ $currency->name }} ({{ $currency->code }})</h6>
-                                <p class="mb-1">{{ __('Symbol') }}: <strong>{{ $currency->symbol }}</strong></p>
-                                <p class="mb-1">{{ __('Exchange Rate') }}: <strong>1 EGP = {{ 1 / $currency->exchange_rate }} {{ $currency->code }}</strong></p>
-                                <p class="mb-0">{{ __('Example') }}: <strong>{{ $currency->format(1000 / $currency->exchange_rate) }}</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @endforeach
         </div>
     </div>
-</div>
 @endsection 

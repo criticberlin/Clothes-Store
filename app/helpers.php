@@ -32,46 +32,37 @@ if (!function_exists('lang')) {
     }
 }
 
-if (!function_exists('formatPrice')) {
+if (!function_exists('format_price')) {
     /**
      * Format price with the appropriate currency symbol and exchange rate
      *
-     * @param float $price
-     * @param string|null $currencyCode
-     * @param bool $includeCode
-     * @return string
+     * @param float $price Price in EGP
+     * @param string|null $currencyCode Optional currency code to use
+     * @param bool $includeCode Whether to include the currency code in the output
+     * @return string Formatted price
      */
-    function formatPrice($price, $currencyCode = null, $includeCode = false)
+    function format_price($price, $currencyCode = null, $includeCode = false)
     {
-        // Get current currency code from session or use default
-        $code = $currencyCode ?? Session::get('currency_code', 'EGP');
+        // Get the CurrencyService
+        $currencyService = app(\App\Services\CurrencyService::class);
         
-        try {
-            // Get currency from database
-            $currency = Currency::where('code', $code)->first();
-            
-            if ($currency) {
-                // Convert price using exchange rate if not default currency
-                if (!$currency->is_default) {
-                    $price = $price / $currency->exchange_rate;
+        if ($currencyCode) {
+            // If a specific currency code is provided, get that currency
+            try {
+                $currency = \App\Models\Currency::where('code', $currencyCode)
+                    ->where('is_active', true)
+                    ->first();
+                    
+                if ($currency) {
+                    return $currencyService->formatPrice($price, $currency, $includeCode);
                 }
-                
-                // Format the price with the currency symbol
-                $formattedPrice = $currency->symbol . number_format($price, 2);
-                
-                // Add currency code if requested
-                if ($includeCode) {
-                    $formattedPrice .= ' ' . $code;
-                }
-                
-                return $formattedPrice;
+            } catch (\Exception $e) {
+                // Fallback to current currency if specific one not found
             }
-        } catch (\Exception $e) {
-            // Fallback to basic formatting if currency not found
         }
         
-        // Default formatting if no currency found
-        return 'ج.م ' . number_format($price, 2);
+        // Use current currency if no specific one is provided or it wasn't found
+        return $currencyService->formatPrice($price, null, $includeCode);
     }
 }
 
@@ -91,12 +82,12 @@ if (!function_exists('getBasePrice')) {
         }
         
         try {
-            $currency = Currency::where('code', $fromCurrency)->first();
+            $currency = \App\Models\Currency::where('code', $fromCurrency)->first();
             
             if ($currency) {
-                // If not default currency, convert to base currency
+                // If not default currency, convert to base currency by dividing by exchange rate
                 if (!$currency->is_default) {
-                    return $price * $currency->exchange_rate;
+                    return $price / $currency->rate;
                 }
             }
         } catch (\Exception $e) {
@@ -107,17 +98,17 @@ if (!function_exists('getBasePrice')) {
     }
 }
 
-if (!function_exists('displayPrice')) {
+if (!function_exists('display_price')) {
     /**
      * HTML helper to display a formatted price with data attributes for dynamic updating
      * 
-     * @param float $price
+     * @param float $price Price in EGP
      * @param string|null $currencyCode
-     * @return string
+     * @return string HTML with formatted price
      */
-    function displayPrice($price, $currencyCode = null)
+    function display_price($price, $currencyCode = null)
     {
         // Store base price (EGP) in data attribute for JavaScript currency switching
-        return '<span class="price-value" data-base-price="'.$price.'">'.formatPrice($price, $currencyCode).'</span>';
+        return '<span class="price-display" data-base-price="'.$price.'">'.format_price($price, $currencyCode).'</span>';
     }
 }

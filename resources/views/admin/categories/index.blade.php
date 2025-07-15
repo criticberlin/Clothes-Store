@@ -42,23 +42,29 @@
                             <tr>
                                 <td>{{ $category->id }}</td>
                                 <td>
-                                    @if($category->photo)
-                                        <img src="{{ asset('storage/' . $category->photo) }}" alt="{{ $category->name }}" width="50" class="img-thumbnail">
-                                    @else
-                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                            <i class="bi bi-tag"></i>
-                                        </div>
-                                    @endif
+                                    <div class="product-thumbnail">
+                                        @if($category->photo)
+                                            <img src="{{ asset('storage/' . $category->photo) }}" alt="{{ $category->name }}" class="product-img">
+                                        @else
+                                            <div class="product-img-placeholder">
+                                                <i class="bi bi-tag"></i>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>{{ $category->name }}</td>
                                 <td>{{ $category->slug }}</td>
-                                <td>{{ $category->products->count() }}</td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('admin.categories.edit', $category) }}" class="btn btn-outline-primary">
+                                    <span class="status-badge completed">
+                                        <i class="bi bi-collection"></i> {{ $category->products->count() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="{{ route('admin.categories.edit', $category) }}" class="action-btn" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger" 
+                                        <button type="button" class="action-btn delete" title="Delete"
                                                 onclick="document.getElementById('delete-category-{{ $category->id }}').submit()">
                                             <i class="bi bi-trash"></i>
                                         </button>

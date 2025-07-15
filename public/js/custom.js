@@ -70,36 +70,130 @@ function initializeSearch() {
     console.log('Search initialized');
     
     let typingTimer;
+    let loadingTimer;
     const doneTypingInterval = 300; // wait 300ms after user stops typing
+    let isLoading = false;
+    
+    /**
+     * Debounce function to limit how often a function is called
+     * @param {Function} func - The function to debounce
+     * @param {number} wait - Time to wait in milliseconds
+     * @return {Function} - Debounced function
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Function to get base URL for the application
+    function getBaseUrl() {
+        // Use global baseUrl if available
+        if (window.baseUrl) {
+            return window.baseUrl;
+        }
+        
+        // Check if base tag exists
+        const baseTag = document.querySelector('base');
+        if (baseTag && baseTag.href) {
+            return baseTag.href.replace(/\/$/, '');
+        }
+        
+        // Check for Clothes_Store in path
+        const path = window.location.pathname;
+        if (path.includes('/Clothes_Store/public')) {
+            return window.location.origin + '/Clothes_Store/public';
+        } else if (path.includes('/Clothes_Store')) {
+            return window.location.origin + '/Clothes_Store';
+        }
+        
+        // Default to origin
+        return window.location.origin;
+    }
+    
+    /**
+     * Show loading indicator in search results
+     */
+    function showLoadingIndicator() {
+        isLoading = true;
+        // Show loading indicator
+        searchResults.innerHTML = `
+            <div class="search-result-item d-flex align-items-center justify-content-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>Loading results...</span>
+            </div>
+        `;
+        searchResults.classList.add('show');
+        
+        // Add loading indicator to search input
+        const existingIcon = searchInput.parentNode.querySelector('.search-loading-indicator');
+        if (!existingIcon) {
+            const loadingIcon = document.createElement('div');
+            loadingIcon.className = 'search-loading-indicator position-absolute';
+            loadingIcon.style.right = '40px';
+            loadingIcon.style.top = '50%';
+            loadingIcon.style.transform = 'translateY(-50%)';
+            loadingIcon.innerHTML = '<div class="spinner-grow spinner-grow-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+            searchInput.parentNode.appendChild(loadingIcon);
+        }
+    }
+    
+    /**
+     * Hide loading indicator
+     */
+    function hideLoadingIndicator() {
+        isLoading = false;
+        // Remove loading indicator from search input
+        const loadingIcon = searchInput.parentNode.querySelector('.search-loading-indicator');
+        if (loadingIcon) {
+            loadingIcon.remove();
+        }
+    }
+    
+    /**
+     * Show error message in search results
+     */
+    function showErrorMessage(message) {
+        hideLoadingIndicator();
+        searchResults.innerHTML = `
+            <div class="search-result-item empty-state">
+                <i class="bi bi-exclamation-circle"></i>
+                ${message || 'Search error. Please try again.'}
+            </div>
+        `;
+        searchResults.classList.add('show');
+    }
     
     // Function to perform search
     function performSearch() {
         const searchTerm = searchInput.value.trim();
         
         if (searchTerm.length < 2) {
+            hideLoadingIndicator();
             searchResults.classList.remove('show');
             return;
         }
         
         console.log('Performing search for:', searchTerm);
         
-        // Show loading indicator
-        searchResults.innerHTML = `
-            <div class="search-result-item text-center">
-                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <span class="ms-2">Searching...</span>
-            </div>
-        `;
-        searchResults.classList.add('show');
+        // Show loading state immediately
+        showLoadingIndicator();
         
         // Get category value
         const categoryInput = document.getElementById('categoryInput');
         const categoryId = categoryInput ? categoryInput.value : '';
         
-        // Build API URL with parameters
-        let apiUrl = `/api/search?q=${encodeURIComponent(searchTerm)}`;
+        // Get base URL and build API URL with parameters
+        const baseUrl = getBaseUrl();
+        let apiUrl = `${baseUrl}/api/search?q=${encodeURIComponent(searchTerm)}`;
         if (categoryId) {
             apiUrl += `&category_id=${categoryId}`;
         }
@@ -118,20 +212,49 @@ function initializeSearch() {
         
         console.log('Fetching:', apiUrl);
         
-        // Send AJAX request
-        fetch(apiUrl, {
-            method: 'GET',
-            headers: headers,
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.status);
-            }
-            return response.json();
+        // Send AJAX request with a promise-based approach
+        new Promise((resolve, reject) => {
+            // First try the regular API endpoint
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('API response error');
+                }
+                return response.json();
+            })
+            .then(data => resolve(data))
+            .catch(error => {
+                console.log('Trying fallback endpoint due to:', error.message);
+                
+                // Try direct PHP endpoint if the API route fails
+                let directEndpoint = `${baseUrl}/api-search.php?q=${encodeURIComponent(searchTerm)}`;
+                if (categoryId) {
+                    directEndpoint += `&category_id=${categoryId}`;
+                }
+                
+                return fetch(directEndpoint, {
+                    method: 'GET',
+                    headers: headers
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Both API endpoints failed');
+                    }
+                    return response.json();
+                })
+                .then(data => resolve(data))
+                .catch(fallbackError => {
+                    console.error('All search endpoints failed:', fallbackError);
+                    reject(fallbackError);
+                });
+            });
         })
         .then(data => {
-            console.log('Search results:', data);
+            hideLoadingIndicator();
             
             if (!data || !data.products) {
                 throw new Error('Invalid response data');
@@ -169,7 +292,7 @@ function initializeSearch() {
                         productsByCategory[category].forEach(product => {
                             if (count < maxResults) {
                                 html += `
-                                    <a href="/product/${product.slug || product.id}" class="text-decoration-none">
+                                    <a href="${baseUrl}/product/${product.slug || product.id}" class="text-decoration-none">
                                         <div class="search-result-item d-flex align-items-center">
                                             <div class="flex-shrink-0">
                                                 <img src="${product.image}" alt="${product.name}" class="me-3" width="40" height="40" style="object-fit: cover; border-radius: var(--radius-sm);">
@@ -199,7 +322,7 @@ function initializeSearch() {
                     }
                     
                     html += `
-                        <a href="/products/search?${searchParams.toString()}" class="text-decoration-none">
+                        <a href="${baseUrl}/products/search?${searchParams.toString()}" class="text-decoration-none">
                             <div class="search-result-item text-center">
                                 <strong class="text-primary">View all results (${data.products.length})</strong>
                             </div>
@@ -208,8 +331,9 @@ function initializeSearch() {
                 }
             } else {
                 html = `
-                    <div class="search-result-item text-center">
-                        No results found
+                    <div class="search-result-item empty-state">
+                        <i class="bi bi-search"></i>
+                        No results found for "${searchTerm}"
                     </div>
                 `;
             }
@@ -218,35 +342,91 @@ function initializeSearch() {
             searchResults.classList.add('show');
         })
         .catch(error => {
-            console.error('Error searching products:', error);
-            searchResults.innerHTML = `
-                <div class="search-result-item text-center text-danger">
-                    Search error. Please try again.
-                </div>
-            `;
+            console.error('Search error:', error);
+            showErrorMessage('Search error. Please try again.');
         });
     }
     
+    // Create a debounced version of the search function
+    const debouncedSearch = debounce(performSearch, doneTypingInterval);
+    
     // Search on typing
     searchInput.addEventListener('input', function() {
-        console.log('Search input changed');
+        // Clear any existing search timer
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(performSearch, doneTypingInterval);
+        clearTimeout(loadingTimer);
+        
+        const searchTerm = searchInput.value.trim();
+        
+        // If search term is too short, hide results and don't search
+        if (searchTerm.length < 2) {
+            hideLoadingIndicator();
+            searchResults.classList.remove('show');
+            return;
+        }
+        
+        // Add delayed loading indicator to prevent flashing for quick responses
+        loadingTimer = setTimeout(() => {
+            if (!isLoading && searchTerm.length >= 2) {
+                showLoadingIndicator();
+            }
+        }, 200);
+        
+        // Trigger the debounced search
+        debouncedSearch();
     });
     
     // Search on category change
     document.addEventListener('categoryChanged', function(e) {
-        console.log('Category changed event received:', e.detail.value);
         if (searchInput.value.trim().length >= 2) {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(performSearch, doneTypingInterval);
+            debouncedSearch();
         }
     });
     
     // Hide search results when clicking outside
     document.addEventListener('click', function(event) {
         if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+            hideLoadingIndicator();
             searchResults.classList.remove('show');
+        }
+    });
+    
+    // Add keyboard navigation support
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideLoadingIndicator();
+            searchResults.classList.remove('show');
+        } else if (e.key === 'ArrowDown' && searchResults.classList.contains('show')) {
+            // Focus first result
+            const firstResult = searchResults.querySelector('a');
+            if (firstResult) {
+                e.preventDefault();
+                firstResult.focus();
+            }
+        }
+    });
+    
+    // Add keyboard navigation within results
+    searchResults.addEventListener('keydown', function(e) {
+        const links = Array.from(searchResults.querySelectorAll('a'));
+        const currentIndex = links.indexOf(document.activeElement);
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (currentIndex >= 0 && currentIndex < links.length - 1) {
+                links[currentIndex + 1].focus();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                links[currentIndex - 1].focus();
+            } else {
+                searchInput.focus();
+            }
+        } else if (e.key === 'Escape') {
+            hideLoadingIndicator();
+            searchResults.classList.remove('show');
+            searchInput.focus();
         }
     });
 }

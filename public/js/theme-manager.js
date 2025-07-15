@@ -8,22 +8,27 @@
 class UnifiedPreferencesManager {
     constructor() {
         // Constants
-        this.THEME_KEY = 'theme_preference';
-        this.LANG_KEY = 'language_preference';
+        this.THEME_KEY = 'myclothes_theme_preference';
+        this.LANG_KEY = 'myclothes_language_preference';
         this.htmlElement = document.documentElement;
+        this.TRANSITION_CLASS = 'theme-transition';
         
-        // Initialize preferences
-        this.init();
+        // Apply saved theme immediately before page load completes to avoid FOUC
+        this.applyThemeEarly();
         
-        // Setup event listeners
-        this.setupEventListeners();
-        
-        // Log initial state
-        console.log('Theme Manager initialized:', {
-            theme: localStorage.getItem(this.THEME_KEY),
-            htmlClass: this.htmlElement.className,
-            documentTheme: document.documentElement.classList.contains('theme-light') ? 'light' : 'dark'
-        });
+        // Initialize preferences when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
+    }
+
+    // Apply theme early - before page rendering completes
+    applyThemeEarly() {
+        const savedTheme = localStorage.getItem(this.THEME_KEY) || 'dark';
+        this.htmlElement.classList.remove('theme-light', 'theme-dark');
+        this.htmlElement.classList.add(`theme-${savedTheme}`);
     }
 
     init() {
@@ -45,14 +50,78 @@ class UnifiedPreferencesManager {
         // Apply theme and language without syncing with server (to avoid loops)
         this.applyTheme(currentTheme, true);
         this.applyLanguage(savedLang, false);
+        
+        // Setup event listeners
+        this.setupEventListeners();
+        
+        // Update theme toggle UI initially
+        this.updateThemeToggleUI();
+        
+        // Log initial state
+        console.log('Theme Manager initialized:', {
+            theme: currentTheme,
+            htmlClass: this.htmlElement.className
+        });
     }
 
     setupEventListeners() {
+        // Prevent dropdown close when clicking on theme toggle
+        document.addEventListener('click', (e) => {
+            if (e.target && (e.target.closest('[data-prevent-close="true"]') || e.target.closest('.modern-switch'))) {
+                e.stopPropagation();
+            }
+        }, true);
+        
+        // Setup modern theme switch in dropdown
+        const themeSwitch = document.getElementById('themeSwitch');
+        const themeToggleOption = document.getElementById('themeToggleOption');
+        
+        if (themeSwitch) {
+            // Set initial state based on current theme
+            const isDarkTheme = this.htmlElement.classList.contains('theme-dark');
+            themeSwitch.checked = isDarkTheme;
+            
+            // Add event listener for the checkbox
+            themeSwitch.addEventListener('change', () => {
+                const newTheme = themeSwitch.checked ? 'dark' : 'light';
+                console.log('Theme switch changed to:', newTheme);
+                this.applyTheme(newTheme);
+            });
+        }
+        
+        if (themeToggleOption) {
+            themeToggleOption.addEventListener('click', (e) => {
+                // Only toggle if clicking on the item but not directly on the switch
+                if (!e.target.closest('.modern-switch')) {
+                    console.log('Theme toggle option clicked');
+                    const isDarkTheme = this.htmlElement.classList.contains('theme-dark');
+                    const newTheme = isDarkTheme ? 'light' : 'dark';
+                    
+                    if (themeSwitch) {
+                        themeSwitch.checked = newTheme === 'dark';
+                    }
+                    
+                    this.applyTheme(newTheme);
+                }
+                
+                // Prevent dropdown from closing
+                e.stopPropagation();
+            });
+        }
+        
         // Theme toggle buttons
         document.querySelectorAll('.theme-toggle-btn, #themeToggle').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.toggleTheme();
+            });
+        });
+        
+        // Theme switch toggles
+        document.querySelectorAll('.theme-switcher').forEach(switchEl => {
+            switchEl.addEventListener('change', (e) => {
+                const theme = e.target.checked ? 'dark' : 'light';
+                this.applyTheme(theme);
             });
         });
         
@@ -106,6 +175,9 @@ class UnifiedPreferencesManager {
     applyTheme(theme, skipServerSync = false) {
         console.log('Applying theme:', theme);
         
+        // Prevent flickering by adding a transition class
+        this.htmlElement.classList.add(this.TRANSITION_CLASS);
+        
         // Save theme preference in localStorage
         localStorage.setItem(this.THEME_KEY, theme);
         
@@ -113,19 +185,32 @@ class UnifiedPreferencesManager {
         this.htmlElement.classList.remove('theme-light', 'theme-dark');
         this.htmlElement.classList.add(`theme-${theme}`);
         
+        // Update theme switch in dropdown
+        const themeSwitch = document.getElementById('themeSwitch');
+        if (themeSwitch) {
+            themeSwitch.checked = theme === 'dark';
+        }
+        
+        // Update theme toggle UI (label and icon)
+        this.updateThemeToggleUI();
+        
         // Update all toggle buttons icons
         this.updateThemeIcons(theme);
         
-        // Add transition effect
-        document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-        setTimeout(() => {
-            document.body.style.transition = '';
-        }, 300);
-        
-        // Update any theme inputs
+        // Update any theme inputs including switches
         document.querySelectorAll('input[name="theme_mode"]').forEach(input => {
             input.checked = input.value === theme;
         });
+        
+        // Update theme switchers
+        document.querySelectorAll('.theme-switcher').forEach(switcher => {
+            switcher.checked = theme === 'dark';
+        });
+        
+        // Remove the transition class after the transition completes
+        setTimeout(() => {
+            this.htmlElement.classList.remove(this.TRANSITION_CLASS);
+        }, 300);
         
         // Sync with server if needed
         if (!skipServerSync) {
@@ -261,6 +346,39 @@ class UnifiedPreferencesManager {
         
         // Default to origin
         return window.location.origin;
+    }
+
+    // Update theme toggle UI in dropdown
+    updateThemeToggleUI() {
+        const themeLabel = document.getElementById('themeToggleLabel');
+        const themeIcon = document.getElementById('themeToggleIcon');
+        const themeSwitch = document.getElementById('themeSwitch');
+        
+        if (!themeLabel || !themeIcon) {
+            console.warn('Theme toggle elements not found in DOM');
+            return;
+        }
+        
+        const isDarkTheme = this.htmlElement.classList.contains('theme-dark');
+        console.log('Updating theme toggle UI, dark theme:', isDarkTheme);
+        
+        // Set checkbox state
+        if (themeSwitch) {
+            themeSwitch.checked = isDarkTheme;
+        }
+        
+        // Update label text - show what mode will be switched TO
+        if (isDarkTheme) {
+            // Currently dark - will switch to light
+            themeLabel.textContent = 'Light Mode';
+            themeIcon.className = 'bi bi-sun-fill me-2';
+            themeIcon.style.color = '#f59e0b'; // amber/yellow
+        } else {
+            // Currently light - will switch to dark
+            themeLabel.textContent = 'Dark Mode';
+            themeIcon.className = 'bi bi-moon-stars-fill me-2';
+            themeIcon.style.color = '#7F5AF0'; // purple
+        }
     }
 }
 

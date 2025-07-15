@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 
 class Currency extends Model
 {
@@ -17,8 +18,9 @@ class Currency extends Model
     protected $fillable = [
         'code',
         'name',
-        'symbol',
-        'exchange_rate',
+        'symbol_en',
+        'symbol_ar',
+        'rate',
         'is_default',
         'is_active'
     ];
@@ -29,7 +31,7 @@ class Currency extends Model
      * @var array
      */
     protected $casts = [
-        'exchange_rate' => 'float',
+        'rate' => 'float',
         'is_default' => 'boolean',
         'is_active' => 'boolean',
     ];
@@ -55,27 +57,17 @@ class Currency extends Model
     }
 
     /**
-     * Convert an amount from the base currency to this currency.
-     *
-     * @param float $amount
-     * @return float
-     */
-    public function convert($amount)
-    {
-        return $amount * $this->exchange_rate;
-    }
-
-    /**
-     * Format an amount in this currency.
-     *
-     * @param float $amount
-     * @param bool $includeSymbol
+     * Get the appropriate symbol based on current locale
+     * 
      * @return string
      */
-    public function format($amount, $includeSymbol = true)
+    public function getSymbolForCurrentLocale()
     {
-        $formattedAmount = number_format($this->convert($amount), 2);
+        // Use arabic symbol if locale is Arabic
+        if (App::getLocale() === 'ar') {
+            return $this->symbol_ar;
+        }
         
-        return $includeSymbol ? $this->symbol . $formattedAmount : $formattedAmount;
+        return $this->symbol_en;
     }
-}
+} 

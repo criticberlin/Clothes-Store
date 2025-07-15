@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard')
-@section('description', 'Welcome back, ' . Auth::user()->name)
+@section('description')
+Welcome back, <span class="admin-name">{{ Auth::user()->name }}</span>
+@endsection
 
 @section('content')
     <div class="admin-header">
@@ -72,7 +74,7 @@
                         <div class="text-center py-5">
                             <i class="bi bi-graph-up fs-1 text-primary"></i>
                             <p class="mt-3">Sales chart visualization would appear here</p>
-                            <p class="text-muted">Total Revenue: ${{ number_format($revenue, 2) }}</p>
+                            <p class="text-muted">Total Revenue: <span class="price-display" data-base-price="{{ $revenue }}">{{ format_price($revenue) }}</span></p>
                         </div>
                     </div>
                 </div>
@@ -107,7 +109,14 @@
                                     </div>
                                     <p class="mb-1 text-truncate">{{ $ticket->message }}</p>
                                     <small class="text-muted">From: {{ $ticket->user->name }}</small>
-                                    <span class="badge bg-{{ $ticket->status === 'open' ? 'danger' : ($ticket->status === 'pending' ? 'warning' : 'success') }} float-end">
+                                    <span class="status-badge {{ 
+                                        $ticket->status === 'open' ? 'cancelled' : 
+                                        ($ticket->status === 'pending' ? 'pending' : 'completed') 
+                                    }}">
+                                        <i class="bi bi-{{ 
+                                            $ticket->status === 'open' ? 'exclamation-circle' : 
+                                            ($ticket->status === 'pending' ? 'hourglass-split' : 'check-circle') 
+                                        }}"></i>
                                         {{ ucfirst($ticket->status) }}
                                     </span>
                                 </a>
@@ -132,7 +141,7 @@
                 </div>
                 <div class="admin-card-body">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table admin-datatable">
                             <thead>
                                 <tr>
                                     <th>Order ID</th>
@@ -153,20 +162,29 @@
                                         <td>#{{ $order->id }}</td>
                                         <td>{{ $order->user->name }}</td>
                                         <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                        <td>${{ number_format($order->total_amount, 2) }}</td>
+                                        <td><span class="price-display" data-base-price="{{ $order->total_amount }}">{{ format_price($order->total_amount) }}</span></td>
                                         <td>
-                                            <span class="badge bg-{{ 
-                                                $order->status === 'completed' ? 'success' : 
-                                                ($order->status === 'processing' ? 'warning' : 
-                                                ($order->status === 'cancelled' ? 'danger' : 'info')) 
+                                            <span class="status-badge {{ 
+                                                $order->status === 'completed' ? 'completed' : 
+                                                ($order->status === 'pending' ? 'pending' : 
+                                                ($order->status === 'processing' ? 'pending' : 
+                                                ($order->status === 'cancelled' ? 'cancelled' : 'info'))) 
                                             }}">
+                                                <i class="bi bi-{{ 
+                                                    $order->status === 'completed' ? 'check-circle' : 
+                                                    ($order->status === 'pending' ? 'hourglass' : 
+                                                    ($order->status === 'processing' ? 'hourglass-split' : 
+                                                    ($order->status === 'cancelled' ? 'x-circle' : 'info-circle'))) 
+                                                }}"></i>
                                                 {{ ucfirst($order->status) }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin.orders.details', $order) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-eye"></i> View
-                                            </a>
+                                            <div class="action-btns">
+                                                <a href="{{ route('admin.orders.details', $order) }}" class="action-btn" title="View">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -184,6 +202,22 @@
 @endsection
 
 <style>
+.admin-name {
+    color: var(--primary);
+    font-weight: 600;
+    transition: text-shadow 0.3s ease-in-out;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+}
+
+.admin-name:hover {
+    text-shadow: 
+        0 0 2px var(--primary),
+        0 0 6px rgba(255, 255, 255, 0.4),
+        0 0 10px rgba(255, 255, 255, 0.3),
+        0 0 14px rgba(255, 255, 255, 0.2);
+}
+
     .quick-link-card {
         display: block;
         padding: 1.25rem;

@@ -62,7 +62,6 @@ Route::get('/reset-password/{token}', [UsersController::class, 'showResetForm'])
 Route::post('/reset-password', [UsersController::class, 'resetPassword'])->name('password.update');
 
  // User Listing and Search
-Route::get('/users/list', [UsersController::class, 'list'])->name('users.list');
 
 // User CRUD Operations
 Route::get('/users/create', [UsersController::class, 'createRoll'])->name('users_create');
@@ -117,11 +116,25 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
     
     // Admin Settings
-    Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+    Route::get('/settings/store-information', [AdminController::class, 'storeInformation'])->name('admin.settings');
+    Route::get('/settings/payment', [AdminController::class, 'paymentSettings'])->name('admin.settings.payment');
+    Route::get('/settings/shipping', [AdminController::class, 'shippingSettings'])->name('admin.settings.shipping');
+    Route::get('/settings/email', [AdminController::class, 'emailSettings'])->name('admin.settings.email');
+    
+    // Admin Preferences
+    Route::post('/preferences/currency', [App\Http\Controllers\Admin\PreferenceController::class, 'updateCurrency'])->name('admin.preferences.currency');
     
     // Admin Currency Management
     Route::get('/currencies', [AdminController::class, 'currencies'])->name('admin.currencies');
-    Route::post('/currencies', [AdminController::class, 'updateCurrencies'])->name('admin.currencies.update');
+    Route::post('/currencies', [AdminController::class, 'updateCurrencies'])->name('admin.updateCurrencies');
+    
+    // Currency Management
+    Route::prefix('currencies')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CurrencyController::class, 'index'])->name('admin.currencies.index');
+        Route::get('/{currency}/edit', [App\Http\Controllers\Admin\CurrencyController::class, 'edit'])->name('admin.currencies.edit');
+        Route::put('/{currency}', [App\Http\Controllers\Admin\CurrencyController::class, 'update'])->name('admin.currencies.update');
+        Route::patch('/{currency}/toggle-status', [App\Http\Controllers\Admin\CurrencyController::class, 'toggleStatus'])->name('admin.currencies.toggle-status');
+    });
     
     // Admin Support Ticket Management
     Route::get('/support', [App\Http\Controllers\web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
@@ -200,6 +213,18 @@ Route::get('/3d-customizer', function () {
 Route::middleware(['auth'])->group(function () {
     Route::post('/products/{product}/rate', [RatingController::class, 'store'])->name('products.rate');
     Route::delete('/ratings/{rating}', [RatingController::class, 'destroy'])->name('ratings.destroy');
+});
+
+// Fallback API routes to ensure functionality
+Route::get('/api/search', [App\Http\Controllers\Api\SearchController::class, 'search']);
+
+// API status check route
+Route::get('/api-status', function () {
+    return response()->json([
+        'status' => 'ok', 
+        'message' => 'API routes are working',
+        'timestamp' => now()->toDateTimeString()
+    ]);
 });
 
 

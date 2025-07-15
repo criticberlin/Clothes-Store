@@ -169,8 +169,8 @@
                                                     <td>{{ $item->color ? $item->color->name : 'N/A' }}</td>
                                                     <td>{{ $item->size ? $item->size->name : 'N/A' }}</td>
                                                     <td>{{ $item->quantity }}</td>
-                                                    <td>${{ number_format($item->price, 2) }}</td>
-                                                    <td>${{ number_format($item->price * $item->quantity, 2) }}</td>
+                                                    <td>{{ number_format($item->price, 2) }} EGP</td>
+                                                    <td>{{ number_format($item->price * $item->quantity, 2) }} EGP</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
