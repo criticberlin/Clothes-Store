@@ -72,23 +72,10 @@
             @foreach($products as $product)
                 <div class="col-6 col-md-4 col-lg-3">
                     <div class="product-card h-100">
+                        <a href="{{ route('products.details', $product->id) }}" class="product-card-link">
                         <div class="product-image-container">
-                            @if($product->photo)
-                                <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                            @else
-                                <img src="{{ asset('images/products/default.jpg') }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                            @endif
-                            <div class="product-actions">
-                                <a href="{{ route('cart.add', $product->id) }}" class="btn btn-sm btn-primary rounded-circle add-to-cart-btn" data-method="post" title="Add to Cart">
-                                    <i class="bi bi-cart-plus"></i>
-                                </a>
-                                <button class="btn btn-sm btn-outline-light rounded-circle quick-view-btn" data-product-id="{{ $product->id }}" title="Quick View">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-light rounded-circle add-to-wishlist-btn" title="Add to Wishlist">
-                                    <i class="bi bi-heart"></i>
-                                </button>
-                            </div>
+                                <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" class="img-fluid product-image">
+                                
                             <!-- Product Badges -->
                             @if($product->quantity <= 0)
                                 <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
@@ -114,11 +101,15 @@
                                     {{ $product->categories->first()->name }}
                                 @endif
                             </div>
-                            <h3 class="product-title h6 mb-1">
-                                <a href="{{ route('products.details', $product->id) }}" class="text-reset text-decoration-none">
-                                    {{ $product->name }}
-                                </a>
-                            </h3>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h3 class="product-title h6 mb-1">{{ $product->name }}</h3>
+                                    <button type="button" class="btn btn-sm btn-icon wishlist-toggle p-0 m-0" 
+                                            data-product-id="{{ $product->id }}" 
+                                            data-bs-toggle="tooltip" 
+                                            title="{{ __('Add to Wishlist') }}">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                </div>
                             <!-- Available Sizes -->
                             @if($product->sizes && $product->sizes->count() > 0)
                                 <div class="available-sizes mb-2">
@@ -129,7 +120,7 @@
                             @endif
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <div class="product-price fw-bold">
-                                    {!! display_price($product->price) !!}
+                                        {{ app(\App\Services\CurrencyService::class)->formatPrice($product->price) }}
                                 </div>
                                 <div class="product-rating">
                                     <i class="bi bi-star-fill text-warning"></i>
@@ -140,6 +131,7 @@
                                 </div>
                             </div>
                         </div>
+                        </a>
                     </div>
                 </div>
             @endforeach
@@ -171,6 +163,214 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+/* Product Card Styles */
+.product-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    position: relative;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
+
+.product-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-normal);
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 1;
+}
+
+.product-badge.out-of-stock {
+    background-color: var(--bs-danger);
+    color: white;
+}
+
+.product-badge.new {
+    background-color: var(--primary);
+    color: white;
+}
+
+.color-swatches {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 1;
+}
+
+.color-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.color-swatch.more-colors {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.product-title {
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.available-sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.size-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    background-color: var(--surface-alt);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+}
+
+.product-price {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.filter-pill {
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.filter-pill:hover {
+    background-color: var(--surface-alt);
+}
+
+.filter-pill.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.size-filter {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.size-filter:hover {
+    background-color: var(--surface-alt);
+}
+
+.size-filter.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.sort-dropdown .form-select {
+    min-width: 180px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+    z-index: 2;
+    position: relative;
+}
+
+.btn-icon:hover {
+    color: var(--primary);
+}
+
+.btn-icon.active {
+    color: var(--primary);
+}
+
+.wishlist-toggle .bi-heart-fill {
+    color: var(--primary);
+}
+
+.color-swatch-lg {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+}
+
+.size-option {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+</style>
+@endpush
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -179,136 +379,69 @@
             swatch.style.backgroundColor = swatch.dataset.color;
         });
         
-        // Quick View functionality
-        const quickViewBtns = document.querySelectorAll('.quick-view-btn');
-        const quickViewModal = new bootstrap.Modal(document.getElementById('quickViewModal'));
-        const quickViewContent = document.getElementById('quickViewContent');
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
         
-        quickViewBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                quickViewContent.innerHTML = `
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                `;
-                quickViewModal.show();
+        // Wishlist toggle functionality
+        const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
+        wishlistBtns.forEach(btn => {
+            // Check if product is in wishlist
+            const productId = btn.getAttribute('data-product-id');
+            
+            // Make AJAX request to check if in wishlist
+            fetch(`/wishlist/check/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.in_wishlist) {
+                        btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        btn.classList.add('active');
+                    } else {
+                        btn.innerHTML = '<i class="bi bi-heart"></i>';
+                        btn.classList.remove('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking wishlist status:', error);
+                });
+            
+            // Add click event listener
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Fetch product details
-                fetch(`/api/products/${productId}`)
+                const productId = this.getAttribute('data-product-id');
+                
+                // Toggle wishlist status
+                fetch(`/wishlist/toggle/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.product) {
-                            const product = data.product;
-                            
-                            // Generate color swatches HTML
-                            let colorSwatches = '';
-                            if (product.colors && product.colors.length > 0) {
-                                colorSwatches = `
-                                    <div class="mb-4">
-                                        <h6 class="mb-2">Available Colors:</h6>
-                                        <div class="d-flex gap-2">
-                                            ${product.colors.map(color => 
-                                                `<div class="color-swatch-lg" data-color="${color.hex_code}" title="${color.name}"></div>`
-                                            ).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                            
-                            // Generate sizes HTML
-                            let sizesHtml = '';
-                            if (product.sizes && product.sizes.length > 0) {
-                                sizesHtml = `
-                                    <div class="mb-4">
-                                        <h6 class="mb-2">Available Sizes:</h6>
-                                        <div class="d-flex gap-2">
-                                            ${product.sizes.map(size => 
-                                                `<div class="size-option">${size.name}</div>`
-                                            ).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                            
-                            quickViewContent.innerHTML = `
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <img src="${product.image}" alt="${product.name}" class="img-fluid rounded">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h2 class="h4 mb-2">${product.name}</h2>
-                                        <div class="mb-3">
-                                            <span class="h5 text-primary">${product.formatted_price}</span>
-                                        </div>
-                                        <p class="mb-4">${product.description}</p>
-                                        
-                                        ${colorSwatches}
-                                        ${sizesHtml}
-                                        
-                                        <div class="d-flex gap-2 mb-4">
-                                            <a href="/product/${product.id}" class="btn btn-outline-primary">
-                                                <i class="bi bi-eye me-1"></i> View Details
-                                            </a>
-                                            <a href="/cart/add/${product.id}" class="btn btn-primary add-to-cart-btn" data-method="post">
-                                                <i class="bi bi-cart-plus me-1"></i> Add to Cart
-                                            </a>
-                                        </div>
-                                        <div class="product-meta">
-                                            <div class="mb-2"><strong>Category:</strong> ${product.category_name}</div>
-                                            <div class="mb-2"><strong>Code:</strong> ${product.code}</div>
-                                            <div><strong>Availability:</strong> 
-                                                <span class="${product.quantity > 0 ? 'text-success' : 'text-danger'}">
-                                                    ${product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                                                </span>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-2"><strong>Rating:</strong></div>
-                                                    <div class="rating-stars">
-                                                        ${Array(5).fill().map((_, i) => 
-                                                            `<i class="bi bi-star${i < Math.round(product.average_rating || 0) ? '-fill' : ''} text-warning"></i>`
-                                                        ).join('')}
-                                                    </div>
-                                                    <div class="ms-2">
-                                                        <span class="fw-bold">${(product.average_rating || 0).toFixed(1)}</span>
-                                                        ${product.ratings_count ? `<span class="text-tertiary small">(${product.ratings_count})</span>` : ''}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            // Reinitialize add to cart buttons
-                            initializeCartButtons();
-                            
-                            // Apply color to swatches
-                            quickViewContent.querySelectorAll('.color-swatch-lg[data-color]').forEach(function(swatch) {
-                                swatch.style.backgroundColor = swatch.dataset.color;
-                            });
+                    if (data.success) {
+                        if (data.in_wishlist) {
+                            btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                            btn.classList.add('active');
                         } else {
-                            quickViewContent.innerHTML = `
-                                <div class="text-center py-4">
-                                    <div class="alert alert-warning">
-                                        Product not found
-                                    </div>
-                                </div>
-                            `;
+                            btn.innerHTML = '<i class="bi bi-heart"></i>';
+                            btn.classList.remove('active');
+                        }
+                    } else {
+                        // If not authenticated, redirect to login
+                        if (data.message.includes('login')) {
+                            window.location.href = '/login';
+                        }
                         }
                     })
                     .catch(error => {
-                        console.error('Error fetching product:', error);
-                        quickViewContent.innerHTML = `
-                            <div class="text-center py-4">
-                                <div class="alert alert-danger">
-                                    Error loading product details
-                                </div>
-                            </div>
-                        `;
+                    console.error('Error toggling wishlist:', error);
                     });
             });
         });

@@ -38,6 +38,37 @@ class Product extends Model {
     }
     
     /**
+     * Get all images for this product
+     */
+    public function images(): HasMany {
+        return $this->hasMany(ProductImage::class);
+    }
+    
+    /**
+     * Get products recommended for this product
+     */
+    public function recommendedProducts(): BelongsToMany {
+        return $this->belongsToMany(
+            Product::class,
+            'product_recommendations',
+            'product_id',
+            'recommended_product_id'
+        )->withPivot('sort_order')->orderBy('sort_order');
+    }
+    
+    /**
+     * Get products that recommend this product
+     */
+    public function recommendedBy(): BelongsToMany {
+        return $this->belongsToMany(
+            Product::class,
+            'product_recommendations',
+            'recommended_product_id',
+            'product_id'
+        );
+    }
+    
+    /**
      * Calculate the average rating for this product
      */
     public function getAverageRatingAttribute(): float {

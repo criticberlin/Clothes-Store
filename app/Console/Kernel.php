@@ -74,11 +74,6 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__.'/Commands');
 
-        // Register commands
-        $this->commands([
-            \App\Console\Commands\CopySampleImages::class,
-            \App\Console\Commands\NormalizeCurrencies::class,
-        ]);
 
         require base_path('routes/console.php');
     }

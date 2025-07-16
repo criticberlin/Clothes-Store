@@ -196,6 +196,13 @@ Route::middleware(['auth:web'])->group(function () {
     // Orders route
     Route::get('/orders', [CartController::class, 'orders'])->name('orders.index');
     Route::get('/orders/{order}', [CartController::class, 'orderDetails'])->name('orders.details');
+
+    // Wishlist routes
+    Route::get('/wishlist', [App\Http\Controllers\web\WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/add/{productId}', [App\Http\Controllers\web\WishlistController::class, 'add'])->name('wishlist.add');
+    Route::delete('/wishlist/remove/{itemId}', [App\Http\Controllers\web\WishlistController::class, 'remove'])->name('wishlist.remove');
+    Route::get('/wishlist/check/{productId}', [App\Http\Controllers\web\WishlistController::class, 'check'])->name('wishlist.check');
+    Route::post('/wishlist/toggle/{productId}', [App\Http\Controllers\web\WishlistController::class, 'toggle'])->name('wishlist.toggle');
 });
 
 

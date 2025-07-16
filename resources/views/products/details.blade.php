@@ -24,7 +24,7 @@
 <div class="container py-5">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('home') }}">{{ __('general.home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('home') }}">{{ __('Home') }}</a></li>
             <li class="breadcrumb-item"><a href="{{ route('products.category', $product->category) }}">{{ ucfirst(__('general.' . $product->category)) }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ $product->name }}</li>
         </ol>
@@ -33,11 +33,55 @@
     <div class="row g-5">
         <!-- Product Images -->
         <div class="col-lg-6">
-            <div class="product-image-wrapper position-relative">
-                <img src="{{ asset('img/products/' . $product->photo) }}" alt="{{ $product->name }}" class="img-fluid rounded-4 shadow-sm product-main-image">
-                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill {{ $product->quantity > 0 ? 'bg-success' : 'bg-danger' }}">
-                    {{ $product->quantity > 0 ? __('general.available') : __('general.out_of_stock') }}
-                </span>
+            <div class="product-gallery">
+                <div class="main-image-container mb-3 position-relative">
+                    <div id="productImagesCarousel" class="carousel slide" data-bs-ride="false">
+                        <div class="carousel-inner rounded-4 shadow-sm">
+                            @if($product->images && count($product->images) > 0)
+                                @foreach($product->images as $index => $image)
+                                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                        <img src="{{ asset('storage/' . $image->filename) }}" alt="{{ $product->name }}" 
+                                             class="d-block w-100 product-main-image">
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="carousel-item active">
+                                    <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" 
+                                         class="d-block w-100 product-main-image">
+                                </div>
+                            @endif
+                        </div>
+                        @if($product->images && count($product->images) > 1)
+                            <button class="carousel-control-prev" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        @endif
+                        <span class="position-absolute top-0 start-0 m-3 badge rounded-pill {{ $product->quantity > 0 ? 'bg-success' : 'bg-danger' }}">
+                            {{ $product->quantity > 0 ? __('Available') : __('Out of Stock') }}
+                        </span>
+                    </div>
+                </div>
+                
+                @if($product->images && count($product->images) > 1)
+                    <div class="thumbnails-container">
+                        <div class="row g-2">
+                            @foreach($product->images as $index => $image)
+                                <div class="col-3">
+                                    <img src="{{ asset('storage/' . $image->filename) }}" 
+                                         alt="Thumbnail" 
+                                         class="img-thumbnail product-thumbnail {{ $index === 0 ? 'active' : '' }}"
+                                         data-bs-target="#productImagesCarousel"
+                                         data-bs-slide-to="{{ $index }}">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -56,7 +100,7 @@
             </div>
             
             <div class="mb-4">
-                <h5 class="mb-3">{{ __('general.color') }}</h5>
+                <h5 class="mb-3">{{ __('Color') }}</h5>
                 <div class="color-options d-flex gap-2 flex-wrap">
                     @foreach($product->colors as $color)
                     <div class="color-option form-check">
@@ -68,7 +112,7 @@
             </div>
             
             <div class="mb-4">
-                <h5 class="mb-3">{{ __('general.size') }}</h5>
+                <h5 class="mb-3">{{ __('Size') }}</h5>
                 <div class="size-options d-flex gap-2 flex-wrap">
                     @foreach($product->sizes as $size)
                     <div class="form-check">
@@ -81,32 +125,42 @@
             
             <div class="d-flex align-items-center mb-4">
                 <div class="me-3">
-                    <label for="quantity" class="form-label">{{ __('general.quantity') }}</label>
+                    <label for="quantity" class="form-label">{{ __('Quantity') }}</label>
                     <input type="number" class="form-control" id="quantity" name="quantity" form="add-to-cart-form" value="1" min="1" max="{{ $product->quantity }}" style="width: 80px;">
                 </div>
                 <div class="availability">
-                    <span class="text-secondary">{{ __('general.available') }}: <strong>{{ $product->quantity }}</strong></span>
+                    <span class="text-secondary">{{ __('Available') }}: <strong>{{ $product->quantity }}</strong></span>
                 </div>
             </div>
             
             <form id="add-to-cart-form" action="{{ route('cart.add', $product->id) }}" method="POST" class="d-grid gap-2 d-md-flex mb-4">
                 @csrf
-                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
-                    <i class="bi bi-cart-plus me-2"></i> {{ __('general.add_to_cart') }}
+                <button type="submit" id="add-to-cart-btn" class="btn btn-primary btn-lg flex-grow-1">
+                    <i class="bi bi-cart-plus me-2"></i> {{ __('Add to cart') }}
                 </button>
-                <button type="button" class="btn btn-outline-primary btn-lg">
+                <button type="button" class="btn btn-outline-primary btn-lg wishlist-toggle" data-product-id="{{ $product->id }}">
                     <i class="bi bi-heart"></i>
                 </button>
             </form>
             
+            <div id="validation-message" class="alert alert-warning d-none">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span id="validation-text"></span>
+            </div>
+
+            <div id="success-message" class="alert alert-success d-none">
+                <i class="bi bi-check-circle me-2"></i>
+                <span>{{ __('Product added to cart') }}</span>
+            </div>
+            
             <div class="product-meta">
                 <div class="row text-secondary">
                     <div class="col-6 col-md-4">
-                        <small class="d-block mb-1">{{ __('general.category') }}</small>
+                        <small class="d-block mb-1">{{ __('Category') }}</small>
                         <span>{{ ucfirst($product->category) }}</span>
                     </div>
                     <div class="col-6 col-md-4">
-                        <small class="d-block mb-1">{{ __('general.code') }}</small>
+                        <small class="d-block mb-1">{{ __('Code') }}</small>
                         <span>{{ $product->code }}</span>
                     </div>
                 </div>
@@ -119,12 +173,12 @@
         <ul class="nav nav-tabs" id="productTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">
-                    {{ __('general.description') }}
+                    {{ __('Description') }}
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">
-                    {{ __('general.reviews') }}
+                    {{ __('Reviews') }}
                 </button>
             </li>
         </ul>
@@ -160,12 +214,15 @@
                                     </div>
                                     <div class="rating-breakdown flex-grow-1">
                                         @php
-                                            $ratingCounts = $product->ratings()
-                                                ->selectRaw('rating, COUNT(*) as count')
-                                                ->where('is_approved', true)
-                                                ->groupBy('rating')
-                                                ->pluck('count', 'rating')
-                                                ->toArray();
+                                            $ratingCounts = [];
+                                            if ($product->ratings_count > 0) {
+                                                $ratingCounts = $product->ratings()
+                                                    ->selectRaw('rating, COUNT(*) as count')
+                                                    ->where('is_approved', true)
+                                                    ->groupBy('rating')
+                                                    ->pluck('count', 'rating')
+                                                    ->toArray();
+                                            }
                                         @endphp
                                         
                                         @for ($i = 5; $i >= 1; $i--)
@@ -292,6 +349,52 @@
             </div>
         </div>
     </div>
+    
+    <!-- You might also like section -->
+    @if($product->recommendedProducts && $product->recommendedProducts->count() > 0)
+    <div class="mt-5">
+        <h3 class="mb-4">{{ __('You might also like') }}</h3>
+        <div class="row g-4">
+            @foreach($product->recommendedProducts as $recommendedProduct)
+            <div class="col-md-4">
+                <div class="product-card h-100">
+                    <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
+                        <div class="product-image-container">
+                            <img src="{{ $recommendedProduct->imageUrl }}" alt="{{ $recommendedProduct->name }}" class="img-fluid product-image">
+                            
+                            <!-- Product Badges -->
+                            @if($recommendedProduct->quantity <= 0)
+                                <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
+                            @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
+                                <div class="product-badge new">{{ __('general.new') }}</div>
+                            @endif
+                        </div>
+                        <div class="product-info p-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
+                                <button type="button" class="btn btn-sm btn-icon wishlist-toggle p-0 m-0" 
+                                        data-product-id="{{ $recommendedProduct->id }}" 
+                                        title="{{ __('Add to Wishlist') }}">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
+                                    {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
+                                </div>
+                                <div class="product-rating">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <span class="ms-1 small">{{ number_format($recommendedProduct->average_rating ?? 0, 1) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 
@@ -338,26 +441,407 @@
         transition: transform 0.3s ease;
     }
     
-    .product-image-wrapper {
+    .main-image-container {
         overflow: hidden;
-        border-radius: 1rem;
+        border-radius: var(--radius-lg);
     }
     
-    .product-image-wrapper:hover .product-main-image {
+    .main-image-container:hover .product-main-image {
         transform: scale(1.03);
+    }
+    
+    .product-thumbnail {
+        cursor: pointer;
+        height: 80px;
+        width: 100%;
+        object-fit: cover;
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-normal);
+    }
+    
+    .product-thumbnail:hover {
+        transform: translateY(-2px);
+    }
+    
+    .product-thumbnail.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary);
+    }
+    
+    /* Product Card Styles */
+    .product-card {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        background-color: var(--surface);
+        overflow: hidden;
+        transition: all var(--transition-normal);
+        position: relative;
+        height: 100%;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .product-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+
+    .product-image-container {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1 / 1;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-normal);
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        z-index: 1;
+    }
+
+    .product-badge.out-of-stock {
+        background-color: var(--bs-danger);
+        color: white;
+    }
+
+    .product-badge.new {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    .product-title {
+        font-weight: 600;
+        line-height: 1.3;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .btn-icon {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        transition: all var(--transition-normal);
+        z-index: 2;
+        position: relative;
+    }
+
+    .btn-icon:hover {
+        color: var(--primary);
+    }
+
+    .btn-icon.active {
+        color: var(--primary);
+    }
+
+    .wishlist-toggle .bi-heart-fill {
+        color: var(--primary);
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert {
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Notification Styles */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 300px;
+        padding: 15px;
+        border-radius: var(--radius-md);
+        background-color: var(--surface);
+        box-shadow: var(--shadow-lg);
+        border-left: 4px solid var(--primary);
+        transform: translateX(120%);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .notification-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .notification-content i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+    }
+
+    .notification-success {
+        border-left-color: var(--secondary);
+    }
+
+    .notification-success i {
+        color: var(--secondary);
+    }
+
+    .notification-error {
+        border-left-color: #dc3545;
+    }
+
+    .notification-error i {
+        color: #dc3545;
     }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set color labels background
-        var colorLabels = document.querySelectorAll('.color-label[data-bg]');
-        for (var i = 0; i < colorLabels.length; i++) {
-            var label = colorLabels[i];
-            label.style.backgroundColor = label.getAttribute('data-bg');
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Set color labels background
+    var colorLabels = document.querySelectorAll('.color-label[data-bg]');
+    for (var i = 0; i < colorLabels.length; i++) {
+        var label = colorLabels[i];
+        label.style.backgroundColor = label.getAttribute('data-bg');
+    }
+    
+    // Thumbnail functionality
+    const thumbnails = document.querySelectorAll('.product-thumbnail');
+    thumbnails.forEach(thumb => {
+        thumb.addEventListener('click', function() {
+            const slideIndex = this.getAttribute('data-bs-slide-to');
+            const carousel = document.getElementById('productImagesCarousel');
+            const bsCarousel = new bootstrap.Carousel(carousel);
+            
+            bsCarousel.to(parseInt(slideIndex));
+            
+            // Update active state
+            thumbnails.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
     });
+    
+    // Form validation
+    const form = document.getElementById('add-to-cart-form');
+    const validationMessage = document.getElementById('validation-message');
+    const validationText = document.getElementById('validation-text');
+    const successMessage = document.getElementById('success-message');
+    
+    form.addEventListener('submit', function(e) {
+        const colorSelected = document.querySelector('input[name="color"]:checked');
+        const sizeSelected = document.querySelector('input[name="size"]:checked');
+        
+        // Reset messages
+        validationMessage.classList.add('d-none');
+        successMessage.classList.add('d-none');
+        
+        if (!colorSelected && !sizeSelected) {
+            e.preventDefault();
+            validationText.textContent = "{{ __('Please select color and size') }}";
+            validationMessage.classList.remove('d-none');
+            return false;
+        }
+        
+        if (!colorSelected) {
+            e.preventDefault();
+            validationText.textContent = "{{ __('Please select color') }}";
+            validationMessage.classList.remove('d-none');
+            return false;
+        }
+        
+        if (!sizeSelected) {
+            e.preventDefault();
+            validationText.textContent = "{{ __('Please select size') }}";
+            validationMessage.classList.remove('d-none');
+            return false;
+        }
+        
+        // If validation passes, submit via AJAX
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                successMessage.classList.remove('d-none');
+                
+                // Update cart counter in header
+                const cartBadge = document.querySelector('.cart-badge');
+                if (cartBadge) {
+                    cartBadge.textContent = data.cartCount || parseInt(cartBadge.textContent || '0') + 1;
+                    cartBadge.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        cartBadge.classList.remove('animate-pulse');
+                    }, 500);
+                } else {
+                    // If badge doesn't exist yet, we need to add it
+                    const cartBtn = document.querySelector('.smart-cart-btn');
+                    if (cartBtn) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'cart-badge animate-pulse';
+                        newBadge.textContent = '1';
+                        cartBtn.appendChild(newBadge);
+                        setTimeout(() => {
+                            newBadge.classList.remove('animate-pulse');
+                        }, 500);
+                    }
+                }
+                
+                // Scroll to success message
+                successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Show error message
+                validationText.textContent = data.message || "{{ __('Error adding to cart') }}";
+                validationMessage.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            validationText.textContent = "{{ __('Error adding to cart') }}";
+            validationMessage.classList.remove('d-none');
+        });
+    });
+    
+    // Wishlist functionality
+    const wishlistBtn = document.querySelector('.wishlist-toggle');
+    if (wishlistBtn) {
+        const productId = wishlistBtn.getAttribute('data-product-id');
+        
+        // Check if product is in wishlist
+        fetch(`/wishlist/check/${productId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.in_wishlist) {
+                    wishlistBtn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                    wishlistBtn.classList.add('active');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking wishlist status:', error);
+            });
+        
+        // Toggle wishlist on click
+        wishlistBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            
+            // Show loading state
+            this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            this.disabled = true;
+            
+            // Toggle wishlist status
+            fetch(`/wishlist/toggle/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Enable button
+                this.disabled = false;
+                
+                if (data.success) {
+                    if (data.in_wishlist) {
+                        this.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        this.classList.add('active');
+                        showNotification('Product added to wishlist', 'success');
+                    } else {
+                        this.innerHTML = '<i class="bi bi-heart"></i>';
+                        this.classList.remove('active');
+                        showNotification('Product removed from wishlist', 'info');
+                    }
+                } else {
+                    // If not authenticated, redirect to login
+                    if (data.message.includes('login')) {
+                        window.location.href = '/login';
+                    } else {
+                        showNotification(data.message || 'Error updating wishlist', 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling wishlist:', error);
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-heart"></i>';
+                showNotification('Error updating wishlist', 'error');
+            });
+        });
+    }
+    
+    // Show notification function
+    function showNotification(message, type = 'success') {
+        // If there's an existing notification, remove it
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        let icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-triangle';
+        if (type === 'info') icon = 'info-circle';
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="bi bi-${icon}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Add to DOM
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+});
 </script>
 @endpush

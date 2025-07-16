@@ -11,9 +11,6 @@
             <p class="text-info mb-0">User Profile Information</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('orders.index') }}" class="btn btn-info px-4">
-                <i class="bi bi-bag me-2"></i> My Orders
-            </a>
             <a href="{{ route('users_edit', $user->id) }}" class="btn btn-primary px-4">
                 <i class="bi bi-pencil-square me-2"></i> Edit Profile
             </a>

@@ -81,7 +81,13 @@ class AdminController extends Controller
      */
     public function products()
     {
-        $products = Product::orderBy('created_at', 'desc')->paginate(10);
+        $products = Product::with(['categories', 'ratings'])->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Calculate average rating for each product
+        $products->each(function ($product) {
+            $product->avg_rating = $product->average_rating;
+            $product->total_ratings = $product->ratings_count;
+        });
         
         return view('admin.products.index', compact('products'));
     }

@@ -118,4 +118,31 @@ class User extends Authenticatable
     {
         return $this->hasMany(ProductRating::class);
     }
+    
+    /**
+     * Get all cart items for this user
+     */
+    public function cart()
+    {
+        return $this->hasMany(Cart::class);
+    }
+    
+    /**
+     * Get all wishlist items for this user
+     */
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+    
+    /**
+     * Check if user has a product in their wishlist
+     * 
+     * @param int $productId
+     * @return bool
+     */
+    public function hasInWishlist($productId)
+    {
+        return $this->wishlist()->where('product_id', $productId)->exists();
+    }
 }

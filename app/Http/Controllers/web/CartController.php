@@ -18,25 +18,54 @@ class CartController extends Controller
 {
     public function index()
     {
-        if (!Auth::check()) return redirect('login');
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to view your cart.');
+        }
+        
+        // Get cart items with their products, colors, and sizes
         $cartItems = Cart::where('user_id', Auth::id())
-            ->with(['product', 'color', 'size'])
+            ->with(['product.images', 'product.recommendedProducts', 'color', 'size'])
+            ->latest()
             ->get();
-
-        $subTotal = $cartItems->sum(function ($item) {
-            return $item->product->price * $item->quantity;
+        
+        // Get recommended products from the cart items
+        $recommendedProducts = collect();
+        
+        foreach ($cartItems as $item) {
+            // Skip if the product doesn't have recommendations
+            if (!$item->product || !$item->product->recommendedProducts) {
+                continue;
+            }
+            
+            // Add recommendations to the collection
+            $recommendedProducts = $recommendedProducts->merge($item->product->recommendedProducts);
+        }
+        
+        // If we don't have enough recommended products, add some popular ones
+        if ($recommendedProducts->count() < 3) {
+            // Get popular products excluding those already in the cart
+            $cartProductIds = $cartItems->pluck('product_id')->toArray();
+            $popularProducts = Product::whereNotIn('id', $cartProductIds)
+                ->inRandomOrder()
+                ->limit(3 - $recommendedProducts->count())
+                ->get();
+            
+            $recommendedProducts = $recommendedProducts->merge($popularProducts);
+        }
+        
+        // Ensure uniqueness and limit to 3
+        $recommendedProducts = $recommendedProducts->unique('id')->take(3);
+        
+        // Calculate total, tax, shipping, etc.
+        $subTotal = $cartItems->sum(function($item) {
+            return $item->quantity * $item->product->price;
         });
         
-        // Calculate shipping cost - can be adjusted based on your business logic
-        $shippingCost = $subTotal > 0 ? 10.00 : 0.00;
-        
-        // Calculate tax - can be adjusted based on your business logic (e.g., 14% VAT)
-        $tax = $subTotal > 0 ? round($subTotal * 0.14, 2) : 0.00;
-        
-        // Calculate total
+        $shippingCost = $subTotal > 0 ? 10.00 : 0; // Example fixed shipping cost
+        $tax = $subTotal * 0.14; // Example tax rate of 14%
         $total = $subTotal + $shippingCost + $tax;
-
-        return view('cart.index', compact('cartItems', 'subTotal', 'shippingCost', 'tax', 'total'));
+        
+        return view('cart.index', compact('cartItems', 'subTotal', 'shippingCost', 'tax', 'total', 'recommendedProducts'));
     }
 
     /**
@@ -96,38 +125,53 @@ class CartController extends Controller
      * Update cart item quantity
      * 
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Cart  $cart
+     * @param  int  $cartId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, Cart $cart)
+    public function update(Request $request, $cartId)
     {
-        // Ensure user can only update their own cart
-        if ($cart->user_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to update this cart item.');
+        try {
+            $cart = Cart::findOrFail($cartId);
+            
+            // Ensure user can only update their own cart
+            if ($cart->user_id !== Auth::id()) {
+                return redirect()->back()->with('error', 'You are not authorized to update this cart item.');
+            }
+            
+            $quantity = $request->input('quantity');
+            
+            // Check if product is available
+            if ($cart->product->quantity < $quantity) {
+                return redirect()->back()->with('error', 'Sorry, the product is out of stock or not enough quantity available.');
+            }
+            
+            $cart->quantity = $quantity;
+            $cart->save();
+            
+            // If AJAX request, return JSON response with updated cart count
+            if ($request->ajax()) {
+                $cartCount = Cart::where('user_id', Auth::id())->sum('quantity');
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Cart updated successfully!',
+                    'cart_count' => $cartCount,
+                    'item_total' => number_format($cart->quantity * $cart->product->price, 2)
+                ]);
+            }
+            
+            return redirect()->back()->with('success', 'Cart updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Cart update error: ' . $e->getMessage());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update cart item. It may have been removed.'
+                ], 404);
+            }
+            
+            return redirect()->route('cart.index')->with('error', 'Failed to update cart item. It may have been removed.');
         }
-        
-        $quantity = $request->input('quantity');
-        
-        // Check if product is available
-        if ($cart->product->quantity < $quantity) {
-            return redirect()->back()->with('error', 'Sorry, the product is out of stock or not enough quantity available.');
-        }
-        
-        $cart->quantity = $quantity;
-        $cart->save();
-        
-        // If AJAX request, return JSON response with updated cart count
-        if ($request->ajax()) {
-            $cartCount = Auth::user()->cart->sum('quantity');
-            return response()->json([
-                'success' => true, 
-                'message' => 'Cart updated successfully!',
-                'cart_count' => $cartCount,
-                'item_total' => number_format($cart->quantity * $cart->product->price, 2)
-            ]);
-        }
-        
-        return redirect()->back()->with('success', 'Cart updated successfully!');
     }
 
     /**
@@ -139,26 +183,39 @@ class CartController extends Controller
      */
     public function remove(Request $request, $cartId)
     {
-        $cart = Cart::findOrFail($cartId);
-        
-        // Ensure user can only remove their own cart items
-        if ($cart->user_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to remove this cart item.');
+        try {
+            $cart = Cart::findOrFail($cartId);
+            
+            // Ensure user can only remove their own cart items
+            if ($cart->user_id !== Auth::id()) {
+                return redirect()->back()->with('error', 'You are not authorized to remove this cart item.');
+            }
+            
+            $cart->delete();
+            
+            // If AJAX request, return JSON response with updated cart count
+            if ($request->ajax()) {
+                $cartCount = Cart::where('user_id', Auth::id())->count();
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Item removed from cart successfully!',
+                    'cart_count' => $cartCount
+                ]);
+            }
+            
+            return redirect()->back()->with('success', 'Item removed from cart successfully!');
+        } catch (\Exception $e) {
+            Log::error('Cart remove error: ' . $e->getMessage());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to remove cart item. It may have been already removed.'
+                ], 404);
+            }
+            
+            return redirect()->route('cart.index')->with('error', 'Failed to remove cart item. It may have been already removed.');
         }
-        
-        $cart->delete();
-        
-        // If AJAX request, return JSON response with updated cart count
-        if ($request->ajax()) {
-            $cartCount = Auth::user()->cart->count();
-            return response()->json([
-                'success' => true, 
-                'message' => 'Item removed from cart successfully!',
-                'cart_count' => $cartCount
-            ]);
-        }
-        
-        return redirect()->back()->with('success', 'Item removed from cart successfully!');
     }
 
     /**

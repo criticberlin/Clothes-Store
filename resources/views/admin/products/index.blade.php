@@ -28,6 +28,7 @@
                             <th>Price</th>
                             <th>Stock</th>
                             <th>Categories</th>
+                            <th class="text-center">Ratings</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -75,6 +76,23 @@
                                             <i class="bi bi-dash-circle"></i> No category
                                         </span>
                                     @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex flex-column align-items-center" 
+                                         data-bs-toggle="tooltip" 
+                                         data-bs-placement="top" 
+                                         title="{{ $product->ratings_count }} ratings">
+                                        <div class="d-inline-flex mb-1">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                @if ($i <= round($product->average_rating))
+                                                    <i class="bi bi-star-fill text-warning small"></i>
+                                                @else
+                                                    <i class="bi bi-star text-warning small"></i>
+                                                @endif
+                                            @endfor
+                                        </div>
+                                        <small class="text-secondary">{{ number_format($product->average_rating, 1) }} ({{ $product->ratings_count }})</small>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="action-btns">
