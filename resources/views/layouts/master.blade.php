@@ -894,36 +894,26 @@
         
         /* Cart Badge */
         .cart-badge {
-            position: absolute;
-            top: 0;
-            right: 0;
-            transform: translate(50%, -50%) !important;
             font-size: 0.65rem;
             padding: 0.25rem 0.4rem;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 50%;
-            min-width: 18px;
-            min-height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            font-weight: bold;
-            animation: cartBadgePulse 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+            transform: translate(-40%, -40%) !important;
         }
-
-        @keyframes cartBadgePulse {
-            0% { transform: translate(50%, -50%) scale(0.8); opacity: 0.8; }
-            50% { transform: translate(50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(50%, -50%) scale(1); opacity: 1; }
-        }
-
+        
         .animate-pulse {
             animation: pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1);
         }
-
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: translate(-40%, -40%) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translate(-40%, -40%) scale(1.2);
+            }
+        }
+        
         /* Notifications */
         .notification {
             position: fixed;
@@ -940,41 +930,626 @@
             opacity: 0;
             transition: all 0.3s ease;
         }
-
+        
         .notification.show {
             transform: translateX(0);
             opacity: 1;
         }
-
+        
         .notification-content {
             display: flex;
             align-items: center;
         }
-
+        
         .notification-content i {
             margin-right: 10px;
             font-size: 1.2rem;
         }
-
+        
         .notification-success {
             border-left-color: var(--secondary);
         }
-
+        
         .notification-success i {
             color: var(--secondary);
         }
-
+        
         .notification-error {
             border-left-color: #dc3545;
         }
-
+        
         .notification-error i {
             color: #dc3545;
         }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 991.98px) {
+            .search-bar-container {
+                max-width: 100%;
+                order: 3;
+                margin-top: 1rem;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+            
+            .navbar-collapse {
+                flex-direction: column;
+            }
+            
+            .search-category-wrapper {
+                min-width: 80px;
+            }
+            
+            .header-icon-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 575.98px) {
+            .search-category-select {
+                max-width: 100px;
+                padding-left: 0.5rem;
+                padding-right: 1.5rem;
+            }
+            
+            .search-button {
+                padding: 0 0.75rem;
+            }
+            
+            .navbar-nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .navbar-nav .nav-item {
+                margin-right: 1rem;
+            }
+            
+            .header-icon-btn {
+                width: 36px;
+                height: 36px;
+            }
+        }
 
-        /* Improve cart badge color to stand out better */
-        :root {
-            --accent: #FF7F50;
+        /* Custom Category Dropdown */
+        .custom-dropdown {
+            position: relative;
+            height: 46px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+            border-right: none;
+            min-width: 60px;
+            cursor: pointer;
+            z-index: 100;
+            user-select: none;
+        }
+        
+        .selected-option {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            white-space: nowrap;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            pointer-events: auto;
+        }
+        
+        .selected-option i {
+            margin-left: 5px;
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .custom-dropdown.open .selected-option i {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-top: 0.25rem;
+            box-shadow: var(--shadow-md);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .custom-dropdown.open .dropdown-options {
+            display: block;
+            animation: fadeInDown 0.2s ease-out;
+        }
+        
+        .dropdown-option {
+            padding: 0.5rem 1rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            pointer-events: auto;
+        }
+        
+        .dropdown-option:hover,
+        .dropdown-option.selected {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+        }
+        
+        /* Search Input */
+        .search-input {
+            height: 46px;
+            border-color: var(--border);
+            background-color: var(--surface);
+            color: var(--text-primary);
+            padding-left: 1rem;
+            padding-right: 1rem;
+            flex: 1;
+            min-width: 0;
+            border-radius: 0;
+            border-left: none;
+        }
+
+        /* Category Dropdown - New Implementation */
+        .category-dropdown {
+            position: relative;
+            height: 46px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+            border-right: none;
+            min-width: 80px;
+            cursor: pointer;
+            z-index: 1500;
+        }
+        
+        .dropdown-header {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            white-space: nowrap;
+            user-select: none;
+        }
+        
+        .dropdown-header i {
+            margin-left: 10px;
+            font-size: 12px;
+            transition: transform 0.2s ease;
+        }
+        
+        .category-dropdown.open .dropdown-header i {
+            transform: rotate(180deg);
+        }
+        
+        .category-dropdown .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            padding: 5px 0;
+            margin-top: 1px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            z-index: 1500;
+        }
+
+        .category-dropdown.open .dropdown-menu {
+            display: block !important;
+        }
+
+        /* Category Dropdown - Fixed Implementation */
+        .category-dropdown {
+            position: relative;
+            height: 46px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+            border-right: none;
+            min-width: 80px;
+            cursor: pointer;
+            z-index: 1500;
+        }
+        
+        .search-bar-container {
+            position: relative;
+        }
+        
+        .category-dropdown-menu {
+            position: absolute;
+            top: 46px;
+            left: 0;
+            width: 180px; /* Narrower to match category dropdown width */
+            padding: 8px 0;
+            margin-top: 2px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            z-index: 3000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .category-dropdown-menu.show {
+            display: block !important;
+            animation: fadeInDown 0.2s ease-out;
+        }
+
+        /* Enhanced Category Dropdown */
+        .category-dropdown-menu {
+            position: absolute;
+            top: 46px;
+            left: 0;
+            width: 200px;
+            padding: 8px 0;
+            margin-top: 2px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none;
+            z-index: 3000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        .category-dropdown-menu.show {
+            display: block !important;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .category-dropdown-menu .dropdown-item {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+        
+        .category-dropdown-menu .dropdown-item:hover,
+        .category-dropdown-menu .dropdown-item.active {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        
+        /* Make sure the dropdown button looks active when dropdown is open */
+        .category-dropdown.open .dropdown-header {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+        }
+
+        /* General Dropdown Item Styles */
+        .dropdown-item {
+            padding: 8px 15px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        
+        .dropdown-item:hover,
+        .dropdown-item.active {
+            background-color: var(--surface-alt);
+            color: var(--primary);
+        }
+        
+        /* Theme-specific styles */
+        :root.theme-light .dropdown-menu {
+            background-color: var(--surface);
+            border-color: var(--border);
+        }
+        
+        :root.theme-dark .dropdown-menu {
+            background-color: var(--surface);
+            border-color: var(--border);
+        }
+
+        /* Fix search bar integration with dropdown */
+        .search-input-group {
+            position: relative;
+        }
+
+        /* Create smooth transition between dropdown and search */
+        .category-dropdown.open + .search-input {
+            border-left: none;
+        }
+
+        /* Theme Toggle Switch Styles */
+        .theme-toggle-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            transition: background-color var(--transition-fast);
+        }
+        
+        .theme-toggle-item:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        /* Modern Switch Design */
+        .modern-switch {
+            position: relative;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .modern-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+            cursor: pointer;
+        }
+
+        .modern-switch-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 34px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .modern-switch-label:before {
+            content: '';
+            position: absolute;
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            transition: all var(--transition-normal);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Switch states for both themes */
+        html.theme-dark .modern-switch-input:checked + .modern-switch-label {
+            background-color: var(--primary);
+            border-color: var(--primary-dark);
+        }
+
+        html.theme-dark .modern-switch-input:checked + .modern-switch-label:before {
+            transform: translateX(21px);
+            background-color: white;
+            box-shadow: 0 0 8px rgba(127, 90, 240, 0.5);
+        }
+
+        html.theme-light .modern-switch-input:not(:checked) + .modern-switch-label {
+            background-color: var(--border);
+            border-color: var(--text-tertiary);
+        }
+
+        html.theme-light .modern-switch-input:checked + .modern-switch-label {
+            background-color: var(--secondary-light);
+            border-color: var(--secondary);
+        }
+
+        html.theme-light .modern-switch-input:checked + .modern-switch-label:before {
+            transform: translateX(21px);
+            background-color: white;
+            box-shadow: 0 0 4px rgba(44, 182, 125, 0.5);
+        }
+
+        /* Focus and hover states for better UX */
+        .modern-switch-input:focus + .modern-switch-label,
+        .modern-switch-label:hover {
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        /* Theme toggle item hover state */
+        .theme-toggle-item {
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle-item:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        .theme-toggle-item:active {
+            transform: translateY(1px);
+        }
+        
+        /* Add ripple effect to make it more obviously clickable */
+        .theme-toggle-item::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(127, 90, 240, 0.4);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .theme-toggle-item:active::after {
+            animation: ripple 0.5s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                opacity: 1;
+                transform: scale(0, 0) translate(-50%, -50%);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(20, 20) translate(-50%, -50%);
+            }
+        }
+
+        /* Theme toggle icons */
+        #themeToggleIcon {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: transform var(--transition-normal), color var(--transition-normal);
+        }
+
+        /* Theme-specific icon colors */
+        html.theme-dark #themeToggleIcon {
+            color: #f59e0b; /* amber/yellow for sun icon in dark mode */
+        }
+
+        html.theme-light #themeToggleIcon {
+            color: var(--primary); /* purple for moon icon in light mode */
+        }
+
+        /* Profile dropdown theme toggle icon */
+        #theme-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: color var(--transition-normal);
+        }
+
+        #theme-icon i {
+            font-size: 1.1rem;
+            transition: color var(--transition-normal), transform var(--transition-fast);
+            color: var(--text-secondary); /* Neutral color by default */
+        }
+
+        /* Theme-specific colors for profile dropdown icons */
+        html.theme-dark #theme-icon i.bi-sun-fill,
+        html.theme-light #theme-icon i.bi-moon-stars-fill {
+            /* Use neutral color by default */
+            color: var(--text-secondary);
+        }
+
+        /* Hover effects for theme toggle icons */
+        #direct-theme-toggle:hover #theme-icon i {
+            transform: scale(1.2);
+            color: var(--primary); /* Primary color on hover */
+        }
+
+        /* Prevent dropdown close */
+        .dropdown-menu .dropdown-item[data-prevent-close="true"] {
+            cursor: pointer;
+        }
+
+        /* Theme transition - Prevent flicker */
+        html.theme-transition,
+        html.theme-transition *,
+        html.theme-transition *:before,
+        html.theme-transition *:after {
+            transition: background-color var(--transition-normal), 
+                        color var(--transition-normal), 
+                        border-color var(--transition-normal), 
+                        box-shadow var(--transition-normal), 
+                        opacity var(--transition-normal) !important;
+            transition-delay: 0 !important;
+        }
+
+        /* Theme Loading Indicator */
+        .search-loading-indicator {
+            transition: opacity 0.2s ease-out;
+            z-index: 5;
+        }
+        
+        /* Toggle Switch - New Implementation */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            margin: 0;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        
+        /* Theme Toggle Item */
+        #direct-theme-toggle {
+            cursor: pointer;
+            user-select: none;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        #direct-theme-toggle:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        #theme-icon {
+            font-size: 1.1rem;
+            display: inline-block;
+            width: 24px;
+            text-align: center;
         }
     </style>
     
@@ -1133,15 +1708,8 @@
                                     
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">
-                                            <i class="bi bi-box me-2 text-secondary"></i>
-                                            <span>{{ __('My Orders') }}</span>
-                                        </a>
-                                    </li>
-                                    
-                                    <li>
-                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('wishlist.index') }}">
-                                            <i class="bi bi-heart me-2 text-secondary"></i>
-                                            <span>{{ __('My Wishlist') }}</span>
+                                            <i class="bi bi-bag me-2"></i> 
+                                            <span>{{ __('general.my_orders') }}</span>
                                         </a>
                                     </li>
                                     
@@ -1181,10 +1749,10 @@
                             @endauth
                         </div>
                         
-                        <a href="{{ route('cart.index') }}" class="smart-cart-btn ms-2" aria-label="Shopping Cart">
-                            <i class="bi bi-cart-fill"></i>
+                        <a href="{{ route('cart.index') }}" class="header-icon-btn position-relative ms-2">
+                            <i class="bi bi-cart text-primary"></i>
                             @if(Auth::check() && Auth::user()->cart && Auth::user()->cart->count() > 0)
-                                <span class="cart-badge">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
                                     {{ Auth::user()->cart->count() }}
                                 </span>
                             @endif
@@ -1345,20 +1913,14 @@
                     // Update toggle state
                     themeSwitch.checked = isDarkTheme;
                     
-                    // Update icon and label with Bootstrap Icons
-                    if (themeToggleIcon) {
-                        themeToggleIcon.innerHTML = isDarkTheme 
-                            ? '<i class="bi bi-sun-fill"></i>' 
-                            : '<i class="bi bi-moon-stars-fill"></i>';
+                    // Update icon and label
+                    if (isDarkTheme) {
+                        themeToggleIcon.className = 'bi bi-sun me-2';
+                        themeToggleLabel.textContent = 'Light Mode';
+                        } else {
+                        themeToggleIcon.className = 'bi bi-moon me-2';
+                        themeToggleLabel.textContent = 'Dark Mode';
                     }
-                    
-                    if (themeToggleLabel) themeToggleLabel.textContent = isDarkTheme ? 'Light Mode' : 'Dark Mode';
-                    
-                    // Save to localStorage
-                    localStorage.setItem('theme', newTheme);
-                    
-                    // Try to sync with server if available
-                    syncWithServer(newTheme);
                 }
                 
                 // Ensure UI is correctly initialized on page load
@@ -1733,11 +2295,17 @@
                 // Update toggle state
                 if (toggle) toggle.checked = isDark;
                 
-                // Update icon and label with Bootstrap Icons
+                // Update icon and label
                 if (themeIcon) {
-                    themeIcon.innerHTML = isDark 
-                        ? '<i class="bi bi-sun-fill"></i>' 
-                        : '<i class="bi bi-moon-stars-fill"></i>';
+                    // Clear existing content
+                    themeIcon.innerHTML = '';
+                    
+                    // Create icon element
+                    const iconElement = document.createElement('i');
+                    iconElement.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+                    
+                    // Add icon to container
+                    themeIcon.appendChild(iconElement);
                 }
                 
                 if (themeLabel) themeLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
