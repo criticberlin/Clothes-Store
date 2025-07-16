@@ -17,7 +17,7 @@ class CategoryController extends Controller
     public function index()
     {
         // Get all categories with their relationships
-        $categories = Category::with(['parent', 'children', 'products'])
+        $categories = Category::with(['parent', 'parents', 'children', 'products'])
             ->orderBy('name')
             ->paginate(15);
             
@@ -42,6 +42,9 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
+        // Eager load parents relationship
+        $category->load('parents');
+        
         // Get all possible parent categories (excluding self and descendants)
         $parentCategories = $category->getAvailableParents();
         $categoryTypes = $this->getCategoryTypes();
@@ -76,7 +79,7 @@ class CategoryController extends Controller
         $category->type = $validated['type'];
         $category->slug = $validated['slug'] ?? Str::slug($validated['name']);
         $category->description = $validated['description'] ?? null;
-        $category->status = $request->has('status');
+        $category->status = $request->has('status') ? true : false;
 
         // Process parent_id array - ensure it's an array even if a single value is submitted
         $parentIds = [];
@@ -165,7 +168,7 @@ class CategoryController extends Controller
         $category->type = $validated['type'];
         $category->slug = $validated['slug'] ?? Str::slug($validated['name']);
         $category->description = $validated['description'] ?? null;
-        $category->status = $request->has('status');
+        $category->status = $request->has('status') ? true : false;
 
         // Process parent_id array - ensure it's an array even if a single value is submitted
         $parentIds = [];
@@ -308,12 +311,12 @@ class CategoryController extends Controller
                 break;
                 
             case 'clothing':
-                // Clothing types must have main category as parent
+                // Clothing types must have at least one main category as parent
                 if (!$parentIds) {
                     return 'Clothing type categories must have at least one parent Main category.';
                 }
                 
-                // Check that all parents are main categories
+                // Check that at least one parent is a main category
                 $validParents = Category::whereIn('id', $parentIds)
                     ->where('type', 'main')
                     ->count();
@@ -323,21 +326,23 @@ class CategoryController extends Controller
                 }
                 
                 if ($validParents !== count($parentIds)) {
-                    Log::warning('Some selected parents are not valid main categories', [
-                        'valid_count' => $validParents, 
-                        'total_count' => count($parentIds)
+                    Log::warning('Some selected parents are not main categories', [
+                        'valid_main_parents' => $validParents, 
+                        'total_parents' => count($parentIds)
                     ]);
-                    // We'll allow mixed parent types for now, but log a warning
+                    
+                    // For multi-parent support, we allow mixed parent types but ensure at least one is valid
+                    // You could change this to return an error if needed
                 }
                 break;
                 
             case 'item_type':
-                // Item types must have clothing type as parent
+                // Item types must have at least one clothing type as parent
                 if (!$parentIds) {
                     return 'Item type categories must have at least one parent Clothing type category.';
                 }
                 
-                // Check that all parents are clothing categories
+                // Check that at least one parent is a clothing category
                 $validParents = Category::whereIn('id', $parentIds)
                     ->where('type', 'clothing')
                     ->count();
@@ -347,11 +352,12 @@ class CategoryController extends Controller
                 }
                 
                 if ($validParents !== count($parentIds)) {
-                    Log::warning('Some selected parents are not valid clothing categories', [
-                        'valid_count' => $validParents, 
-                        'total_count' => count($parentIds)
+                    Log::warning('Some selected parents are not clothing categories', [
+                        'valid_clothing_parents' => $validParents, 
+                        'total_parents' => count($parentIds)
                     ]);
-                    // We'll allow mixed parent types for now, but log a warning
+                    
+                    // For multi-parent support, we allow mixed parent types but ensure at least one is valid
                 }
                 break;
         }

@@ -40,7 +40,7 @@
                             <th>Image</th>
                             <th>Name</th>
                             <th>Type</th>
-                            <th>Hierarchy</th>
+                            <th>Parents</th>
                             <th>Status</th>
                             <th>Products</th>
                             <th>Actions</th>
@@ -63,35 +63,51 @@
                                 </td>
                                 <td>
                                     <strong>{{ $category->name }}</strong>
-                                    <div class="small text-muted">{{ $category->slug }}</div>
+                                    <div class="small text-secondary">{{ $category->slug }}</div>
                                 </td>
                                 <td>
                                     @if($category->type == 'main')
-                                        <span class="badge bg-primary">Main</span>
+                                        <span class="status-badge completed">
+                                            <i class="bi bi-people"></i> Main
+                                        </span>
                                     @elseif($category->type == 'clothing')
-                                        <span class="badge bg-secondary">Clothing</span>
+                                        <span class="status-badge pending">
+                                            <i class="bi bi-collection"></i> Clothing
+                                        </span>
                                     @elseif($category->type == 'item_type')
-                                        <span class="badge bg-info">Item Type</span>
+                                        <span class="status-badge info">
+                                            <i class="bi bi-tag"></i> Item Type
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($category->parent)
-                                        <div class="category-path">
-                                            {{ $category->getBreadcrumbPath() }}
+                                    @if($category->parents->count() > 0)
+                                        <div class="category-parents">
+                                            @foreach($category->parents as $parent)
+                                                <span class="status-badge completed">
+                                                    <i class="bi bi-tag"></i> {{ $parent->name }}
+                                                </span>
+                                            @endforeach
                                         </div>
                                     @else
-                                        <span class="text-muted">Top Level</span>
+                                        <span class="status-badge cancelled">
+                                            <i class="bi bi-dash-circle"></i> Top Level
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($category->status)
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="status-badge completed">
+                                            <i class="bi bi-check-circle"></i> Active
+                                        </span>
                                     @else
-                                        <span class="badge bg-danger">Hidden</span>
+                                        <span class="status-badge cancelled">
+                                            <i class="bi bi-x-circle"></i> Hidden
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="status-badge completed">
+                                    <span class="status-badge info">
                                         <i class="bi bi-collection"></i> {{ $category->products->count() }}
                                     </span>
                                 </td>
@@ -130,7 +146,7 @@
         <div class="admin-card-body">
             <div class="category-tree">
                 @php
-                    $mainCategories = $categories->where('type', 'main')->where('parent_id', null);
+                    $mainCategories = $categories->where('type', 'main');
                 @endphp
 
                 @foreach($mainCategories as $mainCat)
@@ -138,15 +154,18 @@
                         <div class="tree-content">
                             <span class="tree-icon"><i class="bi bi-people"></i></span>
                             <strong>{{ $mainCat->name }}</strong>
-                            <span class="badge bg-primary ms-2">Main</span>
+                            <span class="status-badge completed ms-2">Main</span>
                             @if(!$mainCat->status)
-                                <span class="badge bg-danger ms-1">Hidden</span>
+                                <span class="status-badge cancelled ms-1">Hidden</span>
                             @endif
                         </div>
 
                         <div class="tree-children">
                             @php
-                                $clothingTypes = $categories->where('parent_id', $mainCat->id)->where('type', 'clothing');
+                                // Get clothing types that have this main category as parent
+                                $clothingTypes = $categories->where('type', 'clothing')->filter(function($cat) use ($mainCat) {
+                                    return $cat->parents->contains('id', $mainCat->id);
+                                });
                             @endphp
 
                             @foreach($clothingTypes as $clothingType)
@@ -154,15 +173,21 @@
                                     <div class="tree-content">
                                         <span class="tree-icon"><i class="bi bi-collection"></i></span>
                                         <strong>{{ $clothingType->name }}</strong>
-                                        <span class="badge bg-secondary ms-2">Clothing</span>
+                                        <span class="status-badge pending ms-2">Clothing</span>
                                         @if(!$clothingType->status)
-                                            <span class="badge bg-danger ms-1">Hidden</span>
+                                            <span class="status-badge cancelled ms-1">Hidden</span>
+                                        @endif
+                                        @if($clothingType->parents->count() > 1)
+                                            <span class="status-badge info ms-1">{{ $clothingType->parents->count() }} Parents</span>
                                         @endif
                                     </div>
 
                                     <div class="tree-children">
                                         @php
-                                            $itemTypes = $categories->where('parent_id', $clothingType->id)->where('type', 'item_type');
+                                            // Get item types that have this clothing type as parent
+                                            $itemTypes = $categories->where('type', 'item_type')->filter(function($cat) use ($clothingType) {
+                                                return $cat->parents->contains('id', $clothingType->id);
+                                            });
                                         @endphp
 
                                         @foreach($itemTypes as $itemType)
@@ -170,9 +195,12 @@
                                                 <div class="tree-content">
                                                     <span class="tree-icon"><i class="bi bi-tag"></i></span>
                                                     <strong>{{ $itemType->name }}</strong>
-                                                    <span class="badge bg-info ms-2">Item</span>
+                                                    <span class="status-badge info ms-2">Item</span>
                                                     @if(!$itemType->status)
-                                                        <span class="badge bg-danger ms-1">Hidden</span>
+                                                        <span class="status-badge cancelled ms-1">Hidden</span>
+                                                    @endif
+                                                    @if($itemType->parents->count() > 1)
+                                                        <span class="status-badge info ms-1">{{ $itemType->parents->count() }} Parents</span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -180,8 +208,8 @@
 
                                         @if($itemTypes->isEmpty())
                                             <div class="tree-item empty-node">
-                                                <div class="tree-content text-muted">
-                                                    <i class="bi bi-dash-circle"></i> No specific items added
+                                                <div class="tree-content">
+                                                    <i class="bi bi-dash-circle text-secondary"></i> <span class="text-secondary">No specific items added</span>
                                                 </div>
                                             </div>
                                         @endif
@@ -191,8 +219,8 @@
 
                             @if($clothingTypes->isEmpty())
                                 <div class="tree-item empty-node">
-                                    <div class="tree-content text-muted">
-                                        <i class="bi bi-dash-circle"></i> No clothing types added
+                                    <div class="tree-content">
+                                        <i class="bi bi-dash-circle text-secondary"></i> <span class="text-secondary">No clothing types added</span>
                                     </div>
                                 </div>
                             @endif
@@ -202,11 +230,57 @@
 
                 @if($mainCategories->isEmpty())
                     <div class="tree-item empty-node">
-                        <div class="tree-content text-muted">
-                            <i class="bi bi-exclamation-circle"></i> No main categories found
+                        <div class="tree-content">
+                            <i class="bi bi-exclamation-circle text-secondary"></i> <span class="text-secondary">No main categories found</span>
                         </div>
                     </div>
                 @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card mt-4">
+        <div class="admin-card-header">
+            <span>Category Statistics</span>
+        </div>
+        <div class="admin-card-body">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon purple">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stats-value">{{ $categories->where('type', 'main')->count() }}</div>
+                        <div class="stats-label">Main Categories</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon blue">
+                            <i class="bi bi-collection"></i>
+                        </div>
+                        <div class="stats-value">{{ $categories->where('type', 'clothing')->count() }}</div>
+                        <div class="stats-label">Clothing Types</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon teal">
+                            <i class="bi bi-tag"></i>
+                        </div>
+                        <div class="stats-value">{{ $categories->where('type', 'item_type')->count() }}</div>
+                        <div class="stats-label">Item Types</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon red">
+                            <i class="bi bi-eye-slash"></i>
+                        </div>
+                        <div class="stats-value">{{ $categories->where('status', false)->count() }}</div>
+                        <div class="stats-label">Hidden Categories</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -214,9 +288,10 @@
 
 @push('styles')
 <style>
-    .category-path {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
+    .category-parents .status-badge {
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+        display: inline-flex;
     }
     
     .category-tree {
@@ -225,41 +300,237 @@
     
     .tree-item {
         margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
     }
     
     .tree-content {
-        padding: 0.5rem 0.75rem;
+        padding: 0.75rem 1rem;
         border-radius: var(--radius-sm);
         display: flex;
         align-items: center;
-    }
-    
-    .main-category > .tree-content {
-        background-color: rgba(var(--primary-rgb), 0.05);
-    }
-    
-    .clothing-category > .tree-content {
-        background-color: rgba(var(--secondary-rgb), 0.05);
-    }
-    
-    .item-type-category > .tree-content {
-        background-color: rgba(var(--info-rgb), 0.05);
+        transition: all var(--transition-normal);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
     .tree-icon {
-        margin-right: 0.5rem;
+        margin-right: 0.75rem;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: rgba(var(--primary-rgb), 0.1);
     }
     
-    .tree-children {
-        padding-left: 2rem;
-        border-left: 1px dashed var(--border);
-        margin-left: 0.75rem;
-        margin-top: 0.5rem;
+    .main-category > .tree-content {
+        background-color: var(--surface);
+        color: var(--text-primary);
+        border-left: 4px solid var(--primary);
+    }
+    
+    .clothing-category > .tree-content {
+        background-color: var(--surface);
+        color: var(--text-primary);
+        border-left: 4px solid var(--secondary);
+    }
+    
+    .item-type-category > .tree-content {
+        background-color: var(--surface);
+        color: var(--text-primary);
+        border-left: 4px solid var(--info);
     }
     
     .empty-node .tree-content {
-        font-style: italic;
-        background-color: transparent;
+        background-color: var(--surface-alt);
+        border-left: 4px solid var(--border);
+    }
+    
+    .tree-children {
+        padding-left: 2.5rem;
+        border-left: 1px dashed var(--border);
+        margin-left: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    
+    /* Hover effects */
+    .tree-content:hover {
+        transform: translateX(3px);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-category > .tree-content:hover {
+        box-shadow: 0 3px 6px rgba(var(--primary-rgb), 0.2);
+    }
+    
+    .clothing-category > .tree-content:hover {
+        box-shadow: 0 3px 6px rgba(var(--secondary-rgb), 0.2);
+    }
+    
+    .item-type-category > .tree-content:hover {
+        box-shadow: 0 3px 6px rgba(var(--info-rgb), 0.2);
+    }
+    
+    /* Statistics cards */
+    .stats-card {
+        background-color: var(--surface);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all var(--transition-normal);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stats-icon.purple {
+        background-color: var(--primary);
+    }
+    
+    .stats-icon.blue {
+        background-color: var(--secondary);
+    }
+    
+    .stats-icon.teal {
+        background-color: var(--info);
+    }
+    
+    .stats-icon.red {
+        background-color: var(--danger);
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary);
+    }
+    
+    .stats-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    /* Dark theme adjustments */
+    html.theme-dark .tree-icon {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    html.theme-dark .tree-content:hover {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    html.theme-dark .stats-card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    html.theme-dark .stats-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Additional theme-aware styles */
+    html.theme-dark .product-img-placeholder {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    html.theme-dark .small.text-secondary {
+        color: rgba(255, 255, 255, 0.6) !important;
     }
 </style>
+@endpush 
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable with theme-aware settings
+        if ($.fn.DataTable) {
+            // Destroy existing DataTable instance if it exists
+            if ($.fn.DataTable.isDataTable('#categoriesTable')) {
+                $('#categoriesTable').DataTable().destroy();
+            }
+            
+            // Initialize new DataTable
+            const dataTable = $('#categoriesTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search categories...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ categories",
+                    infoEmpty: "Showing 0 to 0 of 0 categories",
+                    infoFiltered: "(filtered from _MAX_ total categories)"
+                },
+                dom: '<"top d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center"l><"d-flex"f>>rt<"bottom d-flex justify-content-between align-items-center"<"d-flex align-items-center"i><"d-flex"p>>',
+                initComplete: function() {
+                    // Add theme-aware classes to DataTables elements
+                    $('.dataTables_filter input').addClass('form-control');
+                    $('.dataTables_length select').addClass('form-select');
+                    
+                    // Add aria-label for accessibility
+                    $('.dataTables_filter input').attr('aria-label', 'Search categories');
+                }
+            });
+
+            // Apply theme-specific styles to DataTables
+            const applyThemeStyles = () => {
+                const isDark = document.documentElement.classList.contains('theme-dark');
+                
+                // Style adjustments for dark mode
+                if (isDark) {
+                    $('.dataTable').addClass('table-dark');
+                    $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').addClass('text-light');
+                } else {
+                    $('.dataTable').removeClass('table-dark');
+                    $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').removeClass('text-light');
+                }
+            };
+            
+            // Initial application of theme styles
+            applyThemeStyles();
+        }
+        
+        // Update theme-aware elements when theme changes
+        document.addEventListener('themeChanged', function(e) {
+            // Apply theme-specific styles
+            const isDark = document.documentElement.classList.contains('theme-dark');
+            
+            // Update DataTable styles
+            if ($.fn.DataTable && $.fn.DataTable.isDataTable('#categoriesTable')) {
+                const applyThemeStyles = () => {
+                    // Style adjustments for dark mode
+                    if (isDark) {
+                        $('.dataTable').addClass('table-dark');
+                        $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').addClass('text-light');
+                    } else {
+                        $('.dataTable').removeClass('table-dark');
+                        $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').removeClass('text-light');
+                    }
+                };
+                
+                applyThemeStyles();
+                $('#categoriesTable').DataTable().draw();
+            }
+        });
+    });
+</script>
 @endpush 

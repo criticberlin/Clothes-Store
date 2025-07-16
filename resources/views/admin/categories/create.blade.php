@@ -53,13 +53,13 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label">Parent Category</label>
+                        <label class="form-label">Parent Categories</label>
                         <div class="parent-categories-container p-3 border rounded" style="max-height: 200px; overflow-y: auto;">
                             @foreach($parentCategories as $parentCategory)
                                 <div class="form-check mb-2 parent-option" data-type="{{ $parentCategory->type }}">
-                                    <input class="form-check-input" type="radio" name="parent_id" 
+                                    <input class="form-check-input" type="checkbox" name="parent_id[]" 
                                         id="parent-{{ $parentCategory->id }}" value="{{ $parentCategory->id }}"
-                                        {{ old('parent_id') == $parentCategory->id ? 'checked' : '' }}>
+                                        {{ in_array($parentCategory->id, old('parent_id', [])) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="parent-{{ $parentCategory->id }}">
                                         {{ $parentCategory->name }} 
                                         @if($parentCategory->parent)
@@ -78,6 +78,7 @@
                                 <li>Main categories should be top level (no parent)</li>
                                 <li>Clothing types should have Main category parents</li>
                                 <li>Item types should have Clothing type parents</li>
+                                <li>You can select multiple parent categories</li>
                             </ul>
                             @if(session('parent_error'))
                                 <div class="text-danger mt-2">{{ session('parent_error') }}</div>
@@ -189,13 +190,13 @@
         
         // Validate form before submission
         form.addEventListener('submit', function(e) {
-            // Get selected parent
-            var selectedParent = document.querySelector('input[name="parent_id"]:checked');
+            // Get selected parents
+            var selectedParents = document.querySelectorAll('input[name="parent_id[]"]:checked');
             
-            // Check if a parent is required but not selected
-            if (typeSelect.value !== 'main' && !selectedParent) {
+            // Check if parents are required but none selected
+            if (typeSelect.value !== 'main' && selectedParents.length === 0) {
                 e.preventDefault();
-                var message = 'Please select a parent category. ';
+                var message = 'Please select at least one parent category. ';
                 if (typeSelect.value === 'clothing') {
                     message += 'Clothing types must have Main category parents.';
                 } else {
@@ -215,12 +216,12 @@
             // Show/hide parent options based on type
             parentOptions.forEach(function(option) {
                 var parentType = option.getAttribute('data-type');
-                var radio = option.querySelector('input[type="radio"]');
+                var checkbox = option.querySelector('input[type="checkbox"]');
                 
                 if (selectedType === 'main') {
                     // Main categories should have no parent
                     option.style.display = 'none';
-                    radio.checked = false;
+                    checkbox.checked = false;
                 } else if (selectedType === 'clothing' && parentType === 'main') {
                     // Clothing types should have main category parents
                     option.style.display = '';
@@ -230,7 +231,7 @@
                 } else {
                     // Hide and uncheck other options
                     option.style.display = 'none';
-                    radio.checked = false;
+                    checkbox.checked = false;
                 }
             });
         }

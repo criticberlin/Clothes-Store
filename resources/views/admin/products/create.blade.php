@@ -116,12 +116,12 @@
                                 <label class="form-label">Clothing Type</label>
                                 <select class="form-select @error('clothing_category') is-invalid @enderror" id="clothing_category" name="clothing_category">
                                     <option value="">Select Clothing Type</option>
-                                    @foreach(\App\Models\Category::where('type', 'clothing')->get() as $category)
+                                    @foreach(\App\Models\Category::where('type', 'clothing')->with('parents')->get() as $category)
                                         <option value="{{ $category->id }}" {{ old('clothing_category') == $category->id ? 'selected' : '' }}
-                                            data-parent="{{ $category->parent_id }}">
+                                            data-parents="{{ $category->parents->pluck('id')->join(',') }}">
                                             {{ $category->name }}
-                                            @if($category->parent)
-                                                ({{ $category->parent->name }})
+                                            @if($category->parents->count() > 0)
+                                                ({{ $category->parents->pluck('name')->join(', ') }})
                                             @endif
                                         </option>
                                     @endforeach
@@ -135,12 +135,12 @@
                                 <label class="form-label">Item Type</label>
                                 <select class="form-select @error('item_category') is-invalid @enderror" id="item_category" name="item_category">
                                     <option value="">Select Item Type</option>
-                                    @foreach(\App\Models\Category::where('type', 'item_type')->get() as $category)
+                                    @foreach(\App\Models\Category::where('type', 'item_type')->with('parents')->get() as $category)
                                         <option value="{{ $category->id }}" {{ old('item_category') == $category->id ? 'selected' : '' }}
-                                            data-parent="{{ $category->parent_id }}">
+                                            data-parents="{{ $category->parents->pluck('id')->join(',') }}">
                                             {{ $category->name }}
-                                            @if($category->parent)
-                                                ({{ $category->parent->name }})
+                                            @if($category->parents->count() > 0)
+                                                ({{ $category->parents->pluck('name')->join(', ') }})
                                             @endif
                                         </option>
                                     @endforeach
@@ -155,7 +155,7 @@
                         <input type="hidden" name="categories[]" id="categories_combined">
                         
                         <div class="form-text mt-2">
-                            Select one category from each type. The product will automatically be assigned to the selected categories.
+                            Select one category from each type. The product will automatically be assigned to the selected categories. Note that clothing types and item types may belong to multiple parent categories.
                         </div>
                     </div>
                 </div>
@@ -263,10 +263,10 @@
             const clothingOptions = clothingCategorySelect.querySelectorAll('option:not(:first-child)');
             
             clothingOptions.forEach(option => {
-                const parentId = option.getAttribute('data-parent');
+                const parentIds = option.getAttribute('data-parents') ? option.getAttribute('data-parents').split(',') : [];
                 if (mainCategoryId === '') {
                     option.style.display = '';  // Show all if no main category selected
-                } else if (parentId === mainCategoryId) {
+                } else if (parentIds.includes(mainCategoryId)) {
                     option.style.display = '';  // Show if parent matches
                 } else {
                     option.style.display = 'none';  // Hide if parent doesn't match
@@ -288,10 +288,10 @@
             const itemOptions = itemCategorySelect.querySelectorAll('option:not(:first-child)');
             
             itemOptions.forEach(option => {
-                const parentId = option.getAttribute('data-parent');
+                const parentIds = option.getAttribute('data-parents') ? option.getAttribute('data-parents').split(',') : [];
                 if (clothingCategoryId === '') {
                     option.style.display = '';  // Show all if no clothing category selected
-                } else if (parentId === clothingCategoryId) {
+                } else if (parentIds.includes(clothingCategoryId)) {
                     option.style.display = '';  // Show if parent matches
                 } else {
                     option.style.display = 'none';  // Hide if parent doesn't match

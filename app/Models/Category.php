@@ -76,7 +76,7 @@ class Category extends Model
      */
     public function hasChildren(): bool
     {
-        return $this->children()->count() > 0;
+        return $this->children()->count() > 0 || $this->allChildren()->count() > 0;
     }
     
     /**
@@ -117,6 +117,7 @@ class Category extends Model
      */
     public function getAncestors()
     {
+        // Get direct ancestors through parent_id
         $ancestors = collect([]);
         $category = $this;
         
@@ -125,7 +126,14 @@ class Category extends Model
             $category = $category->parent;
         }
         
-        return $ancestors->reverse();
+        // Add many-to-many parents
+        $this->parents->each(function($parent) use ($ancestors) {
+            if (!$ancestors->contains('id', $parent->id)) {
+                $ancestors->push($parent);
+            }
+        });
+        
+        return $ancestors->sortBy('name');
     }
     
     /**
@@ -134,8 +142,13 @@ class Category extends Model
     public function getBreadcrumbPath(): string
     {
         $ancestors = $this->getAncestors();
-        $path = $ancestors->pluck('name')->push($this->name)->implode(' > ');
-        return $path;
+        
+        if ($ancestors->isEmpty()) {
+            return $this->name;
+        }
+        
+        $parentNames = $ancestors->pluck('name')->implode(', ');
+        return $parentNames . ' > ' . $this->name;
     }
     
     /**
@@ -155,6 +168,23 @@ class Category extends Model
             ->where('parent_id', null)
             ->where('status', true)
             ->get();
+    }
+    
+    /**
+     * Get visible categories for store frontend
+     * This ensures only active categories are displayed
+     */
+    public static function getVisibleCategories()
+    {
+        return self::where('status', true)->get();
+    }
+    
+    /**
+     * Scope a query to only include visible categories
+     */
+    public function scopeVisible($query)
+    {
+        return $query->where('status', true);
     }
     
     /**
