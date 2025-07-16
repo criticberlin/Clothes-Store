@@ -73,18 +73,71 @@
                 
                 <div class="row mb-3">
                     <div class="col-md-12">
-                        <label for="categories" class="form-label">Categories</label>
-                        <select class="form-select @error('categories') is-invalid @enderror" id="categories" name="categories[]" multiple required>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ (isset($product) && $product->categories->contains($category->id)) ? 'selected' : '' }}>
+                        <label class="form-label fw-bold">Categories</label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Main Category</label>
+                                <select class="form-select @error('main_category') is-invalid @enderror" id="main_category" name="main_category">
+                                    <option value="">Select Main Category</option>
+                                    @foreach(\App\Models\Category::where('type', 'main')->get() as $category)
+                                        <option value="{{ $category->id }}" 
+                                            {{ (isset($product) && $product->categories->contains($category->id)) ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('categories')
+                                @error('main_category')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Clothing Type</label>
+                                <select class="form-select @error('clothing_category') is-invalid @enderror" id="clothing_category" name="clothing_category">
+                                    <option value="">Select Clothing Type</option>
+                                    @foreach(\App\Models\Category::where('type', 'clothing')->get() as $category)
+                                        <option value="{{ $category->id }}" 
+                                            {{ (isset($product) && $product->categories->contains($category->id)) ? 'selected' : '' }}
+                                            data-parent="{{ $category->parent_id }}">
+                                            {{ $category->name }}
+                                            @if($category->parent)
+                                                ({{ $category->parent->name }})
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('clothing_category')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Item Type</label>
+                                <select class="form-select @error('item_category') is-invalid @enderror" id="item_category" name="item_category">
+                                    <option value="">Select Item Type</option>
+                                    @foreach(\App\Models\Category::where('type', 'item_type')->get() as $category)
+                                        <option value="{{ $category->id }}" 
+                                            {{ (isset($product) && $product->categories->contains($category->id)) ? 'selected' : '' }}
+                                            data-parent="{{ $category->parent_id }}">
+                                            {{ $category->name }}
+                                            @if($category->parent)
+                                                ({{ $category->parent->name }})
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('item_category')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">Hold Ctrl/Cmd to select multiple categories</small>
+                            </div>
+                        </div>
+                        
+                        {{-- Hidden field to store all selected categories --}}
+                        <input type="hidden" name="categories[]" id="categories_combined">
+                        
+                        <div class="form-text mt-2">
+                            Select one category from each type. The product will automatically be assigned to the selected categories.
+                        </div>
                     </div>
                 </div>
                 
@@ -203,6 +256,92 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle categories
+        const mainCategorySelect = document.getElementById('main_category');
+        const clothingCategorySelect = document.getElementById('clothing_category');
+        const itemCategorySelect = document.getElementById('item_category');
+        const categoriesCombined = document.getElementById('categories_combined');
+        const form = document.querySelector('form');
+        
+        // Submit handler to ensure categories are combined
+        form.addEventListener('submit', function(e) {
+            updateCombinedCategories();
+        });
+        
+        // Filter clothing categories based on selected main category
+        mainCategorySelect.addEventListener('change', function() {
+            const mainCategoryId = this.value;
+            const clothingOptions = clothingCategorySelect.querySelectorAll('option:not(:first-child)');
+            
+            clothingOptions.forEach(option => {
+                const parentId = option.getAttribute('data-parent');
+                if (mainCategoryId === '') {
+                    option.style.display = '';  // Show all if no main category selected
+                } else if (parentId === mainCategoryId) {
+                    option.style.display = '';  // Show if parent matches
+                } else {
+                    option.style.display = 'none';  // Hide if parent doesn't match
+                    // Deselect if currently selected but should be hidden
+                    if (option.selected) {
+                        clothingCategorySelect.value = '';
+                    }
+                }
+            });
+            
+            // Trigger clothing category change to update item types
+            clothingCategorySelect.dispatchEvent(new Event('change'));
+            updateCombinedCategories();
+        });
+        
+        // Filter item categories based on selected clothing category
+        clothingCategorySelect.addEventListener('change', function() {
+            const clothingCategoryId = this.value;
+            const itemOptions = itemCategorySelect.querySelectorAll('option:not(:first-child)');
+            
+            itemOptions.forEach(option => {
+                const parentId = option.getAttribute('data-parent');
+                if (clothingCategoryId === '') {
+                    option.style.display = '';  // Show all if no clothing category selected
+                } else if (parentId === clothingCategoryId) {
+                    option.style.display = '';  // Show if parent matches
+                } else {
+                    option.style.display = 'none';  // Hide if parent doesn't match
+                    // Deselect if currently selected but should be hidden
+                    if (option.selected) {
+                        itemCategorySelect.value = '';
+                    }
+                }
+            });
+            
+            updateCombinedCategories();
+        });
+        
+        // Update combined categories when item type changes
+        itemCategorySelect.addEventListener('change', updateCombinedCategories);
+        
+        // Combine selected categories into the hidden input
+        function updateCombinedCategories() {
+            const selectedCategories = [];
+            
+            if (mainCategorySelect.value) {
+                selectedCategories.push(mainCategorySelect.value);
+            }
+            
+            if (clothingCategorySelect.value) {
+                selectedCategories.push(clothingCategorySelect.value);
+            }
+            
+            if (itemCategorySelect.value) {
+                selectedCategories.push(itemCategorySelect.value);
+            }
+            
+            // Update the hidden input with all selected category IDs
+            categoriesCombined.value = selectedCategories.join(',');
+        }
+        
+        // Initial update
+        mainCategorySelect.dispatchEvent(new Event('change'));
+        
         // Apply color swatches background colors
         document.querySelectorAll('.color-swatch').forEach(function(swatch) {
             swatch.style.backgroundColor = swatch.dataset.color;

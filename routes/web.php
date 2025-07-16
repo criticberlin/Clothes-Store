@@ -16,6 +16,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\LanguageController;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,7 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     Route::get('/categories/{category}/edit', [App\Http\Controllers\web\CategoryController::class, 'edit'])->name('admin.categories.edit');
     Route::put('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'update'])->name('admin.categories.update');
     Route::delete('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+    Route::get('/categories/children', [App\Http\Controllers\web\CategoryController::class, 'getChildCategories'])->name('admin.categories.children');
     
     // Admin Order Management
     Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.list');
@@ -232,6 +234,38 @@ Route::get('/api-status', function () {
         'message' => 'API routes are working',
         'timestamp' => now()->toDateTimeString()
     ]);
+});
+
+// Test route for CategoryController
+Route::get('/test-category-controller', [App\Http\Controllers\web\CategoryController::class, 'testController']);
+
+// Test route for CSRF token
+Route::post('/test-csrf', function() {
+    return response()->json(['success' => true, 'message' => 'CSRF token is valid']);
+});
+
+// Debug routes
+Route::get('/debug/category-relationships', function() {
+    $relationships = DB::table('category_category')->get();
+    $categories = \App\Models\Category::all()->keyBy('id');
+    
+    $result = [];
+    foreach ($relationships as $rel) {
+        $parent = $categories[$rel->parent_id] ?? null;
+        $child = $categories[$rel->child_id] ?? null;
+        
+        $result[] = [
+            'relationship_id' => $rel->id,
+            'parent_id' => $rel->parent_id,
+            'parent_name' => $parent ? $parent->name : 'Unknown',
+            'parent_type' => $parent ? $parent->type : 'Unknown',
+            'child_id' => $rel->child_id,
+            'child_name' => $child ? $child->name : 'Unknown',
+            'child_type' => $child ? $child->type : 'Unknown',
+        ];
+    }
+    
+    return response()->json($result);
 });
 
 

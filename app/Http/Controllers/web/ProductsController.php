@@ -147,7 +147,8 @@ class ProductsController extends Controller {
         return view("products.edit", compact('product', 'colors', 'sizes', 'categories'));
     }
 
-    public function save(Request $request, ?Product $product = null) {
+    public function save(Request $request, ?Product $product = null)
+    {
         $this->validate($request, [
             'code' => ['required', 'string', 'max:32'],
             'name' => ['required', 'string', 'max:128'],
@@ -155,8 +156,11 @@ class ProductsController extends Controller {
             'price' => ['required', 'numeric'],
             'quantity' => ['required','integer','min:0'],
             'photo' => ['nullable', 'image', 'max:2048'], // 2MB max
-            'categories' => ['required', 'array', 'min:1'],
-            'categories.*' => ['exists:categories,id']
+            'categories' => ['nullable', 'array'],
+            'categories.*' => ['nullable', 'exists:categories,id'],
+            'main_category' => ['nullable', 'exists:categories,id'],
+            'clothing_category' => ['nullable', 'exists:categories,id'],
+            'item_category' => ['nullable', 'exists:categories,id'],
         ]);
 
         $product = $product ?? new Product();
@@ -201,8 +205,51 @@ class ProductsController extends Controller {
         
         $product->save();
 
+        // Collect all selected categories
+        $selectedCategories = [];
+        
+        // Add individual category selections if they exist
+        if ($request->main_category) {
+            $selectedCategories[] = $request->main_category;
+        }
+        
+        if ($request->clothing_category) {
+            $selectedCategories[] = $request->clothing_category;
+        }
+        
+        if ($request->item_category) {
+            $selectedCategories[] = $request->item_category;
+        }
+        
+        // If categories_combined is provided (from JS), use those values
+        if ($request->has('categories') && is_array($request->categories) && count($request->categories) > 0) {
+            foreach ($request->categories as $categoryId) {
+                if (empty($categoryId)) continue;
+                
+                // Check if the value contains a comma (e.g. "2,6")
+                if (strpos($categoryId, ',') !== false) {
+                    $parts = explode(',', $categoryId);
+                    foreach ($parts as $part) {
+                        $part = trim($part);
+                        if (!empty($part) && !in_array($part, $selectedCategories)) {
+                            $selectedCategories[] = $part;
+                        }
+                    }
+                } else if (!in_array($categoryId, $selectedCategories)) {
+                    $selectedCategories[] = $categoryId;
+                }
+            }
+        } else if ($request->has('categories_combined') && !empty($request->categories_combined)) {
+            $combinedCategories = explode(',', $request->categories_combined);
+            foreach ($combinedCategories as $categoryId) {
+                if ($categoryId && !in_array($categoryId, $selectedCategories)) {
+                    $selectedCategories[] = $categoryId;
+                }
+            }
+        }
+
         // Sync relationships
-        $product->categories()->sync($request->categories);
+        $product->categories()->sync($selectedCategories);
         $product->colors()->sync($request->colors ?? []);
         $product->sizes()->sync($request->sizes ?? []);
 

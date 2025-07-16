@@ -119,7 +119,9 @@ class AdminController extends Controller
      */
     public function categories()
     {
-        $categories = \App\Models\Category::orderBy('name')->paginate(10);
+        $categories = \App\Models\Category::with(['parent', 'children', 'products'])
+            ->orderBy('name')
+            ->paginate(15);
         
         return view('admin.categories.index', compact('categories'));
     }

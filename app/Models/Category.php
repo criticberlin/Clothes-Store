@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
@@ -13,12 +15,146 @@ class Category extends Model
         'name',
         'slug',
         'description',
-        'photo'
+        'photo',
+        'parent_id',
+        'type',
+        'status'
     ];
 
+    /**
+     * Get all products associated with this category
+     */
     public function products()
     {
         return $this->belongsToMany(Product::class);
+    }
+    
+    /**
+     * Get the parent category
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+    
+    /**
+     * Get all parent categories (many-to-many)
+     */
+    public function parents()
+    {
+        return $this->belongsToMany(
+            Category::class, 
+            'category_category', 
+            'child_id', 
+            'parent_id'
+        );
+    }
+    
+    /**
+     * Get the child categories
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+    
+    /**
+     * Get all child categories (many-to-many)
+     */
+    public function allChildren()
+    {
+        return $this->belongsToMany(
+            Category::class, 
+            'category_category', 
+            'parent_id', 
+            'child_id'
+        );
+    }
+    
+    /**
+     * Check if category has children
+     */
+    public function hasChildren(): bool
+    {
+        return $this->children()->count() > 0;
+    }
+    
+    /**
+     * Get all available parent categories for this category
+     * (excludes self and descendants to prevent circular references)
+     */
+    public function getAvailableParents()
+    {
+        // If this is a new record, all categories are available
+        if (!$this->exists) {
+            return Category::where('id', '!=', $this->id ?? 0)->get();
+        }
+        
+        // Get all descendant IDs to exclude (to prevent circular references)
+        $excludeIds = $this->getAllChildrenIds();
+        $excludeIds[] = $this->id;
+        
+        return Category::whereNotIn('id', $excludeIds)->get();
+    }
+    
+    /**
+     * Get all children IDs recursively
+     */
+    protected function getAllChildrenIds(): array
+    {
+        $ids = [];
+        
+        foreach ($this->children as $child) {
+            $ids[] = $child->id;
+            $ids = array_merge($ids, $child->getAllChildrenIds());
+        }
+        
+        return $ids;
+    }
+    
+    /**
+     * Get ancestors of this category
+     */
+    public function getAncestors()
+    {
+        $ancestors = collect([]);
+        $category = $this;
+        
+        while ($category->parent) {
+            $ancestors->push($category->parent);
+            $category = $category->parent;
+        }
+        
+        return $ancestors->reverse();
+    }
+    
+    /**
+     * Get category breadcrumb path
+     */
+    public function getBreadcrumbPath(): string
+    {
+        $ancestors = $this->getAncestors();
+        $path = $ancestors->pluck('name')->push($this->name)->implode(' > ');
+        return $path;
+    }
+    
+    /**
+     * Get categories filtered by type
+     */
+    public static function getByType(string $type)
+    {
+        return self::where('type', $type)->where('status', true)->get();
+    }
+    
+    /**
+     * Get main categories (top level)
+     */
+    public static function getMainCategories()
+    {
+        return self::where('type', 'main')
+            ->where('parent_id', null)
+            ->where('status', true)
+            ->get();
     }
     
     /**
