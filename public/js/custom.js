@@ -92,28 +92,20 @@ function initializeSearch() {
         };
     }
     
-    // Function to get base URL for the application
+    // Get base URL for consistent path handling
     function getBaseUrl() {
-        // Use global baseUrl if available
-        if (window.baseUrl) {
-            return window.baseUrl;
-        }
-        
-        // Check if base tag exists
-        const baseTag = document.querySelector('base');
-        if (baseTag && baseTag.href) {
-            return baseTag.href.replace(/\/$/, '');
-        }
-        
-        // Check for Clothes_Store in path
+        // Get the current URL path
         const path = window.location.pathname;
+        
+        // Check if we're in the Clothes_Store/public directory
         if (path.includes('/Clothes_Store/public')) {
             return window.location.origin + '/Clothes_Store/public';
-        } else if (path.includes('/Clothes_Store')) {
+        } 
+        // Check if we're just in the Clothes_Store directory
+        else if (path.includes('/Clothes_Store')) {
             return window.location.origin + '/Clothes_Store';
         }
-        
-        // Default to origin
+        // Otherwise, assume we're at the root
         return window.location.origin;
     }
     
@@ -798,6 +790,54 @@ function updateCartCount(count, animate = false) {
         setTimeout(() => {
             cartIconBtn.classList.remove('animate-tada');
         }, 1000);
+    }
+}
+
+/**
+ * Update the wishlist count badge in the header with animation
+ * @param {number} count - The new wishlist count
+ * @param {boolean} animate - Whether to show bounce animation
+ */
+function updateWishlistCount(count, animate = false) {
+    const wishlistBadge = document.querySelector('.wishlist-badge');
+    
+    if (wishlistBadge) {
+        // Update existing badge
+        wishlistBadge.textContent = count;
+        
+        // Show/hide badge based on count
+        if (count > 0) {
+            wishlistBadge.classList.remove('d-none');
+            
+            // Add animation if requested
+            if (animate) {
+                wishlistBadge.classList.add('animate-bounce');
+                setTimeout(() => {
+                    wishlistBadge.classList.remove('animate-bounce');
+                }, 1000);
+            }
+        } else {
+            wishlistBadge.classList.add('d-none');
+        }
+    } else if (count > 0) {
+        // Create new badge if it doesn't exist
+        const wishlistText = document.querySelector('.dropdown-item[href*="wishlist"] span');
+        if (wishlistText) {
+            const badge = document.createElement('span');
+            badge.className = 'badge rounded-pill bg-primary wishlist-badge ms-2';
+            if (animate) {
+                badge.classList.add('animate-bounce');
+            }
+            badge.textContent = count;
+            wishlistText.parentNode.appendChild(badge);
+            
+            // Remove animation after a short delay
+            if (animate) {
+                setTimeout(() => {
+                    badge.classList.remove('animate-bounce');
+                }, 1000);
+            }
+        }
     }
 }
 

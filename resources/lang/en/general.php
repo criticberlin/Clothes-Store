@@ -35,6 +35,7 @@ return [
     'new' => 'New',
     'my_profile' => 'My Profile',
     'my_orders' => 'My Orders',
+    'my_wishlist' => 'My Wishlist',
     'admin_dashboard' => 'Admin Dashboard',
     'logout' => 'Logout',
     'login' => 'Login',

@@ -9,6 +9,7 @@
     <meta name="description" content="MyClothes - Modern fashion store for all your style needs">
     <meta name="theme-color" content="#7F5AF0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="base-url" content="{{ url('') }}">
     <base href="{{ url('/') }}/">
     @yield('meta')
     <title>MyClothes - @yield('title')</title>
@@ -38,6 +39,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Define baseUrl globally for search functionality
             window.baseUrl = function() {
+                const baseMeta = document.querySelector('meta[name="base-url"]');
+                if (baseMeta) {
+                    return baseMeta.getAttribute('content');
+                }
+                
                 const path = window.location.pathname;
                 if (path.includes('/Clothes_Store/public')) {
                     return window.location.origin + '/Clothes_Store/public';
@@ -1551,6 +1557,50 @@
             width: 24px;
             text-align: center;
         }
+
+        /* Cart Badge */
+        .cart-counter {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.4rem;
+            transform: translate(-40%, -40%) !important;
+            background-color: var(--primary) !important;
+            color: white;
+        }
+        
+        /* New badge position in top left */
+        .product-badge.top-left {
+            top: 10px;
+            left: 10px;
+            right: auto;
+        }
+        
+        /* Inline wishlist button */
+        .wishlist-btn-inline {
+            padding: 0.25rem;
+            width: auto;
+            height: auto;
+            font-size: 1rem;
+            transition: all var(--transition-normal);
+            color: var(--text-tertiary);
+        }
+        
+        .wishlist-btn-inline:hover {
+            color: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        /* User profile icon hover effect */
+        #userDropdown {
+            transition: all var(--transition-normal);
+        }
+        
+        #userDropdown:hover {
+            color: var(--primary);
+        }
+        
+        #userDropdown:hover .profile-placeholder i {
+            color: var(--primary);
+        }
     </style>
     
     @stack('styles')
@@ -1693,7 +1743,7 @@
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center" href="{{ route('admin.dashboard') }}">
                                             <i class="bi bi-speedometer2 me-2"></i> 
-                                            <span>{{ __('general.admin_dashboard') }}</span>
+                                            <span>{{ __('Admin Dashboard') }}</span>
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
@@ -1702,14 +1752,26 @@
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center" href="{{ route('profile', Auth::id()) }}">
                                             <i class="bi bi-person me-2"></i> 
-                                            <span>{{ __('general.my_profile') }}</span>
+                                            <span>{{ __('My Profile') }}</span>
                                         </a>
                                     </li>
                                     
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center" href="{{ route('orders.index') }}">
                                             <i class="bi bi-bag me-2"></i> 
-                                            <span>{{ __('general.my_orders') }}</span>
+                                            <span>{{ __('My Orders') }}</span>
+                                        </a>
+                                    </li>
+                                    
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('wishlist.index') }}">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-heart me-2"></i> 
+                                                <span>{{ __('My Wishlist') }}</span>
+                                            </div>
+                                            @if(Auth::check() && Auth::user()->wishlist)
+                                                <span class="badge rounded-circle bg-primary wishlist-counter">{{ Auth::user()->wishlist->count() }}</span>
+                                            @endif
                                         </a>
                                     </li>
                                     
@@ -1749,13 +1811,12 @@
                             @endauth
                         </div>
                         
+                        <!-- Cart Icon with Counter -->
                         <a href="{{ route('cart.index') }}" class="header-icon-btn position-relative ms-2">
-                            <i class="bi bi-cart text-primary"></i>
-                            @if(Auth::check() && Auth::user()->cart && Auth::user()->cart->count() > 0)
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
-                                    {{ Auth::user()->cart->count() }}
-                                </span>
-                            @endif
+                            <i class="bi bi-cart"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-circle cart-counter">
+                                {{ Auth::check() && Auth::user()->cart ? Auth::user()->cart->sum('quantity') : 0 }}
+                            </span>
                         </a>
                     </div>
                 </div>
@@ -2326,7 +2387,7 @@
                         formData.append('theme', theme);
                         formData.append('_token', csrfToken);
                         
-                        fetch('/preferences/theme', {
+                        fetch('{{ route("preferences.theme") }}', {
                             method: 'POST',
                             body: formData,
                             headers: {
@@ -2374,5 +2435,8 @@
             initTheme();
         });
     </script>
+    
+    <!-- Wishlist JS -->
+    <script src="{{ asset('js/wishlist.js') }}"></script>
 </body>
 </html>

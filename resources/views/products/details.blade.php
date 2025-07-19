@@ -355,8 +355,22 @@
     <div class="mt-5">
         <h3 class="mb-4">{{ __('You might also like') }}</h3>
         <div class="row g-4">
-            @foreach($product->recommendedProducts as $recommendedProduct)
-            <div class="col-md-4">
+            @php
+                // Ensure we have at least 4 products
+                $recommendedProducts = $product->recommendedProducts->load(['categories', 'colors', 'sizes', 'images']);
+                if($recommendedProducts->count() < 4) {
+                    $moreProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                        ->whereNotIn('id', [$product->id])
+                        ->whereNotIn('id', $recommendedProducts->pluck('id')->toArray())
+                        ->inRandomOrder()
+                        ->limit(4 - $recommendedProducts->count())
+                        ->get();
+                    $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                }
+            @endphp
+            
+            @foreach($recommendedProducts->take(4) as $recommendedProduct)
+            <div class="col-6 col-md-3">
                 <div class="product-card h-100">
                     <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
                         <div class="product-image-container">
@@ -366,18 +380,45 @@
                             @if($recommendedProduct->quantity <= 0)
                                 <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
                             @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
-                                <div class="product-badge new">{{ __('general.new') }}</div>
+                                <div class="product-badge new top-left">{{ __('general.new') }}</div>
+                            @endif
+                            
+                            <!-- Color Swatches -->
+                            @if(isset($recommendedProduct->colors) && $recommendedProduct->colors && $recommendedProduct->colors->count() > 0)
+                                <div class="color-swatches">
+                                    @foreach($recommendedProduct->colors->take(4) as $color)
+                                        <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
+                                    @endforeach
+                                    @if($recommendedProduct->colors->count() > 4)
+                                        <div class="color-swatch more-colors">+{{ $recommendedProduct->colors->count() - 4 }}</div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                         <div class="product-info p-3">
-                            <div class="d-flex justify-content-between align-items-start">
+                            <div class="product-category text-tertiary small mb-1">
+                                @if($recommendedProduct->categories && $recommendedProduct->categories->isNotEmpty())
+                                    {{ $recommendedProduct->categories->first()->name }}
+                                @endif
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
                                 <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
-                                <button type="button" class="btn btn-sm btn-icon wishlist-toggle p-0 m-0" 
+                                <!-- Wishlist button moved next to product name -->
+                                <button type="button" class="btn btn-sm btn-icon wishlist-toggle wishlist-btn-inline" 
                                         data-product-id="{{ $recommendedProduct->id }}" 
+                                        data-bs-toggle="tooltip"
                                         title="{{ __('Add to Wishlist') }}">
                                     <i class="bi bi-heart"></i>
                                 </button>
                             </div>
+                            <!-- Available Sizes -->
+                            @if(isset($recommendedProduct->sizes) && $recommendedProduct->sizes && $recommendedProduct->sizes->count() > 0)
+                                <div class="available-sizes mb-2">
+                                    @foreach($recommendedProduct->sizes->take(5) as $size)
+                                        <span class="size-badge">{{ $size->name }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
                                     {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
@@ -531,11 +572,68 @@
         color: white;
     }
     
+    /* New badge position in top left */
+    .product-badge.top-left {
+        top: 10px;
+        left: 10px;
+        right: auto;
+    }
+    
     .product-title {
         font-weight: 600;
         line-height: 1.3;
         margin-bottom: 0.5rem;
         color: var(--text-primary);
+    }
+    
+    /* Color Swatches */
+    .color-swatches {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        display: flex;
+        gap: 5px;
+        z-index: 2;
+    }
+    
+    .color-swatch {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        transition: transform var(--transition-normal);
+    }
+    
+    .color-swatch:hover {
+        transform: scale(1.2);
+    }
+    
+    .color-swatch.more-colors {
+        background-color: var(--surface);
+        color: var(--text-tertiary);
+        font-size: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* Size Badges */
+    .available-sizes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .size-badge {
+        background-color: var(--surface-alt);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        padding: 0.15rem 0.35rem;
+        border-radius: var(--radius-sm);
+        display: inline-block;
     }
     
     .btn-icon {
@@ -557,6 +655,21 @@
 
     .wishlist-toggle .bi-heart-fill {
         color: var(--primary);
+    }
+    
+    /* Inline wishlist button */
+    .wishlist-btn-inline {
+        padding: 0.25rem;
+        width: auto;
+        height: auto;
+        font-size: 1rem;
+        transition: all var(--transition-normal);
+        color: var(--text-tertiary);
+    }
+    
+    .wishlist-btn-inline:hover {
+        color: var(--primary);
+        transform: scale(1.2);
     }
     
     /* Animations */
@@ -622,6 +735,11 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Apply color swatches background
+    document.querySelectorAll('.color-swatch[data-color]').forEach(function(swatch) {
+        swatch.style.backgroundColor = swatch.dataset.color;
+    });
+    
     // Set color labels background
     var colorLabels = document.querySelectorAll('.color-label[data-bg]');
     for (var i = 0; i < colorLabels.length; i++) {
@@ -699,9 +817,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 successMessage.classList.remove('d-none');
                 
                 // Update cart counter in header
-                const cartBadge = document.querySelector('.cart-badge');
+                const cartBadge = document.querySelector('.cart-counter');
                 if (cartBadge) {
-                    cartBadge.textContent = data.cartCount || parseInt(cartBadge.textContent || '0') + 1;
+                    cartBadge.textContent = data.cart_count || parseInt(cartBadge.textContent || '0') + 1;
                     cartBadge.classList.add('animate-pulse');
                     setTimeout(() => {
                         cartBadge.classList.remove('animate-pulse');
@@ -736,17 +854,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Wishlist functionality
-    const wishlistBtn = document.querySelector('.wishlist-toggle');
-    if (wishlistBtn) {
-        const productId = wishlistBtn.getAttribute('data-product-id');
+    const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
+    wishlistBtns.forEach(btn => {
+        const productId = btn.getAttribute('data-product-id');
         
         // Check if product is in wishlist
-        fetch(`/wishlist/check/${productId}`)
-            .then(response => response.json())
+        fetch(`{{ url('wishlist/check') }}/${productId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.in_wishlist) {
-                    wishlistBtn.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                    wishlistBtn.classList.add('active');
+                    btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                    btn.classList.add('active');
                 }
             })
             .catch(error => {
@@ -754,54 +882,65 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         
         // Toggle wishlist on click
-        wishlistBtn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const productId = this.getAttribute('data-product-id');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
             // Show loading state
             this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
             this.disabled = true;
             
             // Toggle wishlist status
-            fetch(`/wishlist/toggle/${productId}`, {
+            fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
-                // Enable button
-                this.disabled = false;
-                
-                if (data.success) {
-                    if (data.in_wishlist) {
-                        this.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                        this.classList.add('active');
-                        showNotification('Product added to wishlist', 'success');
-                    } else {
-                        this.innerHTML = '<i class="bi bi-heart"></i>';
-                        this.classList.remove('active');
-                        showNotification('Product removed from wishlist', 'info');
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                } else {
-                    // If not authenticated, redirect to login
-                    if (data.message.includes('login')) {
-                        window.location.href = '/login';
+                    return response.json();
+                })
+                .then(data => {
+                    // Enable button
+                    this.disabled = false;
+                    
+                    if (data.success) {
+                        if (data.in_wishlist) {
+                            this.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                            this.classList.add('active');
+                            showNotification('Product added to wishlist', 'success');
+                        } else {
+                            this.innerHTML = '<i class="bi bi-heart"></i>';
+                            this.classList.remove('active');
+                            showNotification('Product removed from wishlist', 'info');
+                        }
                     } else {
-                        showNotification(data.message || 'Error updating wishlist', 'error');
+                        // If not authenticated, redirect to login
+                        if (data.message.includes('login')) {
+                            window.location.href = '/login';
+                        } else {
+                            showNotification(data.message || 'Error updating wishlist', 'error');
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Error toggling wishlist:', error);
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-heart"></i>';
-                showNotification('Error updating wishlist', 'error');
-            });
+                })
+                .catch(error => {
+                    console.error('Error toggling wishlist:', error);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-heart"></i>';
+                    showNotification('Error updating wishlist', 'error');
+                });
         });
-    }
+    });
     
     // Show notification function
     function showNotification(message, type = 'success') {

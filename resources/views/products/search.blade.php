@@ -61,52 +61,7 @@
                         <div class="col-6 col-md-4 col-lg-3 product-card-wrapper" 
                              data-price="{{ $product->price }}" 
                              data-date="{{ $product->created_at->timestamp }}">
-                            <div class="product-card h-100">
-                                <div class="product-image-container">
-                                    @if($product->photo)
-                                        <img src="{{ asset('storage/' . $product->photo) }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                                    @else
-                                        <img src="{{ asset('images/products/default.jpg') }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                                    @endif
-                                    <div class="product-actions">
-                                        <a href="{{ route('cart.add', $product->id) }}" class="btn btn-sm btn-primary rounded-circle add-to-cart-btn" data-method="post">
-                                            <i class="bi bi-cart-plus"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-outline-light rounded-circle quick-view-btn" data-product-id="{{ $product->id }}">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-light rounded-circle add-to-wishlist-btn">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    @if($product->quantity <= 0)
-                                        <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
-                                    @elseif($product->created_at && $product->created_at->diffInDays(now()) <= 7)
-                                        <div class="product-badge new">{{ __('general.new') }}</div>
-                                    @endif
-                                </div>
-                                <div class="product-info p-3">
-                                    <div class="product-category text-tertiary small mb-1">
-                                        @if($product->categories->isNotEmpty())
-                                            {{ $product->categories->first()->name }}
-                                        @endif
-                                    </div>
-                                    <h3 class="product-title h6 mb-1">
-                                        <a href="{{ route('products.details', $product->id) }}" class="text-reset text-decoration-none">
-                                            {{ $product->name }}
-                                        </a>
-                                    </h3>
-                                    <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <div class="product-price fw-bold">
-                                            {!! displayPrice($product->price) !!}
-                                        </div>
-                                        <div class="product-rating">
-                                            <i class="bi bi-star-fill text-warning"></i>
-                                            <span class="ms-1 small">4.8</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <x-product-card :product="$product" />
                         </div>
                     @endforeach
                 </div>
@@ -152,6 +107,17 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Apply color swatches background
+        document.querySelectorAll('.color-swatch[data-color]').forEach(function(swatch) {
+            swatch.style.backgroundColor = swatch.dataset.color;
+        });
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
         // Sorting functionality
         const sortSelect = document.getElementById('sortOrder');
         if (sortSelect) {
@@ -267,6 +233,198 @@
                     });
             });
         });
+        
+        // Wishlist functionality
+        const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
+        wishlistBtns.forEach(btn => {
+            const productId = btn.getAttribute('data-product-id');
+            
+            // Check if product is in wishlist
+            fetch(`{{ url('wishlist/check') }}/${productId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.in_wishlist) {
+                        btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        btn.classList.add('active');
+                    } else {
+                        btn.innerHTML = '<i class="bi bi-heart"></i>';
+                        btn.classList.remove('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking wishlist status:', error);
+                });
+            
+            // Add click event listener
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const productId = this.getAttribute('data-product-id');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                // Show loading state
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                this.disabled = true;
+                
+                // Toggle wishlist status
+                fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Enable button
+                        this.disabled = false;
+                        
+                        if (data.success) {
+                            if (data.in_wishlist) {
+                                this.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                                this.classList.add('active');
+                                showNotification('Product added to wishlist', 'success');
+                            } else {
+                                this.innerHTML = '<i class="bi bi-heart"></i>';
+                                this.classList.remove('active');
+                                showNotification('Product removed from wishlist', 'info');
+                            }
+                        } else {
+                            // If not authenticated, redirect to login
+                            if (data.message.includes('login')) {
+                                window.location.href = '/login';
+                            } else {
+                                showNotification(data.message || 'Error updating wishlist', 'error');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling wishlist:', error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-heart"></i>';
+                        showNotification('Error updating wishlist', 'error');
+                    });
+            });
+        });
+        
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            // If there's an existing notification, remove it
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            let icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-triangle';
+            if (type === 'info') icon = 'info-circle';
+            
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="bi bi-${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Add to DOM
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
     });
 </script>
+@endpush 
+
+@push('styles')
+<style>
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 300px;
+    padding: 15px;
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--primary);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+}
+
+.notification-content i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.notification-success {
+    border-left-color: var(--secondary);
+}
+
+.notification-success i {
+    color: var(--secondary);
+}
+
+.notification-error {
+    border-left-color: #dc3545;
+}
+
+.notification-error i {
+    color: #dc3545;
+}
+
+.notification-info {
+    border-left-color: var(--primary);
+}
+
+.notification-info i {
+    color: var(--primary);
+}
+</style>
 @endpush 

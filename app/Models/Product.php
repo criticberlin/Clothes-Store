@@ -134,4 +134,23 @@ class Product extends Model {
         // Default thumbnail
         return asset('images/products/default-thumbnail.jpg');
     }
+
+    /**
+     * Get the first image URL from the images relationship
+     */
+    public function getFirstImageUrlAttribute(): string {
+        $image = $this->images()->first();
+        if ($image && $image->filename) {
+            if (str_starts_with($image->filename, 'products/') && file_exists(public_path('storage/' . $image->filename))) {
+                return asset('storage/' . $image->filename);
+            }
+            
+            if (file_exists(public_path('images/products/' . $image->filename))) {
+                return asset('images/products/' . $image->filename);
+            }
+        }
+        
+        // Fall back to the regular image URL
+        return $this->getImageUrlAttribute();
+    }
 }

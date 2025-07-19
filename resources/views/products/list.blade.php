@@ -71,68 +71,7 @@
         <div class="row g-4">
             @foreach($products as $product)
                 <div class="col-6 col-md-4 col-lg-3">
-                    <div class="product-card h-100">
-                        <a href="{{ route('products.details', $product->id) }}" class="product-card-link">
-                        <div class="product-image-container">
-                                <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                                
-                            <!-- Product Badges -->
-                            @if($product->quantity <= 0)
-                                <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
-                            @elseif($product->created_at && $product->created_at->diffInDays(now()) <= 7)
-                                <div class="product-badge new">{{ __('general.new') }}</div>
-                            @endif
-                            
-                            <!-- Color Swatches -->
-                            @if($product->colors && $product->colors->count() > 0)
-                                <div class="color-swatches">
-                                    @foreach($product->colors->take(4) as $color)
-                                        <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
-                                    @endforeach
-                                    @if($product->colors->count() > 4)
-                                        <div class="color-swatch more-colors">+{{ $product->colors->count() - 4 }}</div>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-                        <div class="product-info p-3">
-                            <div class="product-category text-tertiary small mb-1">
-                                @if($product->categories->isNotEmpty())
-                                    {{ $product->categories->first()->name }}
-                                @endif
-                            </div>
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h3 class="product-title h6 mb-1">{{ $product->name }}</h3>
-                                    <button type="button" class="btn btn-sm btn-icon wishlist-toggle p-0 m-0" 
-                                            data-product-id="{{ $product->id }}" 
-                                            data-bs-toggle="tooltip" 
-                                            title="{{ __('Add to Wishlist') }}">
-                                        <i class="bi bi-heart"></i>
-                                    </button>
-                                </div>
-                            <!-- Available Sizes -->
-                            @if($product->sizes && $product->sizes->count() > 0)
-                                <div class="available-sizes mb-2">
-                                    @foreach($product->sizes->take(5) as $size)
-                                        <span class="size-badge">{{ $size->name }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <div class="product-price fw-bold">
-                                        {{ app(\App\Services\CurrencyService::class)->formatPrice($product->price) }}
-                                </div>
-                                <div class="product-rating">
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <span class="ms-1 small">{{ number_format($product->average_rating, 1) }}</span>
-                                    @if($product->ratings_count > 0)
-                                        <span class="text-tertiary small">({{ $product->ratings_count }})</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        </a>
-                    </div>
+                    <x-product-card :product="$product" />
                 </div>
             @endforeach
         </div>
@@ -368,6 +307,62 @@
     border-radius: var(--radius-sm);
     font-size: 0.875rem;
 }
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 300px;
+    padding: 15px;
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--primary);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+}
+
+.notification-content i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.notification-success {
+    border-left-color: var(--secondary);
+}
+
+.notification-success i {
+    color: var(--secondary);
+}
+
+.notification-error {
+    border-left-color: #dc3545;
+}
+
+.notification-error i {
+    color: #dc3545;
+}
+
+.notification-info {
+    border-left-color: var(--primary);
+}
+
+.notification-info i {
+    color: var(--primary);
+}
 </style>
 @endpush
 
@@ -392,8 +387,18 @@
             const productId = btn.getAttribute('data-product-id');
             
             // Make AJAX request to check if in wishlist
-            fetch(`/wishlist/check/${productId}`)
-                .then(response => response.json())
+            fetch(`{{ url('wishlist/check') }}/${productId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.in_wishlist) {
                         btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
@@ -413,25 +418,39 @@
                 e.stopPropagation();
                 
                 const productId = this.getAttribute('data-product-id');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                // Show loading state
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                this.disabled = true;
                 
                 // Toggle wishlist status
-                fetch(`/wishlist/toggle/${productId}`, {
+                fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'same-origin'
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                     if (data.success) {
                         if (data.in_wishlist) {
                             btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
                             btn.classList.add('active');
+                            showNotification('Product added to wishlist', 'success');
                         } else {
                             btn.innerHTML = '<i class="bi bi-heart"></i>';
                             btn.classList.remove('active');
+                            showNotification('Product removed from wishlist', 'info');
                         }
                     } else {
                         // If not authenticated, redirect to login
@@ -469,5 +488,45 @@
             });
         });
     });
+
+    // Show notification function
+    function showNotification(message, type = 'success') {
+        // If there's an existing notification, remove it
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        let icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-triangle';
+        if (type === 'info') icon = 'info-circle';
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="bi bi-${icon}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Add to DOM
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
 </script>
 @endpush

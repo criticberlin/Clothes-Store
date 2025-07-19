@@ -23,7 +23,7 @@ class WishlistController extends Controller
         }
         
         $wishlistItems = Wishlist::where('user_id', Auth::id())
-            ->with(['product.images'])
+            ->with(['product.images', 'product.categories', 'product.colors', 'product.sizes'])
             ->latest()
             ->get();
             
@@ -40,64 +40,56 @@ class WishlistController extends Controller
     public function add(Request $request, $productId)
     {
         if (!Auth::check()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Please login to add items to your wishlist.'
-                ], 401);
-            }
-            
             return redirect()->route('login')->with('error', 'Please login to add items to your wishlist.');
         }
         
-        try {
-            // Find the product
-            $product = Product::findOrFail($productId);
-            
-            // Check if already in wishlist
-            $existingItem = Wishlist::where('user_id', Auth::id())
-                ->where('product_id', $productId)
-                ->first();
-                
-            if ($existingItem) {
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Product is already in your wishlist.',
-                        'exists' => true
-                    ]);
-                }
-                
-                return redirect()->back()->with('info', 'Product is already in your wishlist.');
-            }
-            
-            // Add to wishlist
-            Wishlist::create([
-                'user_id' => Auth::id(),
-                'product_id' => $productId
-            ]);
-            
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Product added to wishlist successfully!',
-                    'exists' => false
-                ]);
-            }
-            
-            return redirect()->back()->with('success', 'Product added to wishlist successfully!');
-        } catch (\Exception $e) {
-            Log::error('Wishlist add error: ' . $e->getMessage());
-            
+        // Check if product exists
+        $product = Product::find($productId);
+        if (!$product) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to add product to wishlist.'
-                ], 500);
+                    'message' => 'Product not found.'
+                ], 404);
             }
             
-            return redirect()->back()->with('error', 'Failed to add product to wishlist.');
+            return redirect()->back()->with('error', 'Product not found.');
         }
+        
+        // Check if already in wishlist
+        $existingItem = Wishlist::where('user_id', Auth::id())
+            ->where('product_id', $productId)
+            ->first();
+            
+        if ($existingItem) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product already in wishlist.',
+                    'in_wishlist' => true
+                ]);
+            }
+            
+            return redirect()->back()->with('info', 'Product already in your wishlist.');
+        }
+        
+        // Add to wishlist
+        Wishlist::create([
+            'user_id' => Auth::id(),
+            'product_id' => $productId
+        ]);
+        
+        if ($request->ajax()) {
+            $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
+            return response()->json([
+                'success' => true,
+                'message' => 'Product added to wishlist.',
+                'in_wishlist' => true,
+                'wishlist_count' => $wishlistCount
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Product added to your wishlist.');
     }
     
     /**
@@ -109,37 +101,41 @@ class WishlistController extends Controller
      */
     public function remove(Request $request, $itemId)
     {
-        try {
-            $wishlistItem = Wishlist::where('id', $itemId)
-                ->where('user_id', Auth::id())
-                ->firstOrFail();
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to manage your wishlist.');
+        }
+        
+        $item = Wishlist::where('id', $itemId)
+            ->where('user_id', Auth::id())
+            ->first();
             
-            $wishlistItem->delete();
-            
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Product removed from wishlist successfully!'
-                ]);
-            }
-            
-            return redirect()->back()->with('success', 'Product removed from wishlist successfully!');
-        } catch (\Exception $e) {
-            Log::error('Wishlist remove error: ' . $e->getMessage());
-            
+        if (!$item) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to remove product from wishlist.'
-                ], 500);
+                    'message' => 'Item not found in your wishlist.'
+                ], 404);
             }
             
-            return redirect()->back()->with('error', 'Failed to remove product from wishlist.');
+            return redirect()->back()->with('error', 'Item not found in your wishlist.');
         }
+        
+        $item->delete();
+        
+        if ($request->ajax()) {
+            $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removed from wishlist.',
+                'wishlist_count' => $wishlistCount
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Item removed from your wishlist.');
     }
     
     /**
-     * Check if a product is in the wishlist
+     * Check if a product is in the user's wishlist
      * 
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $productId
@@ -153,12 +149,12 @@ class WishlistController extends Controller
             ]);
         }
         
-        $exists = Wishlist::where('user_id', Auth::id())
+        $inWishlist = Wishlist::where('user_id', Auth::id())
             ->where('product_id', $productId)
             ->exists();
             
         return response()->json([
-            'in_wishlist' => $exists
+            'in_wishlist' => $inWishlist
         ]);
     }
     
@@ -172,13 +168,6 @@ class WishlistController extends Controller
     public function toggle(Request $request, $productId)
     {
         if (!Auth::check()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Please login to manage your wishlist.'
-                ], 401);
-            }
-            
             return redirect()->route('login')->with('error', 'Please login to manage your wishlist.');
         }
         
@@ -193,10 +182,12 @@ class WishlistController extends Controller
                 $existingItem->delete();
                 
                 if ($request->ajax()) {
+                    $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
                     return response()->json([
                         'success' => true,
                         'message' => 'Product removed from wishlist.',
-                        'in_wishlist' => false
+                        'in_wishlist' => false,
+                        'wishlist_count' => $wishlistCount
                     ]);
                 }
                 
@@ -209,10 +200,12 @@ class WishlistController extends Controller
                 ]);
                 
                 if ($request->ajax()) {
+                    $wishlistCount = Wishlist::where('user_id', Auth::id())->count();
                     return response()->json([
                         'success' => true,
                         'message' => 'Product added to wishlist.',
-                        'in_wishlist' => true
+                        'in_wishlist' => true,
+                        'wishlist_count' => $wishlistCount
                     ]);
                 }
                 
@@ -224,11 +217,36 @@ class WishlistController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update wishlist.'
+                    'message' => 'An error occurred while updating your wishlist.'
                 ], 500);
             }
             
-            return redirect()->back()->with('error', 'Failed to update wishlist.');
+            return redirect()->back()->with('error', 'An error occurred while updating your wishlist.');
         }
     }
-}
+    
+    /**
+     * Clear all items from the wishlist
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clear(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to manage your wishlist.');
+        }
+        
+        Wishlist::where('user_id', Auth::id())->delete();
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Wishlist cleared.',
+                'wishlist_count' => 0
+            ]);
+        }
+        
+        return redirect()->back()->with('success', 'Your wishlist has been cleared.');
+    }
+} 

@@ -100,7 +100,7 @@ class ProductsController extends Controller {
 
     public function productDetails($id){
         // Find the product with its relationships
-        $product = Product::with(['categories', 'colors', 'sizes', 'images', 'ratings', 'recommendedProducts'])->find($id);
+        $product = Product::with(['categories', 'colors', 'sizes', 'images', 'ratings', 'recommendedProducts.categories', 'recommendedProducts.colors', 'recommendedProducts.sizes', 'recommendedProducts.images'])->find($id);
         
         if (!$product) {
             return redirect()->back()->with('error', 'Product not found.');
@@ -109,13 +109,14 @@ class ProductsController extends Controller {
         // If the product has no recommendations, find similar products
         if ($product->recommendedProducts->count() === 0) {
             // Get similar products from the same category, limited to 3
-            $similarProducts = Product::whereHas('categories', function($query) use ($product) {
-                $query->whereIn('categories.id', $product->categories->pluck('id'));
-            })
-            ->where('id', '!=', $product->id) // Exclude current product
-            ->inRandomOrder()
-            ->limit(3)
-            ->get();
+            $similarProducts = Product::with(['categories', 'colors', 'sizes', 'images'])
+                ->whereHas('categories', function($query) use ($product) {
+                    $query->whereIn('categories.id', $product->categories->pluck('id'));
+                })
+                ->where('id', '!=', $product->id) // Exclude current product
+                ->inRandomOrder()
+                ->limit(3)
+                ->get();
             
             // Assign similar products as recommended
             $product->setRelation('recommendedProducts', $similarProducts);

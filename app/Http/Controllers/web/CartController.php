@@ -24,7 +24,7 @@ class CartController extends Controller
         
         // Get cart items with their products, colors, and sizes
         $cartItems = Cart::where('user_id', Auth::id())
-            ->with(['product.images', 'product.recommendedProducts', 'color', 'size'])
+            ->with(['product.images', 'product.recommendedProducts', 'product.categories', 'product.colors', 'product.sizes', 'color', 'size'])
             ->latest()
             ->get();
         
@@ -45,7 +45,8 @@ class CartController extends Controller
         if ($recommendedProducts->count() < 3) {
             // Get popular products excluding those already in the cart
             $cartProductIds = $cartItems->pluck('product_id')->toArray();
-            $popularProducts = Product::whereNotIn('id', $cartProductIds)
+            $popularProducts = Product::with(['categories', 'colors', 'sizes', 'images'])
+                ->whereNotIn('id', $cartProductIds)
                 ->inRandomOrder()
                 ->limit(3 - $recommendedProducts->count())
                 ->get();
@@ -55,6 +56,16 @@ class CartController extends Controller
         
         // Ensure uniqueness and limit to 3
         $recommendedProducts = $recommendedProducts->unique('id')->take(3);
+        
+        // Get the IDs of the products in the collection
+        $productIds = $recommendedProducts->pluck('id')->toArray();
+        
+        // Reload the products with eager loading to ensure all relationships are loaded
+        if (!empty($productIds)) {
+            $recommendedProducts = Product::with(['categories', 'colors', 'sizes', 'images'])
+                ->whereIn('id', $productIds)
+                ->get();
+        }
         
         // Calculate total, tax, shipping, etc.
         $subTotal = $cartItems->sum(function($item) {
@@ -175,29 +186,30 @@ class CartController extends Controller
     }
 
     /**
-     * Remove an item from the cart
+     * Remove a cart item
      * 
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $cartId
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function remove(Request $request, $cartId)
+    public function remove($cartId)
     {
         try {
             $cart = Cart::findOrFail($cartId);
             
             // Ensure user can only remove their own cart items
             if ($cart->user_id !== Auth::id()) {
+                if (request()->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'You are not authorized to remove this cart item.']);
+                }
                 return redirect()->back()->with('error', 'You are not authorized to remove this cart item.');
             }
             
             $cart->delete();
             
-            // If AJAX request, return JSON response with updated cart count
-            if ($request->ajax()) {
-                $cartCount = Cart::where('user_id', Auth::id())->count();
+            if (request()->ajax()) {
+                $cartCount = Cart::where('user_id', Auth::id())->sum('quantity');
                 return response()->json([
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Item removed from cart successfully!',
                     'cart_count' => $cartCount
                 ]);
@@ -207,37 +219,48 @@ class CartController extends Controller
         } catch (\Exception $e) {
             Log::error('Cart remove error: ' . $e->getMessage());
             
-            if ($request->ajax()) {
+            if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to remove cart item. It may have been already removed.'
-                ], 404);
+                    'message' => 'Failed to remove item from cart.'
+                ]);
             }
             
-            return redirect()->route('cart.index')->with('error', 'Failed to remove cart item. It may have been already removed.');
+            return redirect()->route('cart.index')->with('error', 'Failed to remove item from cart.');
         }
     }
-
+    
     /**
-     * Clear all items from the cart
+     * Clear all items from cart
      * 
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function clear(Request $request)
+    public function clear()
     {
-        Cart::where('user_id', Auth::id())->delete();
-        
-        // If AJAX request, return JSON response with updated cart count
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true, 
-                'message' => 'Cart cleared successfully!',
-                'cart_count' => 0
-            ]);
+        try {
+            Cart::where('user_id', Auth::id())->delete();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cart cleared successfully!',
+                    'cart_count' => 0
+                ]);
+            }
+            
+            return redirect()->back()->with('success', 'Cart cleared successfully!');
+        } catch (\Exception $e) {
+            Log::error('Cart clear error: ' . $e->getMessage());
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to clear cart.'
+                ]);
+            }
+            
+            return redirect()->route('cart.index')->with('error', 'Failed to clear cart.');
         }
-        
-        return redirect()->back()->with('success', 'Cart cleared successfully!');
     }
 
     public function checkout()

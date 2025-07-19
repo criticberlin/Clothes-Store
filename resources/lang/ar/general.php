@@ -35,6 +35,7 @@ return [
     'new' => 'جديد',
     'my_profile' => 'ملفي الشخصي',
     'my_orders' => 'طلباتي',
+    'my_wishlist' => 'قائمة أمنياتي',
     'admin_dashboard' => 'لوحة تحكم المدير',
     'logout' => 'تسجيل الخروج',
     'login' => 'تسجيل الدخول',

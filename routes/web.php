@@ -205,6 +205,8 @@ Route::middleware(['auth:web'])->group(function () {
     Route::delete('/wishlist/remove/{itemId}', [App\Http\Controllers\web\WishlistController::class, 'remove'])->name('wishlist.remove');
     Route::get('/wishlist/check/{productId}', [App\Http\Controllers\web\WishlistController::class, 'check'])->name('wishlist.check');
     Route::post('/wishlist/toggle/{productId}', [App\Http\Controllers\web\WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::delete('/wishlist/clear', [App\Http\Controllers\web\WishlistController::class, 'clear'])->name('wishlist.clear');
+    Route::get('/wishlist/clear', [App\Http\Controllers\web\WishlistController::class, 'clear'])->name('wishlist.clear.get'); // Temporary for debugging
 });
 
 

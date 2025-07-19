@@ -91,24 +91,6 @@
     top: 100px;
 }
 
-.recommended-product {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    transition: all var(--transition-normal);
-}
-
-.recommended-product:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary-light);
-}
-
-.recommended-product-img {
-    height: 120px;
-    object-fit: cover;
-}
-
 .coupon-form {
     position: relative;
 }
@@ -123,6 +105,15 @@
     top: 3px;
     bottom: 3px;
     border-radius: var(--radius-sm);
+}
+
+/* Fix for "You Might Also Like" section */
+.container.py-5 {
+    margin-bottom: 2rem;
+}
+
+.row.g-3.mb-5 {
+    margin-bottom: 3rem;
 }
 </style>
 @endpush
@@ -222,54 +213,6 @@
                     </div>
                     @endforeach
                 </div>
-            </div>
-            
-            <!-- Recommended Products -->
-            <h5 class="mb-3">{{ __('You might also like') }}</h5>
-            <div class="row g-3">
-                @if($recommendedProducts->count() > 0)
-                    @foreach($recommendedProducts as $product)
-                    <div class="col-md-4">
-                        <div class="product-card recommended-product h-100">
-                            <a href="{{ route('products.details', $product->id) }}" class="product-card-link">
-                                <div class="product-image-container" style="height: 150px;">
-                                    <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" class="img-fluid product-image">
-                                    
-                                    <!-- Product Badges -->
-                                    @if($product->quantity <= 0)
-                                        <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
-                                    @elseif($product->created_at && $product->created_at->diffInDays(now()) <= 7)
-                                        <div class="product-badge new">{{ __('general.new') }}</div>
-                                    @endif
-                                </div>
-                                <div class="product-info p-3">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <h3 class="product-title h6 mb-1">{{ $product->name }}</h3>
-                                        <button type="button" class="btn btn-sm btn-icon wishlist-toggle p-0 m-0" 
-                                                data-product-id="{{ $product->id }}" 
-                                                title="{{ __('Add to Wishlist') }}">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <div class="product-price fw-bold price-value" data-base-price="{{ $product->price }}">
-                                            {{ app(\App\Services\CurrencyService::class)->formatPrice($product->price) }}
-                                        </div>
-                                        <div class="product-rating">
-                                            <i class="bi bi-star-fill text-warning"></i>
-                                            <span class="ms-1 small">{{ number_format($product->average_rating ?? 0, 1) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                @else
-                    <div class="col-12 text-center text-secondary">
-                        <p>{{ __('No recommendations available at this time.') }}</p>
-                    </div>
-                @endif
             </div>
         </div>
         
@@ -393,6 +336,27 @@
         </div>
     </div>
     @endif
+    
+    <!-- You might also like section -->
+    @if(!empty($cartItems) || true)
+    <div class="mt-5">
+        <h3 class="mb-4">{{ __('You might also like') }}</h3>
+        <div class="row g-4">
+            @php
+                $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                    ->inRandomOrder()
+                    ->limit(4)
+                    ->get();
+            @endphp
+            
+            @foreach($recommendedProducts as $product)
+            <div class="col-6 col-md-3">
+                <x-product-card :product="$product" />
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 
@@ -401,7 +365,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Set color swatches
         document.querySelectorAll('.color-swatch').forEach(function(swatch) {
-            swatch.style.backgroundColor = swatch.dataset.color;
+            if (swatch.dataset.color) {
+                swatch.style.backgroundColor = swatch.dataset.color;
+            }
+        });
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
         
         // Quantity buttons
@@ -443,8 +415,18 @@
             const productId = btn.getAttribute('data-product-id');
             
             // Make AJAX request to check if in wishlist
-            fetch(`/wishlist/check/${productId}`)
-                .then(response => response.json())
+            fetch(`{{ url('wishlist/check') }}/${productId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.in_wishlist) {
                         btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
@@ -464,21 +446,29 @@
                 e.stopPropagation();
                 
                 const productId = this.getAttribute('data-product-id');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 
                 // Show loading state
                 this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
                 this.disabled = true;
                 
                 // Toggle wishlist status
-                fetch(`/wishlist/toggle/${productId}`, {
+                fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     // Enable button
                     this.disabled = false;
