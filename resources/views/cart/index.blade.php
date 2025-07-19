@@ -107,6 +107,54 @@
     border-radius: var(--radius-sm);
 }
 
+/* Recommendation Navigation */
+.recommended-products-container {
+    overflow: hidden;
+}
+
+.recommended-products {
+    display: flex;
+    flex-wrap: nowrap;
+    transition: transform 0.5s ease;
+}
+
+.recommended-item {
+    flex: 0 0 auto;
+    width: 50%;
+}
+
+@media (min-width: 768px) {
+    .recommended-item {
+        width: 25%;
+    }
+}
+
+.nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.nav-btn:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Fix for "You Might Also Like" section */
 .container.py-5 {
     margin-bottom: 2rem;
@@ -340,20 +388,68 @@
     <!-- You might also like section -->
     @if(!empty($cartItems) || true)
     <div class="mt-5">
-        <h3 class="mb-4">{{ __('You might also like') }}</h3>
-        <div class="row g-4">
-            @php
-                $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                    ->inRandomOrder()
-                    ->limit(4)
-                    ->get();
-            @endphp
-            
-            @foreach($recommendedProducts as $product)
-            <div class="col-6 col-md-3">
-                <x-product-card :product="$product" />
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">{{ __('You might also like') }}</h3>
+            <div class="recommendation-nav">
+                <button class="btn btn-sm btn-icon nav-btn prev-btn me-2" id="cartRecommendPrev">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-sm btn-icon nav-btn next-btn" id="cartRecommendNext">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
-            @endforeach
+        </div>
+        
+        <div class="recommended-products-container position-relative">
+            <div class="recommended-products row g-4" id="cartRecommendedProductsRow">
+                @php
+                    // Get product categories from cart items
+                    $categoryIds = [];
+                    if(!empty($cartItems)) {
+                        foreach($cartItems as $item) {
+                            if($item->product && $item->product->categories) {
+                                $categoryIds = array_merge($categoryIds, $item->product->categories->pluck('id')->toArray());
+                            }
+                        }
+                        $categoryIds = array_unique($categoryIds);
+                    }
+                    
+                    // Get recommended products based on cart categories
+                    if(!empty($categoryIds)) {
+                        $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                            ->whereHas('categories', function($query) use ($categoryIds) {
+                                $query->whereIn('categories.id', $categoryIds);
+                            })
+                            ->inRandomOrder()
+                            ->limit(8)
+                            ->get();
+                            
+                        // If not enough products, add some random ones
+                        if($recommendedProducts->count() < 8) {
+                            $existingIds = $recommendedProducts->pluck('id')->toArray();
+                            $moreProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                ->whereNotIn('id', $existingIds)
+                                ->inRandomOrder()
+                                ->limit(8 - $recommendedProducts->count())
+                                ->get();
+                                
+                            $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                        }
+                    } else {
+                        // If no cart items or categories, just get random products
+                        $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                            ->inRandomOrder()
+                            ->limit(8)
+                            ->get();
+                    }
+                @endphp
+                
+                @foreach($recommendedProducts as $product)
+                <div class="col-6 col-md-3 recommended-item">
+                    <x-product-card :product="$product" />
+                </div>
+                @endforeach
+            </div>
         </div>
     </div>
     @endif
@@ -407,6 +503,61 @@
                 this.querySelector('.cart-product-img').style.transform = 'scale(1)';
             });
         });
+        
+        // Recommended products navigation
+        const recommendRow = document.getElementById('cartRecommendedProductsRow');
+        const prevBtn = document.getElementById('cartRecommendPrev');
+        const nextBtn = document.getElementById('cartRecommendNext');
+        
+        if (recommendRow && prevBtn && nextBtn) {
+            let currentPosition = 0;
+            const itemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+            const visibleItems = window.innerWidth >= 768 ? 4 : 2;
+            const totalItems = recommendRow.querySelectorAll('.recommended-item').length;
+            const maxPosition = Math.max(0, totalItems - visibleItems);
+            
+            // Initialize button states
+            updateNavButtons();
+            
+            prevBtn.addEventListener('click', function() {
+                if (currentPosition > 0) {
+                    currentPosition--;
+                    updateSliderPosition();
+                }
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                if (currentPosition < maxPosition) {
+                    currentPosition++;
+                    updateSliderPosition();
+                }
+            });
+            
+            function updateSliderPosition() {
+                recommendRow.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
+                updateNavButtons();
+            }
+            
+            function updateNavButtons() {
+                prevBtn.disabled = currentPosition === 0;
+                nextBtn.disabled = currentPosition >= maxPosition;
+            }
+            
+            // Update on window resize
+            window.addEventListener('resize', function() {
+                const newItemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+                const newVisibleItems = window.innerWidth >= 768 ? 4 : 2;
+                const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
+                
+                // Reset position if needed
+                if (currentPosition > newMaxPosition) {
+                    currentPosition = newMaxPosition;
+                }
+                
+                // Update with new dimensions
+                updateSliderPosition();
+            });
+        }
         
         // Wishlist toggle functionality
         const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
@@ -503,23 +654,36 @@
         
         // Show notification function
         function showNotification(message, type = 'success') {
-            // If there's an existing notification, remove it
-            const existingNotification = document.querySelector('.notification');
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-            
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
+            notification.className = 'notification notification-' + type;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.maxWidth = '300px';
+            notification.style.padding = '15px';
+            notification.style.borderRadius = 'var(--radius-md)';
+            notification.style.backgroundColor = 'var(--surface)';
+            notification.style.boxShadow = 'var(--shadow-lg)';
+            notification.style.borderLeft = '4px solid var(--primary)';
+            notification.style.transform = 'translateX(120%)';
+            notification.style.opacity = '0';
+            notification.style.transition = 'all 0.3s ease';
+            
+            if (type === 'success') {
+                notification.style.borderLeftColor = 'var(--secondary)';
+            } else if (type === 'error') {
+                notification.style.borderLeftColor = '#dc3545';
+            }
             
             let icon = 'check-circle';
             if (type === 'error') icon = 'exclamation-triangle';
             if (type === 'info') icon = 'info-circle';
             
             notification.innerHTML = `
-                <div class="notification-content">
-                    <i class="bi bi-${icon}"></i>
+                <div style="display: flex; align-items: center;">
+                    <i class="bi bi-${icon}" style="margin-right: 10px; font-size: 1.2rem;"></i>
                     <span>${message}</span>
                 </div>
             `;
@@ -529,12 +693,14 @@
             
             // Show notification
             setTimeout(() => {
-                notification.classList.add('show');
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
             }, 10);
             
             // Auto hide after 3 seconds
             setTimeout(() => {
-                notification.classList.remove('show');
+                notification.style.transform = 'translateX(120%)';
+                notification.style.opacity = '0';
                 setTimeout(() => {
                     notification.remove();
                 }, 300);

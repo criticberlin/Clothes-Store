@@ -1121,7 +1121,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
             white-space: nowrap;
             user-select: none;
         }
@@ -1169,6 +1168,9 @@
             min-width: 80px;
             cursor: pointer;
             z-index: 1500;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
         }
         
         .search-bar-container {
@@ -1179,14 +1181,14 @@
             position: absolute;
             top: 46px;
             left: 0;
-            width: 180px; /* Narrower to match category dropdown width */
+            width: 280px; /* Wider to accommodate category hierarchy */
             padding: 8px 0;
             margin-top: 2px;
             background-color: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             overflow-x: hidden;
             display: none;
@@ -1206,14 +1208,14 @@
             position: absolute;
             top: 46px;
             left: 0;
-            width: 200px;
+            width: 280px;
             padding: 8px 0;
             margin-top: 2px;
             background-color: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             overflow-x: hidden;
             display: none;
@@ -1235,6 +1237,8 @@
             color: var(--text-primary);
             border-left: 3px solid transparent;
             transition: all 0.15s ease;
+            white-space: normal;
+            word-wrap: break-word;
         }
         
         .category-dropdown-menu .dropdown-item:hover,
@@ -1244,6 +1248,21 @@
             border-left-color: var(--primary);
         }
         
+        .category-dropdown-menu .dropdown-header {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .category-dropdown-menu .dropdown-divider {
+            margin: 4px 0;
+            border-color: var(--border);
+            opacity: 0.5;
+        }
+
         /* Make sure the dropdown button looks active when dropdown is open */
         .category-dropdown.open .dropdown-header {
             background-color: var(--surface-alt);
@@ -1661,7 +1680,34 @@
                                  data-value="" 
                                  role="menuitem" 
                                  tabindex="-1">All</div>
-                            @foreach(App\Models\Category::all() as $category)
+                            
+                            <!-- Main Categories -->
+                            <div class="dropdown-header">{{ __('Main Categories') }}</div>
+                            @foreach(App\Models\Category::where('type', 'main')->where('status', true)->orderBy('name')->get() as $category)
+                                <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" 
+                                     data-value="{{ $category->id }}" 
+                                     role="menuitem" 
+                                     tabindex="-1">
+                                    {{ $category->name }}
+                                </div>
+                            @endforeach
+                            
+                            <!-- Clothing Types -->
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-header">{{ __('Clothing Type') }}</div>
+                            @foreach(App\Models\Category::where('type', 'clothing')->where('status', true)->orderBy('name')->get() as $category)
+                                <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" 
+                                     data-value="{{ $category->id }}" 
+                                     role="menuitem" 
+                                     tabindex="-1">
+                                    {{ $category->name }}
+                                </div>
+                            @endforeach
+                            
+                            <!-- Specific Item Types -->
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-header">{{ __('Specific Item Types') }}</div>
+                            @foreach(App\Models\Category::where('type', 'specific')->where('status', true)->orderBy('name')->get() as $category)
                                 <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" 
                                      data-value="{{ $category->id }}" 
                                      role="menuitem" 
@@ -2018,6 +2064,7 @@
             const items = dropdownMenu.querySelectorAll('.dropdown-item');
             const input = document.getElementById('categoryInput');
             const selectedCategory = document.getElementById('selectedCategory');
+            const searchInput = document.getElementById('searchInput');
             
             if (!header || !items.length || !input || !selectedCategory || !dropdownMenu) {
                 console.error('Missing dropdown elements');
@@ -2047,6 +2094,11 @@
                     e.preventDefault();
                     e.stopPropagation();
                     
+                    // Skip if this is a header or divider
+                    if (this.classList.contains('dropdown-header') || this.classList.contains('dropdown-divider')) {
+                        return;
+                    }
+                    
                     // Update display and value
                     selectedCategory.textContent = this.textContent.trim();
                     input.value = this.dataset.value;
@@ -2065,6 +2117,15 @@
                         detail: { value: this.dataset.value }
                     });
                     document.dispatchEvent(event);
+                    
+                    // If search input has text, trigger search with new category
+                    if (searchInput && searchInput.value.trim().length > 1) {
+                        // Trigger search with slight delay to allow UI update
+                        setTimeout(() => {
+                            const searchEvent = new Event('input');
+                            searchInput.dispatchEvent(searchEvent);
+                        }, 100);
+                    }
                 });
             });
             
@@ -2073,6 +2134,60 @@
                 if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
                     dropdownMenu.classList.remove('show');
                     dropdown.classList.remove('open');
+                }
+            });
+            
+            // Add keyboard navigation
+            dropdownMenu.addEventListener('keydown', function(e) {
+                if (!dropdownMenu.classList.contains('show')) return;
+                
+                const activeItem = dropdownMenu.querySelector('.dropdown-item.active');
+                const items = Array.from(dropdownMenu.querySelectorAll('.dropdown-item:not(.dropdown-header):not(.dropdown-divider)'));
+                
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        if (activeItem) {
+                            const currentIndex = items.indexOf(activeItem);
+                            const nextItem = items[currentIndex + 1] || items[0];
+                            if (nextItem) {
+                                nextItem.focus();
+                                nextItem.click();
+                            }
+                        } else if (items.length) {
+                            items[0].focus();
+                            items[0].click();
+                        }
+                        break;
+                        
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        if (activeItem) {
+                            const currentIndex = items.indexOf(activeItem);
+                            const prevItem = items[currentIndex - 1] || items[items.length - 1];
+                            if (prevItem) {
+                                prevItem.focus();
+                                prevItem.click();
+                            }
+                        } else if (items.length) {
+                            items[items.length - 1].focus();
+                            items[items.length - 1].click();
+                        }
+                        break;
+                        
+                    case 'Escape':
+                        e.preventDefault();
+                        dropdownMenu.classList.remove('show');
+                        dropdown.classList.remove('open');
+                        header.focus();
+                        break;
+                        
+                    case 'Enter':
+                        e.preventDefault();
+                        if (document.activeElement.classList.contains('dropdown-item')) {
+                            document.activeElement.click();
+                        }
+                        break;
                 }
             });
         }

@@ -6,59 +6,92 @@
 <div class="container py-4">
     <h2 class="mb-4 text-capitalize">{{ isset($category) ? $category . ' Collection' : 'All Products' }}</h2>
 
-    <!-- Clothing Filters -->
-    <div class="clothing-filters mb-4">
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <span class="text-secondary me-2">{{ __('Filter by') }}:</span>
-                    <div class="filter-pills">
-                        <button class="filter-pill active" data-filter="all">All</button>
-                        <button class="filter-pill" data-filter="tops">Tops</button>
-                        <button class="filter-pill" data-filter="bottoms">Bottoms</button>
-                        <button class="filter-pill" data-filter="dresses">Dresses</button>
-                        <button class="filter-pill" data-filter="outerwear">Outerwear</button>
-                        <button class="filter-pill" data-filter="accessories">Accessories</button>
+    <!-- Filters and Sort Bar -->
+    <div class="filters-bar mb-4">
+        <div class="row g-3 align-items-center">
+            <!-- Size Filters -->
+            <div class="col-md-4">
+                <div class="filter-section mb-0">
+                    <h5 class="filter-heading">{{ __('Size') }}</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @php
+                            $sizes = \App\Models\Size::orderBy('name')->get();
+                        @endphp
+                        @foreach($sizes as $size)
+                            <button class="size-filter" 
+                                    data-filter="{{ $size->id }}" 
+                                    data-type="size">
+                                {{ $size->name }}
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
-            <div class="col-12">
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <span class="text-secondary me-2">{{ __('Size') }}:</span>
-                    <div class="size-filters">
-                        <button class="size-filter" data-size="xs">XS</button>
-                        <button class="size-filter" data-size="s">S</button>
-                        <button class="size-filter" data-size="m">M</button>
-                        <button class="size-filter" data-size="l">L</button>
-                        <button class="size-filter" data-size="xl">XL</button>
-                        <button class="size-filter" data-size="xxl">XXL</button>
+            
+            <!-- Color Filters -->
+            <div class="col-md-4">
+                <div class="filter-section mb-0">
+                    <h5 class="filter-heading">{{ __('Color') }}</h5>
+                    <div class="d-flex flex-wrap gap-3">
+                        @php
+                            $colors = \App\Models\Color::orderBy('name')->get();
+                        @endphp
+                        @foreach($colors as $color)
+                            <button class="color-filter" 
+                                    data-filter="{{ $color->id }}" 
+                                    data-type="color"
+                                    data-color="{{ $color->hex_code }}"
+                                    title="{{ $color->name }}">
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Clean Sort By Dropdown -->
-    <div class="d-flex justify-content-end mb-4">
-        <div class="sort-dropdown">
-            <form action="{{ route('products.list') }}" method="GET" class="d-flex align-items-center">
-                <!-- Preserve any existing query parameters -->
-                @if(request()->has('query'))
-                    <input type="hidden" name="query" value="{{ request()->get('query') }}">
-                @endif
-                @if(request()->has('category_id'))
-                    <input type="hidden" name="category_id" value="{{ request()->get('category_id') }}">
-                @endif
-                
-                <label for="sortOrder" class="me-2 text-nowrap">{{ __('general.sort_by') }}:</label>
-                <select class="form-select form-select-sm" id="sortOrder" name="sort" onchange="this.form.submit()">
-                    <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
-                    <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
-                    <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
-                    <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
-                    <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
-                </select>
-            </form>
+            
+            <!-- Sort By Dropdown -->
+            <div class="col-md-4">
+                <div class="d-flex justify-content-md-end">
+                    <div class="sort-dropdown">
+                        <form action="{{ route('products.list') }}" method="GET" class="d-flex align-items-center" id="sortForm">
+                            <!-- Preserve any existing query parameters -->
+                            @if(request()->has('query'))
+                                <input type="hidden" name="query" value="{{ request()->get('query') }}">
+                            @endif
+                            @if(request()->has('category_id'))
+                                <input type="hidden" name="category_id" value="{{ request()->get('category_id') }}">
+                            @endif
+                            
+                            <!-- Hidden filter inputs that will be populated by JS -->
+                            <input type="hidden" name="sizes" id="sizesInput" value="">
+                            <input type="hidden" name="colors" id="colorsInput" value="">
+                            
+                            <label for="sortOrder" class="me-2 text-nowrap">{{ __('general.sort_by') }}:</label>
+                            <select class="form-select form-select-sm" id="sortOrder" name="sort" onchange="this.form.submit()">
+                                <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
+                                <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
+                                <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
+                                <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
+                                <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Filters -->
+            <div class="col-12 mt-2" id="activeFiltersContainer" style="display: none;">
+                <div class="filter-section mb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="filter-heading mb-0">{{ __('Active Filters') }}</h5>
+                        <button class="btn btn-sm btn-outline-danger" id="clearAllFilters">
+                            <i class="bi bi-x-circle me-1"></i> {{ __('Clear All Filters') }}
+                        </button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-2" id="activeFilters">
+                        <!-- Active filters will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -68,9 +101,11 @@
         </div>
     @else
         <!-- Products Grid -->
-        <div class="row g-4">
+        <div class="row g-4" id="productsGrid">
             @foreach($products as $product)
-                <div class="col-6 col-md-4 col-lg-3">
+                <div class="col-6 col-md-4 col-lg-3 product-item" 
+                     data-sizes="{{ $product->sizes->pluck('id')->implode(',') }}"
+                     data-colors="{{ $product->colors->pluck('id')->implode(',') }}">
                     <x-product-card :product="$product" />
                 </div>
             @endforeach
@@ -220,26 +255,25 @@
     font-size: 1.1rem;
 }
 
-.filter-pill {
-    border: 1px solid var(--border);
+/* Filter Styles */
+.filters-bar {
     background-color: var(--surface);
-    color: var(--text-secondary);
-    padding: 0.5rem 1rem;
-    border-radius: 30px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all var(--transition-normal);
-    cursor: pointer;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
 }
 
-.filter-pill:hover {
-    background-color: var(--surface-alt);
+.filter-section {
+    margin-bottom: 1.5rem;
 }
 
-.filter-pill.active {
-    background-color: var(--primary);
-    color: white;
-    border-color: var(--primary);
+.filter-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
 }
 
 .size-filter {
@@ -266,6 +300,62 @@
     background-color: var(--primary);
     color: white;
     border-color: var(--primary);
+}
+
+/* Color Filter */
+.color-filter {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.color-filter:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.color-filter.active {
+    box-shadow: 0 0 0 2px var(--primary);
+    transform: scale(1.1);
+}
+
+.color-filter.active::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Active Filters */
+.active-filter-tag {
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    border-radius: 30px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+}
+
+.active-filter-tag .remove-filter {
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.active-filter-tag .remove-filter:hover {
+    color: var(--primary);
 }
 
 .sort-dropdown .form-select {
@@ -363,6 +453,26 @@
 .notification-info i {
     color: var(--primary);
 }
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .filter-section {
+        margin-bottom: 1rem;
+    }
+    
+    .filter-heading {
+        font-size: 0.9rem;
+    }
+    
+    .size-filter {
+        min-width: 35px;
+        height: 35px;
+    }
+    
+    .filters-bar {
+        padding: 1rem;
+    }
+}
 </style>
 @endpush
 
@@ -374,11 +484,254 @@
             swatch.style.backgroundColor = swatch.dataset.color;
         });
         
+        // Apply color filter background
+        document.querySelectorAll('.color-filter[data-color]').forEach(function(filter) {
+            filter.style.backgroundColor = filter.dataset.color;
+        });
+        
         // Initialize tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+        
+        // Filter state
+        const filterState = {
+            sizes: [],
+            colors: []
+        };
+        
+        // DOM elements
+        const productsGrid = document.getElementById('productsGrid');
+        const activeFiltersContainer = document.getElementById('activeFiltersContainer');
+        const activeFiltersDiv = document.getElementById('activeFilters');
+        const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+        const sizesInput = document.getElementById('sizesInput');
+        const colorsInput = document.getElementById('colorsInput');
+        const sortForm = document.getElementById('sortForm');
+        
+        // Size filter functionality
+        const sizeFilters = document.querySelectorAll('.size-filter');
+        sizeFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                const filterId = this.dataset.filter;
+                const filterType = this.dataset.type;
+                
+                // Toggle this filter
+                const filterIndex = filterState.sizes.indexOf(filterId);
+                if (filterIndex === -1) {
+                    // Add filter
+                    filterState.sizes.push(filterId);
+                    this.classList.add('active');
+                } else {
+                    // Remove filter
+                    filterState.sizes.splice(filterIndex, 1);
+                    this.classList.remove('active');
+                }
+                
+                // Update active filters display
+                updateActiveFilters();
+                
+                // Apply filters
+                applyFilters();
+            });
+        });
+        
+        // Color filter functionality
+        const colorFilters = document.querySelectorAll('.color-filter');
+        colorFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                const filterId = this.dataset.filter;
+                const filterType = this.dataset.type;
+                
+                // Toggle this filter
+                const filterIndex = filterState.colors.indexOf(filterId);
+                if (filterIndex === -1) {
+                    // Add filter
+                    filterState.colors.push(filterId);
+                    this.classList.add('active');
+                } else {
+                    // Remove filter
+                    filterState.colors.splice(filterIndex, 1);
+                    this.classList.remove('active');
+                }
+                
+                // Update active filters display
+                updateActiveFilters();
+                
+                // Apply filters
+                applyFilters();
+            });
+        });
+        
+        // Clear all filters
+        clearAllFiltersBtn.addEventListener('click', function() {
+            // Reset filter state
+            filterState.sizes = [];
+            filterState.colors = [];
+            
+            // Reset UI
+            sizeFilters.forEach(f => f.classList.remove('active'));
+            colorFilters.forEach(f => f.classList.remove('active'));
+            
+            // Update active filters display
+            updateActiveFilters();
+            
+            // Apply filters
+            applyFilters();
+        });
+        
+        // Function to update active filters display
+        function updateActiveFilters() {
+            // Clear current active filters
+            activeFiltersDiv.innerHTML = '';
+            
+            // Add size filters
+            filterState.sizes.forEach(sizeId => {
+                const filter = document.querySelector(`.size-filter[data-filter="${sizeId}"]`);
+                if (filter) {
+                    const filterName = filter.textContent.trim();
+                    addActiveFilterTag(sizeId, filterName, 'size');
+                }
+            });
+            
+            // Add color filters
+            filterState.colors.forEach(colorId => {
+                const filter = document.querySelector(`.color-filter[data-filter="${colorId}"]`);
+                if (filter) {
+                    const filterName = filter.title;
+                    const filterColor = filter.dataset.color;
+                    addActiveFilterTag(colorId, filterName, 'color', filterColor);
+                }
+            });
+            
+            // Show/hide active filters container
+            const hasActiveFilters = filterState.sizes.length > 0 || filterState.colors.length > 0;
+                                    
+            activeFiltersContainer.style.display = hasActiveFilters ? 'block' : 'none';
+            
+            // Update hidden inputs for form submission
+            sizesInput.value = filterState.sizes.join(',');
+            colorsInput.value = filterState.colors.join(',');
+        }
+        
+        // Function to add an active filter tag
+        function addActiveFilterTag(id, name, type, color = null) {
+            const tag = document.createElement('div');
+            tag.className = 'active-filter-tag';
+            tag.dataset.id = id;
+            tag.dataset.type = type;
+            
+            let tagContent = '';
+            
+            if (type === 'color' && color) {
+                tagContent = `
+                    <span class="d-flex align-items-center">
+                        <span class="color-swatch me-1" style="background-color: ${color}; width: 16px; height: 16px;"></span>
+                        ${name}
+                    </span>
+                `;
+            } else {
+                tagContent = `<span>${name}</span>`;
+            }
+            
+            tagContent += `<i class="bi bi-x remove-filter"></i>`;
+            tag.innerHTML = tagContent;
+            
+            // Add click handler to remove filter
+            tag.querySelector('.remove-filter').addEventListener('click', function() {
+                removeFilter(id, type);
+            });
+            
+            activeFiltersDiv.appendChild(tag);
+        }
+        
+        // Function to remove a filter
+        function removeFilter(id, type) {
+            switch (type) {
+                case 'size':
+                    const sizeIndex = filterState.sizes.indexOf(id);
+                    if (sizeIndex !== -1) {
+                        filterState.sizes.splice(sizeIndex, 1);
+                        document.querySelector(`.size-filter[data-filter="${id}"]`).classList.remove('active');
+                    }
+                    break;
+                    
+                case 'color':
+                    const colorIndex = filterState.colors.indexOf(id);
+                    if (colorIndex !== -1) {
+                        filterState.colors.splice(colorIndex, 1);
+                        document.querySelector(`.color-filter[data-filter="${id}"]`).classList.remove('active');
+                    }
+                    break;
+            }
+            
+            // Update active filters display
+            updateActiveFilters();
+            
+            // Apply filters
+            applyFilters();
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            const productItems = document.querySelectorAll('.product-item');
+            let visibleCount = 0;
+            
+            productItems.forEach(item => {
+                let showItem = true;
+                
+                // Check size filters
+                if (showItem && filterState.sizes.length > 0) {
+                    const productSizes = item.dataset.sizes.split(',');
+                    const hasMatchingSize = filterState.sizes.some(sizeId => 
+                        productSizes.includes(sizeId)
+                    );
+                    
+                    if (!hasMatchingSize) {
+                        showItem = false;
+                    }
+                }
+                
+                // Check color filters
+                if (showItem && filterState.colors.length > 0) {
+                    const productColors = item.dataset.colors.split(',');
+                    const hasMatchingColor = filterState.colors.some(colorId => 
+                        productColors.includes(colorId)
+                    );
+                    
+                    if (!hasMatchingColor) {
+                        showItem = false;
+                    }
+                }
+                
+                // Show/hide item
+                if (showItem) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Check if any products are visible
+            if (visibleCount === 0) {
+                // No products match filters
+                if (!document.getElementById('no-products-message')) {
+                    const noProductsMessage = document.createElement('div');
+                    noProductsMessage.id = 'no-products-message';
+                    noProductsMessage.className = 'alert alert-info col-12 text-center';
+                    noProductsMessage.innerHTML = '<i class="bi bi-info-circle me-2"></i> {{ __("No products match your selected filters") }}';
+                    productsGrid.appendChild(noProductsMessage);
+                }
+            } else {
+                // Remove no products message if it exists
+                const noProductsMessage = document.getElementById('no-products-message');
+                if (noProductsMessage) {
+                    noProductsMessage.remove();
+                }
+            }
+        }
         
         // Wishlist toggle functionality
         const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
@@ -465,28 +818,43 @@
             });
         });
         
-        // Filter functionality
-        const filterPills = document.querySelectorAll('.filter-pill');
-        filterPills.forEach(pill => {
-            pill.addEventListener('click', function() {
-                // Remove active class from all pills
-                filterPills.forEach(p => p.classList.remove('active'));
-                // Add active class to clicked pill
-                this.classList.add('active');
-                
-                // Filter logic would go here
-                // For now, we're just showing the UI
-            });
-        });
+        // Initialize filters from URL parameters
+        function initializeFiltersFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Initialize sizes
+            if (urlParams.has('sizes')) {
+                const sizeIds = urlParams.get('sizes').split(',').filter(id => id.trim() !== '');
+                sizeIds.forEach(id => {
+                    const filter = document.querySelector(`.size-filter[data-filter="${id}"]`);
+                    if (filter) {
+                        filter.classList.add('active');
+                        filterState.sizes.push(id);
+                    }
+                });
+            }
+            
+            // Initialize colors
+            if (urlParams.has('colors')) {
+                const colorIds = urlParams.get('colors').split(',').filter(id => id.trim() !== '');
+                colorIds.forEach(id => {
+                    const filter = document.querySelector(`.color-filter[data-filter="${id}"]`);
+                    if (filter) {
+                        filter.classList.add('active');
+                        filterState.colors.push(id);
+                    }
+                });
+            }
+            
+            // Update active filters display
+            updateActiveFilters();
+            
+            // Apply filters
+            applyFilters();
+        }
         
-        // Size filter functionality
-        const sizeFilters = document.querySelectorAll('.size-filter');
-        sizeFilters.forEach(filter => {
-            filter.addEventListener('click', function() {
-                this.classList.toggle('active');
-                // Size filter logic would go here
-            });
-        });
+        // Initialize filters from URL
+        initializeFiltersFromUrl();
     });
 
     // Show notification function

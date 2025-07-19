@@ -353,86 +353,128 @@
     <!-- You might also like section -->
     @if($product->recommendedProducts && $product->recommendedProducts->count() > 0)
     <div class="mt-5">
-        <h3 class="mb-4">{{ __('You might also like') }}</h3>
-        <div class="row g-4">
-            @php
-                // Ensure we have at least 4 products
-                $recommendedProducts = $product->recommendedProducts->load(['categories', 'colors', 'sizes', 'images']);
-                if($recommendedProducts->count() < 4) {
-                    $moreProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                        ->whereNotIn('id', [$product->id])
-                        ->whereNotIn('id', $recommendedProducts->pluck('id')->toArray())
-                        ->inRandomOrder()
-                        ->limit(4 - $recommendedProducts->count())
-                        ->get();
-                    $recommendedProducts = $recommendedProducts->concat($moreProducts);
-                }
-            @endphp
-            
-            @foreach($recommendedProducts->take(4) as $recommendedProduct)
-            <div class="col-6 col-md-3">
-                <div class="product-card h-100">
-                    <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
-                        <div class="product-image-container">
-                            <img src="{{ $recommendedProduct->imageUrl }}" alt="{{ $recommendedProduct->name }}" class="img-fluid product-image">
-                            
-                            <!-- Product Badges -->
-                            @if($recommendedProduct->quantity <= 0)
-                                <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
-                            @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
-                                <div class="product-badge new top-left">{{ __('general.new') }}</div>
-                            @endif
-                            
-                            <!-- Color Swatches -->
-                            @if(isset($recommendedProduct->colors) && $recommendedProduct->colors && $recommendedProduct->colors->count() > 0)
-                                <div class="color-swatches">
-                                    @foreach($recommendedProduct->colors->take(4) as $color)
-                                        <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
-                                    @endforeach
-                                    @if($recommendedProduct->colors->count() > 4)
-                                        <div class="color-swatch more-colors">+{{ $recommendedProduct->colors->count() - 4 }}</div>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-                        <div class="product-info p-3">
-                            <div class="product-category text-tertiary small mb-1">
-                                @if($recommendedProduct->categories && $recommendedProduct->categories->isNotEmpty())
-                                    {{ $recommendedProduct->categories->first()->name }}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">{{ __('You might also like') }}</h3>
+            <div class="recommendation-nav">
+                <button class="btn btn-sm btn-icon nav-btn prev-btn me-2" id="recommendPrev">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-sm btn-icon nav-btn next-btn" id="recommendNext">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="recommended-products-container position-relative">
+            <div class="recommended-products row g-4" id="recommendedProductsRow">
+                @php
+                    // Get recommended products and sort by category
+                    $recommendedProducts = $product->recommendedProducts->load(['categories', 'colors', 'sizes', 'images']);
+                    
+                    // Get additional products if needed, prioritizing same category
+                    if($recommendedProducts->count() < 8) {
+                        $categoryIds = $product->categories->pluck('id')->toArray();
+                        $moreProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                            ->whereHas('categories', function($query) use ($categoryIds) {
+                                $query->whereIn('categories.id', $categoryIds);
+                            })
+                            ->whereNotIn('id', [$product->id])
+                            ->whereNotIn('id', $recommendedProducts->pluck('id')->toArray())
+                            ->inRandomOrder()
+                            ->limit(8 - $recommendedProducts->count())
+                            ->get();
+                        
+                        // If still not enough, get random products
+                        if($moreProducts->count() + $recommendedProducts->count() < 8) {
+                            $existingIds = $moreProducts->pluck('id')
+                                ->merge($recommendedProducts->pluck('id'))
+                                ->push($product->id)
+                                ->toArray();
+                                
+                            $randomProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                ->whereNotIn('id', $existingIds)
+                                ->inRandomOrder()
+                                ->limit(8 - $moreProducts->count() - $recommendedProducts->count())
+                                ->get();
+                                
+                            $moreProducts = $moreProducts->concat($randomProducts);
+                        }
+                        
+                        $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                    }
+                    
+                    // Sort by matching categories with current product
+                    $currentProductCategoryIds = $product->categories->pluck('id')->toArray();
+                    $recommendedProducts = $recommendedProducts->sortByDesc(function($recommendedProduct) use ($currentProductCategoryIds) {
+                        return $recommendedProduct->categories->whereIn('id', $currentProductCategoryIds)->count();
+                    });
+                @endphp
+                
+                @foreach($recommendedProducts->take(8) as $recommendedProduct)
+                <div class="col-6 col-md-3 recommended-item">
+                    <div class="product-card h-100">
+                        <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
+                            <div class="product-image-container">
+                                <img src="{{ $recommendedProduct->imageUrl }}" alt="{{ $recommendedProduct->name }}" class="img-fluid product-image">
+                                
+                                <!-- Product Badges -->
+                                @if($recommendedProduct->quantity <= 0)
+                                    <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
+                                @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
+                                    <div class="product-badge new top-left">{{ __('general.new') }}</div>
+                                @endif
+                                
+                                <!-- Color Swatches -->
+                                @if(isset($recommendedProduct->colors) && $recommendedProduct->colors && $recommendedProduct->colors->count() > 0)
+                                    <div class="color-swatches">
+                                        @foreach($recommendedProduct->colors->take(4) as $color)
+                                            <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
+                                        @endforeach
+                                        @if($recommendedProduct->colors->count() > 4)
+                                            <div class="color-swatch more-colors">+{{ $recommendedProduct->colors->count() - 4 }}</div>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
-                                <!-- Wishlist button moved next to product name -->
-                                <button type="button" class="btn btn-sm btn-icon wishlist-toggle wishlist-btn-inline" 
-                                        data-product-id="{{ $recommendedProduct->id }}" 
-                                        data-bs-toggle="tooltip"
-                                        title="{{ __('Add to Wishlist') }}">
-                                    <i class="bi bi-heart"></i>
-                                </button>
+                            <div class="product-info p-3">
+                                <div class="product-category text-tertiary small mb-1">
+                                    @if($recommendedProduct->categories && $recommendedProduct->categories->isNotEmpty())
+                                        {{ $recommendedProduct->categories->first()->name }}
+                                    @endif
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
+                                    <!-- Wishlist button moved next to product name -->
+                                    <button type="button" class="btn btn-sm btn-icon wishlist-toggle wishlist-btn-inline" 
+                                            data-product-id="{{ $recommendedProduct->id }}" 
+                                            data-bs-toggle="tooltip"
+                                            title="{{ __('Add to Wishlist') }}">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                </div>
+                                <!-- Available Sizes -->
+                                @if(isset($recommendedProduct->sizes) && $recommendedProduct->sizes && $recommendedProduct->sizes->count() > 0)
+                                    <div class="available-sizes mb-2">
+                                        @foreach($recommendedProduct->sizes->take(5) as $size)
+                                            <span class="size-badge">{{ $size->name }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
+                                        {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
+                                    </div>
+                                    <div class="product-rating">
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                        <span class="ms-1 small">{{ number_format($recommendedProduct->average_rating ?? 0, 1) }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <!-- Available Sizes -->
-                            @if(isset($recommendedProduct->sizes) && $recommendedProduct->sizes && $recommendedProduct->sizes->count() > 0)
-                                <div class="available-sizes mb-2">
-                                    @foreach($recommendedProduct->sizes->take(5) as $size)
-                                        <span class="size-badge">{{ $size->name }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
-                                    {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
-                                </div>
-                                <div class="product-rating">
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    <span class="ms-1 small">{{ number_format($recommendedProduct->average_rating ?? 0, 1) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
+                @endforeach
             </div>
-            @endforeach
         </div>
     </div>
     @endif
@@ -672,6 +714,54 @@
         transform: scale(1.2);
     }
     
+    /* Recommendation Navigation */
+    .recommended-products-container {
+        overflow: hidden;
+    }
+    
+    .recommended-products {
+        display: flex;
+        flex-wrap: nowrap;
+        transition: transform 0.5s ease;
+    }
+    
+    .recommended-item {
+        flex: 0 0 auto;
+        width: 50%;
+    }
+    
+    @media (min-width: 768px) {
+        .recommended-item {
+            width: 25%;
+        }
+    }
+    
+    .nav-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+    
+    .nav-btn:hover {
+        background-color: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .nav-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
     /* Animations */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
@@ -762,6 +852,61 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
         });
     });
+    
+    // Recommended products navigation
+    const recommendRow = document.getElementById('recommendedProductsRow');
+    const prevBtn = document.getElementById('recommendPrev');
+    const nextBtn = document.getElementById('recommendNext');
+    
+    if (recommendRow && prevBtn && nextBtn) {
+        let currentPosition = 0;
+        const itemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+        const visibleItems = window.innerWidth >= 768 ? 4 : 2;
+        const totalItems = recommendRow.querySelectorAll('.recommended-item').length;
+        const maxPosition = Math.max(0, totalItems - visibleItems);
+        
+        // Initialize button states
+        updateNavButtons();
+        
+        prevBtn.addEventListener('click', function() {
+            if (currentPosition > 0) {
+                currentPosition--;
+                updateSliderPosition();
+            }
+        });
+        
+        nextBtn.addEventListener('click', function() {
+            if (currentPosition < maxPosition) {
+                currentPosition++;
+                updateSliderPosition();
+            }
+        });
+        
+        function updateSliderPosition() {
+            recommendRow.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
+            updateNavButtons();
+        }
+        
+        function updateNavButtons() {
+            prevBtn.disabled = currentPosition === 0;
+            nextBtn.disabled = currentPosition >= maxPosition;
+        }
+        
+        // Update on window resize
+        window.addEventListener('resize', function() {
+            const newItemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+            const newVisibleItems = window.innerWidth >= 768 ? 4 : 2;
+            const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
+            
+            // Reset position if needed
+            if (currentPosition > newMaxPosition) {
+                currentPosition = newMaxPosition;
+            }
+            
+            // Update with new dimensions
+            updateSliderPosition();
+        });
+    }
     
     // Form validation
     const form = document.getElementById('add-to-cart-form');

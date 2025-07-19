@@ -14,6 +14,54 @@
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1.5rem;
 }
+
+/* Recommendation Navigation */
+.recommended-products-container {
+    overflow: hidden;
+}
+
+.recommended-products {
+    display: flex;
+    flex-wrap: nowrap;
+    transition: transform 0.5s ease;
+}
+
+.recommended-item {
+    flex: 0 0 auto;
+    width: 50%;
+}
+
+@media (min-width: 768px) {
+    .recommended-item {
+        width: 25%;
+    }
+}
+
+.nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.nav-btn:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
 </style>
 @endpush
 
@@ -86,20 +134,63 @@
     
     <!-- You might also like section -->
     <div class="mt-5">
-        <h3 class="mb-4">{{ __('You might also like') }}</h3>
-        <div class="row g-4">
-            @php
-                $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                    ->inRandomOrder()
-                    ->limit(4)
-                    ->get();
-            @endphp
-            
-            @foreach($recommendedProducts as $product)
-            <div class="col-6 col-md-3">
-                <x-product-card :product="$product" />
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">{{ __('You might also like') }}</h3>
+            <div class="recommendation-nav">
+                <button class="btn btn-sm btn-icon nav-btn prev-btn me-2" id="wishlistRecommendPrev">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-sm btn-icon nav-btn next-btn" id="wishlistRecommendNext">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
-            @endforeach
+        </div>
+        
+        <div class="recommended-products-container position-relative">
+            <div class="recommended-products row g-4" id="wishlistRecommendedProductsRow">
+                @php
+                    // Get product categories from wishlist items
+                    $categoryIds = [];
+                    foreach($wishlistItems as $item) {
+                        if($item->product && $item->product->categories) {
+                            $categoryIds = array_merge($categoryIds, $item->product->categories->pluck('id')->toArray());
+                        }
+                    }
+                    $categoryIds = array_unique($categoryIds);
+                    
+                    // Get recommended products based on wishlist categories
+                    $wishlistProductIds = $wishlistItems->pluck('product_id')->toArray();
+                    $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                        ->whereHas('categories', function($query) use ($categoryIds) {
+                            $query->whereIn('categories.id', $categoryIds);
+                        })
+                        ->whereNotIn('id', $wishlistProductIds)
+                        ->inRandomOrder()
+                        ->limit(8)
+                        ->get();
+                        
+                    // If not enough products, add some random ones
+                    if($recommendedProducts->count() < 8) {
+                        $existingIds = $recommendedProducts->pluck('id')
+                            ->merge($wishlistProductIds)
+                            ->toArray();
+                            
+                        $moreProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                            ->whereNotIn('id', $existingIds)
+                            ->inRandomOrder()
+                            ->limit(8 - $recommendedProducts->count())
+                            ->get();
+                            
+                        $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                    }
+                @endphp
+                
+                @foreach($recommendedProducts as $product)
+                <div class="col-6 col-md-3 recommended-item">
+                    <x-product-card :product="$product" />
+                </div>
+                @endforeach
+            </div>
         </div>
     </div>
     @else
@@ -126,6 +217,61 @@
         document.querySelectorAll('.color-swatch[data-color]').forEach(function(swatch) {
             swatch.style.backgroundColor = swatch.dataset.color;
         });
+        
+        // Recommended products navigation
+        const recommendRow = document.getElementById('wishlistRecommendedProductsRow');
+        const prevBtn = document.getElementById('wishlistRecommendPrev');
+        const nextBtn = document.getElementById('wishlistRecommendNext');
+        
+        if (recommendRow && prevBtn && nextBtn) {
+            let currentPosition = 0;
+            const itemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+            const visibleItems = window.innerWidth >= 768 ? 4 : 2;
+            const totalItems = recommendRow.querySelectorAll('.recommended-item').length;
+            const maxPosition = Math.max(0, totalItems - visibleItems);
+            
+            // Initialize button states
+            updateNavButtons();
+            
+            prevBtn.addEventListener('click', function() {
+                if (currentPosition > 0) {
+                    currentPosition--;
+                    updateSliderPosition();
+                }
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                if (currentPosition < maxPosition) {
+                    currentPosition++;
+                    updateSliderPosition();
+                }
+            });
+            
+            function updateSliderPosition() {
+                recommendRow.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
+                updateNavButtons();
+            }
+            
+            function updateNavButtons() {
+                prevBtn.disabled = currentPosition === 0;
+                nextBtn.disabled = currentPosition >= maxPosition;
+            }
+            
+            // Update on window resize
+            window.addEventListener('resize', function() {
+                const newItemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
+                const newVisibleItems = window.innerWidth >= 768 ? 4 : 2;
+                const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
+                
+                // Reset position if needed
+                if (currentPosition > newMaxPosition) {
+                    currentPosition = newMaxPosition;
+                }
+                
+                // Update with new dimensions
+                updateSliderPosition();
+            });
+        }
         
         // Remove from wishlist
         document.querySelectorAll('.remove-from-wishlist-btn').forEach(function(btn) {
