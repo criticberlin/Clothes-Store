@@ -19,6 +19,92 @@
 .w-80 { width: 80%; }
 .w-90 { width: 90%; }
 .w-100 { width: 100%; }
+
+/* Recommendation Navigation */
+.recommended-section {
+    position: relative;
+    padding: 0 15px;
+}
+
+.recommended-products-container {
+    overflow: hidden;
+    border-radius: 8px;
+    padding: 0 30px;
+    touch-action: pan-x; /* Enable horizontal touch scrolling */
+}
+
+.recommended-products {
+    display: flex;
+    flex-wrap: nowrap;
+    transition: transform 0.5s ease;
+}
+
+.recommended-item {
+    flex: 0 0 auto;
+    width: 85%; /* Wider cards on mobile */
+    padding: 10px;
+}
+
+@media (min-width: 768px) {
+    .recommended-item {
+        width: 25%;
+    }
+    .recommended-section {
+        padding: 0 25px;
+    }
+}
+
+.nav-btn {
+    position: absolute;
+    top: 44%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 30px;
+    border-radius: 30px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.nav-btn.prev-btn {
+    left: -15px;
+}
+
+.nav-btn.next-btn {
+    right: -15px;
+}
+
+.nav-btn:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.nav-btn:disabled {
+    opacity: 0;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .nav-btn {
+        width: 36px;
+        height: 28px;
+    }
+    
+    /* Hide arrows on touch devices */
+    @media (pointer: coarse) {
+        .nav-btn {
+            display: none;
+        }
+    }
+}
 </style>
 
 <div class="container py-5">
@@ -353,128 +439,128 @@
     <!-- You might also like section -->
     @if($product->recommendedProducts && $product->recommendedProducts->count() > 0)
     <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">{{ __('You might also like') }}</h3>
-            <div class="recommendation-nav">
-                <button class="btn btn-sm btn-icon nav-btn prev-btn me-2" id="recommendPrev">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                <button class="btn btn-sm btn-icon nav-btn next-btn" id="recommendNext">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-            </div>
-        </div>
+        <h3 class="mb-4">{{ __('You might also like') }}</h3>
         
-        <div class="recommended-products-container position-relative">
-            <div class="recommended-products row g-4" id="recommendedProductsRow">
-                @php
-                    // Get recommended products and sort by category
-                    $recommendedProducts = $product->recommendedProducts->load(['categories', 'colors', 'sizes', 'images']);
-                    
-                    // Get additional products if needed, prioritizing same category
-                    if($recommendedProducts->count() < 8) {
-                        $categoryIds = $product->categories->pluck('id')->toArray();
-                        $moreProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                            ->whereHas('categories', function($query) use ($categoryIds) {
-                                $query->whereIn('categories.id', $categoryIds);
-                            })
-                            ->whereNotIn('id', [$product->id])
-                            ->whereNotIn('id', $recommendedProducts->pluck('id')->toArray())
-                            ->inRandomOrder()
-                            ->limit(8 - $recommendedProducts->count())
-                            ->get();
+        <div class="recommended-section">
+            <div class="recommended-products-container">
+                <div class="recommended-products row g-0" id="recommendedProductsRow">
+                    @php
+                        // Get recommended products and sort by category
+                        $recommendedProducts = $product->recommendedProducts->load(['categories', 'colors', 'sizes', 'images']);
                         
-                        // If still not enough, get random products
-                        if($moreProducts->count() + $recommendedProducts->count() < 8) {
-                            $existingIds = $moreProducts->pluck('id')
-                                ->merge($recommendedProducts->pluck('id'))
-                                ->push($product->id)
-                                ->toArray();
-                                
-                            $randomProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                                ->whereNotIn('id', $existingIds)
+                        // Get additional products if needed, prioritizing same category
+                        if($recommendedProducts->count() < 8) {
+                            $categoryIds = $product->categories->pluck('id')->toArray();
+                            $moreProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                ->whereHas('categories', function($query) use ($categoryIds) {
+                                    $query->whereIn('categories.id', $categoryIds);
+                                })
+                                ->whereNotIn('id', [$product->id])
+                                ->whereNotIn('id', $recommendedProducts->pluck('id')->toArray())
                                 ->inRandomOrder()
-                                ->limit(8 - $moreProducts->count() - $recommendedProducts->count())
+                                ->limit(8 - $recommendedProducts->count())
                                 ->get();
-                                
-                            $moreProducts = $moreProducts->concat($randomProducts);
+                            
+                            // If still not enough, get random products
+                            if($moreProducts->count() + $recommendedProducts->count() < 8) {
+                                $existingIds = $moreProducts->pluck('id')
+                                    ->merge($recommendedProducts->pluck('id'))
+                                    ->push($product->id)
+                                    ->toArray();
+                                    
+                                $randomProducts = App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                    ->whereNotIn('id', $existingIds)
+                                    ->inRandomOrder()
+                                    ->limit(8 - $moreProducts->count() - $recommendedProducts->count())
+                                    ->get();
+                                    
+                                $moreProducts = $moreProducts->concat($randomProducts);
+                            }
+                            
+                            $recommendedProducts = $recommendedProducts->concat($moreProducts);
                         }
                         
-                        $recommendedProducts = $recommendedProducts->concat($moreProducts);
-                    }
+                        // Sort by matching categories with current product
+                        $currentProductCategoryIds = $product->categories->pluck('id')->toArray();
+                        $recommendedProducts = $recommendedProducts->sortByDesc(function($recommendedProduct) use ($currentProductCategoryIds) {
+                            return $recommendedProduct->categories->whereIn('id', $currentProductCategoryIds)->count();
+                        });
+                    @endphp
                     
-                    // Sort by matching categories with current product
-                    $currentProductCategoryIds = $product->categories->pluck('id')->toArray();
-                    $recommendedProducts = $recommendedProducts->sortByDesc(function($recommendedProduct) use ($currentProductCategoryIds) {
-                        return $recommendedProduct->categories->whereIn('id', $currentProductCategoryIds)->count();
-                    });
-                @endphp
-                
-                @foreach($recommendedProducts->take(8) as $recommendedProduct)
-                <div class="col-6 col-md-3 recommended-item">
-                    <div class="product-card h-100">
-                        <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
-                            <div class="product-image-container">
-                                <img src="{{ $recommendedProduct->imageUrl }}" alt="{{ $recommendedProduct->name }}" class="img-fluid product-image">
-                                
-                                <!-- Product Badges -->
-                                @if($recommendedProduct->quantity <= 0)
-                                    <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
-                                @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
-                                    <div class="product-badge new top-left">{{ __('general.new') }}</div>
-                                @endif
-                                
-                                <!-- Color Swatches -->
-                                @if(isset($recommendedProduct->colors) && $recommendedProduct->colors && $recommendedProduct->colors->count() > 0)
-                                    <div class="color-swatches">
-                                        @foreach($recommendedProduct->colors->take(4) as $color)
-                                            <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
-                                        @endforeach
-                                        @if($recommendedProduct->colors->count() > 4)
-                                            <div class="color-swatch more-colors">+{{ $recommendedProduct->colors->count() - 4 }}</div>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="product-info p-3">
-                                <div class="product-category text-tertiary small mb-1">
-                                    @if($recommendedProduct->categories && $recommendedProduct->categories->isNotEmpty())
-                                        {{ $recommendedProduct->categories->first()->name }}
+                    @foreach($recommendedProducts->take(8) as $recommendedProduct)
+                    <div class="recommended-item">
+                        <div class="product-card h-100">
+                            <a href="{{ route('products.details', $recommendedProduct->id) }}" class="product-card-link">
+                                <div class="product-image-container">
+                                    <img src="{{ $recommendedProduct->imageUrl }}" alt="{{ $recommendedProduct->name }}" class="img-fluid product-image">
+                                    
+                                    <!-- Product Badges -->
+                                    @if($recommendedProduct->quantity <= 0)
+                                        <div class="product-badge out-of-stock">{{ __('general.out_of_stock') }}</div>
+                                    @elseif($recommendedProduct->created_at && $recommendedProduct->created_at->diffInDays(now()) <= 7)
+                                        <div class="product-badge new top-left">{{ __('general.new') }}</div>
+                                    @endif
+                                    
+                                    <!-- Color Swatches -->
+                                    @if(isset($recommendedProduct->colors) && $recommendedProduct->colors && $recommendedProduct->colors->count() > 0)
+                                        <div class="color-swatches">
+                                            @foreach($recommendedProduct->colors->take(4) as $color)
+                                                <div class="color-swatch" data-color="{{ $color->hex_code }}" title="{{ $color->name }}"></div>
+                                            @endforeach
+                                            @if($recommendedProduct->colors->count() > 4)
+                                                <div class="color-swatch more-colors">+{{ $recommendedProduct->colors->count() - 4 }}</div>
+                                            @endif
+                                        </div>
                                     @endif
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
-                                    <!-- Wishlist button moved next to product name -->
-                                    <button type="button" class="btn btn-sm btn-icon wishlist-toggle wishlist-btn-inline" 
-                                            data-product-id="{{ $recommendedProduct->id }}" 
-                                            data-bs-toggle="tooltip"
-                                            title="{{ __('Add to Wishlist') }}">
-                                        <i class="bi bi-heart"></i>
-                                    </button>
+                                <div class="product-info p-3">
+                                    <div class="product-category text-tertiary small mb-1">
+                                        @if($recommendedProduct->categories && $recommendedProduct->categories->isNotEmpty())
+                                            {{ $recommendedProduct->categories->first()->name }}
+                                        @endif
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h3 class="product-title h6 mb-1">{{ $recommendedProduct->name }}</h3>
+                                        <!-- Wishlist button moved next to product name -->
+                                        <button type="button" class="btn btn-sm btn-icon wishlist-toggle wishlist-btn-inline" 
+                                                data-product-id="{{ $recommendedProduct->id }}" 
+                                                data-bs-toggle="tooltip"
+                                                title="{{ __('Add to Wishlist') }}">
+                                            <i class="bi bi-heart"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Available Sizes -->
+                                    @if(isset($recommendedProduct->sizes) && $recommendedProduct->sizes && $recommendedProduct->sizes->count() > 0)
+                                        <div class="available-sizes mb-2">
+                                            @foreach($recommendedProduct->sizes->take(5) as $size)
+                                                <span class="size-badge">{{ $size->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
+                                            {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
+                                        </div>
+                                        <div class="product-rating">
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                            <span class="ms-1 small">{{ number_format($recommendedProduct->average_rating ?? 0, 1) }}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <!-- Available Sizes -->
-                                @if(isset($recommendedProduct->sizes) && $recommendedProduct->sizes && $recommendedProduct->sizes->count() > 0)
-                                    <div class="available-sizes mb-2">
-                                        @foreach($recommendedProduct->sizes->take(5) as $size)
-                                            <span class="size-badge">{{ $size->name }}</span>
-                                        @endforeach
-                                    </div>
-                                @endif
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <div class="product-price fw-bold price-value" data-base-price="{{ $recommendedProduct->price }}">
-                                        {{ app(\App\Services\CurrencyService::class)->formatPrice($recommendedProduct->price) }}
-                                    </div>
-                                    <div class="product-rating">
-                                        <i class="bi bi-star-fill text-warning"></i>
-                                        <span class="ms-1 small">{{ number_format($recommendedProduct->average_rating ?? 0, 1) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
+                            </a>
+                        </div>
                     </div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
+            
+            <button class="btn nav-btn prev-btn" id="recommendPrev" aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            
+            <button class="btn nav-btn next-btn" id="recommendNext" aria-label="Next">
+                <i class="bi bi-chevron-right"></i>
+            </button>
         </div>
     </div>
     @endif
@@ -716,7 +802,8 @@
     
     /* Recommendation Navigation */
     .recommended-products-container {
-        overflow: hidden;
+        overflow: visible;
+        padding: 0 30px;
     }
     
     .recommended-products {
@@ -737,8 +824,11 @@
     }
     
     .nav-btn {
-        width: 36px;
-        height: 36px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background-color: var(--surface);
         border: 1px solid var(--border);
@@ -747,19 +837,25 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all var(--transition-normal);
+        z-index: 10;
+    }
+    
+    .nav-btn.prev-btn {
+        left: -15px;
+    }
+    
+    .nav-btn.next-btn {
+        right: -15px;
     }
     
     .nav-btn:hover {
         background-color: var(--primary);
         color: white;
-        transform: translateY(-2px);
     }
     
     .nav-btn:disabled {
-        opacity: 0.5;
+        opacity: 0;
         cursor: not-allowed;
-        transform: none;
     }
     
     /* Animations */
@@ -861,7 +957,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (recommendRow && prevBtn && nextBtn) {
         let currentPosition = 0;
         const itemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
-        const visibleItems = window.innerWidth >= 768 ? 4 : 2;
+        const visibleItems = window.innerWidth >= 768 ? 4 : 1; // Show only 1 item at a time on mobile
         const totalItems = recommendRow.querySelectorAll('.recommended-item').length;
         const maxPosition = Math.max(0, totalItems - visibleItems);
         
@@ -882,6 +978,58 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Improved touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isSwiping = false;
+        
+        recommendRow.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            isSwiping = true;
+        }, { passive: true });
+        
+        recommendRow.addEventListener('touchmove', function(e) {
+            if (!isSwiping) return;
+            
+            const currentX = e.changedTouches[0].screenX;
+            const diff = touchStartX - currentX;
+            
+            // Add resistance at the edges
+            if ((currentPosition === 0 && diff < 0) || 
+                (currentPosition >= maxPosition && diff > 0)) {
+                return;
+            }
+            
+            // Prevent default to avoid page scrolling
+            e.preventDefault();
+        }, { passive: false });
+        
+        recommendRow.addEventListener('touchend', function(e) {
+            if (!isSwiping) return;
+            
+            touchEndX = e.changedTouches[0].screenX;
+            const swipeDistance = touchStartX - touchEndX;
+            handleSwipe(swipeDistance);
+            isSwiping = false;
+        }, { passive: true });
+        
+        function handleSwipe(swipeDistance) {
+            const swipeThreshold = 50;
+            if (swipeDistance > swipeThreshold) {
+                // Swipe left
+                if (currentPosition < maxPosition) {
+                    currentPosition++;
+                    updateSliderPosition();
+                }
+            } else if (swipeDistance < -swipeThreshold) {
+                // Swipe right
+                if (currentPosition > 0) {
+                    currentPosition--;
+                    updateSliderPosition();
+                }
+            }
+        }
+        
         function updateSliderPosition() {
             recommendRow.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
             updateNavButtons();
@@ -890,12 +1038,16 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateNavButtons() {
             prevBtn.disabled = currentPosition === 0;
             nextBtn.disabled = currentPosition >= maxPosition;
+            
+            // Show/hide buttons based on position
+            prevBtn.style.opacity = currentPosition === 0 ? '0' : '1';
+            nextBtn.style.opacity = currentPosition >= maxPosition ? '0' : '1';
         }
         
         // Update on window resize
         window.addEventListener('resize', function() {
             const newItemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
-            const newVisibleItems = window.innerWidth >= 768 ? 4 : 2;
+            const newVisibleItems = window.innerWidth >= 768 ? 4 : 1; // Show only 1 item at a time on mobile
             const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
             
             // Reset position if needed
@@ -1003,49 +1155,15 @@ document.addEventListener('DOMContentLoaded', function() {
     wishlistBtns.forEach(btn => {
         const productId = btn.getAttribute('data-product-id');
         
-        // Check if product is in wishlist
-        fetch(`{{ url('wishlist/check') }}/${productId}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.in_wishlist) {
-                    btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                    btn.classList.add('active');
-                }
-            })
-            .catch(error => {
-                console.error('Error checking wishlist status:', error);
-            });
-        
-        // Toggle wishlist on click
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const productId = this.getAttribute('data-product-id');
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            // Show loading state
-            this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-            this.disabled = true;
-            
-            // Toggle wishlist status
-            fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
-                method: 'POST',
+        // Check if product is in wishlist using the centralized function
+        if (window.checkWishlistStatus) {
+            window.checkWishlistStatus(btn, productId, '{{ url("/") }}');
+        } else {
+            // Fallback if the global function isn't available
+            fetch(`{{ url('wishlist/check') }}/${productId}`, {
                 headers: {
-                    'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 },
                 credentials: 'same-origin'
             })
@@ -1056,34 +1174,60 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 })
                 .then(data => {
-                    // Enable button
-                    this.disabled = false;
-                    
+                    if (data.in_wishlist) {
+                        btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                        btn.classList.add('active');
+                    } else {
+                        btn.innerHTML = '<i class="bi bi-heart"></i>';
+                        btn.classList.remove('active');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking wishlist status:', error);
+                    // Set default state on error
+                    btn.innerHTML = '<i class="bi bi-heart"></i>';
+                    btn.classList.remove('active');
+                });
+        }
+        
+        // Toggle wishlist on click
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (window.toggleWishlistItem) {
+                window.toggleWishlistItem(btn, productId, '{{ url("/") }}');
+            } else {
+                // Fallback implementation
+                fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
                     if (data.success) {
                         if (data.in_wishlist) {
-                            this.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                            this.classList.add('active');
-                            showNotification('Product added to wishlist', 'success');
+                            btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                            btn.classList.add('active');
                         } else {
-                            this.innerHTML = '<i class="bi bi-heart"></i>';
-                            this.classList.remove('active');
-                            showNotification('Product removed from wishlist', 'info');
-                        }
-                    } else {
-                        // If not authenticated, redirect to login
-                        if (data.message.includes('login')) {
-                            window.location.href = '/login';
-                        } else {
-                            showNotification(data.message || 'Error updating wishlist', 'error');
+                            btn.innerHTML = '<i class="bi bi-heart"></i>';
+                            btn.classList.remove('active');
                         }
                     }
                 })
                 .catch(error => {
-                    console.error('Error toggling wishlist:', error);
-                    this.disabled = false;
-                    this.innerHTML = '<i class="bi bi-heart"></i>';
-                    showNotification('Error updating wishlist', 'error');
+                    console.error('Error toggling wishlist item:', error);
                 });
+            }
         });
     });
     

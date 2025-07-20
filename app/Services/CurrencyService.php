@@ -115,6 +115,15 @@ class CurrencyService
      */
     public function convertPrice($price, $targetCurrency = null)
     {
+        // Ensure price is numeric
+        if (!is_numeric($price)) {
+            if (is_array($price) || is_object($price)) {
+                $price = 0;
+            } else {
+                $price = (float)$price;
+            }
+        }
+        
         if (!$targetCurrency) {
             $targetCurrency = $this->getCurrentCurrency();
         }
@@ -141,6 +150,15 @@ class CurrencyService
      */
     public function formatPrice($price, $currency = null, $includeCode = false)
     {
+        // Ensure price is numeric
+        if (!is_numeric($price)) {
+            if (is_array($price) || is_object($price)) {
+                $price = 0;
+            } else {
+                $price = (float)$price;
+            }
+        }
+        
         if (!$currency) {
             $currency = $this->getCurrentCurrency();
         }

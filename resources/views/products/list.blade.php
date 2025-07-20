@@ -4,55 +4,194 @@
 
 @section('content')
 <div class="container py-4">
-    <h2 class="mb-4 text-capitalize">{{ isset($category) ? $category . ' Collection' : 'All Products' }}</h2>
+    <!-- Header with Title -->
+    <div class="mb-4">
+        <h2 class="text-capitalize">{{ isset($category) ? $category . ' Collection' : 'All Products' }}</h2>
+    </div>
+    
+    <!-- Filter Controls - Horizontal layout -->
+    <div class="filter-bar mb-4">
+        <div class="d-flex flex-wrap align-items-center">
+            <!-- Categories Section - Dropdown -->
+            <div class="filter-dropdown me-3 mb-2">
+                <div class="dropdown">
+                    <button class="btn filter-btn dropdown-toggle" type="button" id="categoriesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span>{{ __('Categories') }}</span>
+                    </button>
+                    <div class="dropdown-menu p-3" aria-labelledby="categoriesDropdown">
+                        <!-- Main Categories -->
+                        <div class="mb-2">
+                            <h6 class="filter-subtitle">{{ __('Main Categories') }}</h6>
+                            <div class="category-options">
+                                @php
+                                    $mainCategories = \App\Models\Category::where('type', 'main')
+                                        ->where('status', true)
+                                        ->orderBy('name')
+                                        ->get();
+                                @endphp
+                                @foreach($mainCategories as $category)
+                                    <button class="category-filter" 
+                                            data-filter="{{ $category->id }}" 
+                                            data-type="category">
+                                        {{ $category->name }}
+                                    </button>
+                                @endforeach
+                    </div>
+                </div>
+                        
+                        <!-- Clothing Type -->
+                        <div class="mb-2">
+                            <h6 class="filter-subtitle">{{ __('Clothing Type') }}</h6>
+                            <div class="category-options">
+                                @php
+                                    $clothingTypes = \App\Models\Category::where('type', 'clothing')
+                                        ->where('status', true)
+                                        ->orderBy('name')
+                                        ->get();
+                                @endphp
+                                @foreach($clothingTypes as $category)
+                                    <button class="category-filter" 
+                                            data-filter="{{ $category->id }}" 
+                                            data-type="category">
+                                        {{ $category->name }}
+                                    </button>
+                                @endforeach
+            </div>
+                        </div>
+                        
+                        <!-- Specific Item Types -->
+                        <div>
+                            <h6 class="filter-subtitle">{{ __('Specific Items') }}</h6>
+                            <div class="category-options">
+                                @php
+                                    $specificItems = \App\Models\Category::whereNotIn('type', ['main', 'clothing'])
+                                        ->where('status', true)
+                                        ->orderBy('name')
+                                        ->get();
+                                @endphp
+                                @foreach($specificItems as $category)
+                                    <button class="category-filter" 
+                                            data-filter="{{ $category->id }}" 
+                                            data-type="category">
+                                        {{ $category->name }}
+                                    </button>
+                                @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Filters and Sort Bar -->
-    <div class="filters-bar mb-4">
-        <div class="row g-3 align-items-center">
-            <!-- Size Filters -->
-            <div class="col-md-4">
-                <div class="filter-section mb-0">
-                    <h5 class="filter-heading">{{ __('Size') }}</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        @php
-                            $sizes = \App\Models\Size::orderBy('name')->get();
-                        @endphp
-                        @foreach($sizes as $size)
-                            <button class="size-filter" 
-                                    data-filter="{{ $size->id }}" 
-                                    data-type="size">
-                                {{ $size->name }}
-                            </button>
-                        @endforeach
+            <!-- Size Filter - Dropdown -->
+            <div class="filter-dropdown me-3 mb-2">
+                <div class="dropdown">
+                    <button class="btn filter-btn dropdown-toggle" type="button" id="sizeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span>{{ __('Size') }}</span>
+                    </button>
+                    <div class="dropdown-menu p-3" aria-labelledby="sizeDropdown">
+                        <div class="size-options">
+                            @php
+                                // Define standard size order
+                                $standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                                $orderedSizes = [];
+                                $otherSizes = [];
+                                
+                                // Get all sizes from database
+                                $allSizes = \App\Models\Size::orderBy('name')->get();
+                                
+                                // Sort sizes into standard and other categories
+                                foreach($allSizes as $size) {
+                                    $found = false;
+                                    foreach($standardSizes as $index => $stdSize) {
+                                        if(strtoupper($size->name) == $stdSize) {
+                                            $orderedSizes[$index] = $size;
+                                            $found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!$found) {
+                                        $otherSizes[] = $size;
+                                    }
+                                }
+                                
+                                // Sort standard sizes by predefined order
+                                ksort($orderedSizes);
+                                
+                                // Combine arrays with standard sizes first
+                                $displaySizes = array_merge($orderedSizes, $otherSizes);
+                            @endphp
+                            
+                            @foreach($displaySizes as $size)
+                                <button class="size-filter" 
+                                        data-filter="{{ $size->id }}" 
+                                        data-type="size">
+                                    {{ $size->name }}
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Color Filters -->
-            <div class="col-md-4">
-                <div class="filter-section mb-0">
-                    <h5 class="filter-heading">{{ __('Color') }}</h5>
-                    <div class="d-flex flex-wrap gap-3">
-                        @php
-                            $colors = \App\Models\Color::orderBy('name')->get();
-                        @endphp
-                        @foreach($colors as $color)
-                            <button class="color-filter" 
-                                    data-filter="{{ $color->id }}" 
-                                    data-type="color"
-                                    data-color="{{ $color->hex_code }}"
-                                    title="{{ $color->name }}">
-                            </button>
-                        @endforeach
+            <!-- Color Filter - Dropdown -->
+            <div class="filter-dropdown me-3 mb-2">
+                <div class="dropdown">
+                    <button class="btn filter-btn dropdown-toggle" type="button" id="colorDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span>{{ __('Color') }}</span>
+                    </button>
+                    <div class="dropdown-menu p-3 color-dropdown-menu" aria-labelledby="colorDropdown">
+                        <div class="color-options">
+                            @php
+                                $colors = \App\Models\Color::orderBy('name')->get();
+                            @endphp
+                            @foreach($colors as $color)
+                                <button class="color-filter" 
+                                        data-filter="{{ $color->id }}" 
+                                        data-type="color"
+                                        data-color="{{ $color->hex_code }}"
+                                        title="{{ $color->name }}">
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- Sort By Dropdown -->
-            <div class="col-md-4">
-                <div class="d-flex justify-content-md-end">
-                    <div class="sort-dropdown">
-                        <form action="{{ route('products.list') }}" method="GET" class="d-flex align-items-center" id="sortForm">
+            <div class="filter-dropdown mb-2 ms-auto">
+                <div class="dropdown">
+                    <button class="btn filter-btn dropdown-toggle sort-button" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <div class="sort-text">
+                                <span>{{ __('Sort by') }}</span>
+                                <span class="selected-sort">
+                                    @php
+                                        $sortOption = request()->get('sort', '');
+                                        $sortText = '';
+                                        switch($sortOption) {
+                                            case 'price_low':
+                                                $sortText = __('general.price_low_to_high');
+                                                break;
+                                            case 'price_high':
+                                                $sortText = __('general.price_high_to_low');
+                                                break;
+                                            case 'newest':
+                                                $sortText = __('general.newest_arrivals');
+                                                break;
+                                            case 'name':
+                                                $sortText = __('general.name');
+                                                break;
+                                            default:
+                                                $sortText = __('general.relevance');
+                                        }
+                                    @endphp
+                                    : {{ $sortText }}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                    <div class="dropdown-menu p-3 sort-dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                        <form action="{{ route('products.list') }}" method="GET" id="sortForm">
                             <!-- Preserve any existing query parameters -->
                             @if(request()->has('query'))
                                 <input type="hidden" name="query" value="{{ request()->get('query') }}">
@@ -64,34 +203,43 @@
                             <!-- Hidden filter inputs that will be populated by JS -->
                             <input type="hidden" name="sizes" id="sizesInput" value="">
                             <input type="hidden" name="colors" id="colorsInput" value="">
+                            <input type="hidden" name="categories" id="categoriesInput" value="">
                             
-                            <label for="sortOrder" class="me-2 text-nowrap">{{ __('general.sort_by') }}:</label>
-                            <select class="form-select form-select-sm" id="sortOrder" name="sort" onchange="this.form.submit()">
-                                <option value="" {{ request()->get('sort') == '' ? 'selected' : '' }}>{{ __('general.relevance') }}</option>
-                                <option value="price_low" {{ request()->get('sort') == 'price_low' ? 'selected' : '' }}>{{ __('general.price_low_to_high') }}</option>
-                                <option value="price_high" {{ request()->get('sort') == 'price_high' ? 'selected' : '' }}>{{ __('general.price_high_to_low') }}</option>
-                                <option value="newest" {{ request()->get('sort') == 'newest' ? 'selected' : '' }}>{{ __('general.newest_arrivals') }}</option>
-                                <option value="name" {{ request()->get('sort') == 'name' ? 'selected' : '' }}>{{ __('general.name') }}</option>
-                            </select>
+                            <div class="sort-options">
+                                <button type="button" class="sort-option {{ request()->get('sort') == '' ? 'active' : '' }}" data-value="">
+                                    {{ __('general.relevance') }}
+                                </button>
+                                <button type="button" class="sort-option {{ request()->get('sort') == 'price_low' ? 'active' : '' }}" data-value="price_low">
+                                    {{ __('general.price_low_to_high') }}
+                                </button>
+                                <button type="button" class="sort-option {{ request()->get('sort') == 'price_high' ? 'active' : '' }}" data-value="price_high">
+                                    {{ __('general.price_high_to_low') }}
+                                </button>
+                                <button type="button" class="sort-option {{ request()->get('sort') == 'newest' ? 'active' : '' }}" data-value="newest">
+                                    {{ __('general.newest_arrivals') }}
+                                </button>
+                                <button type="button" class="sort-option {{ request()->get('sort') == 'name' ? 'active' : '' }}" data-value="name">
+                                    {{ __('general.name') }}
+                                </button>
+                            </div>
+                            <input type="hidden" name="sort" id="sortInput" value="{{ request()->get('sort', '') }}">
                         </form>
                     </div>
                 </div>
             </div>
-            
-            <!-- Active Filters -->
-            <div class="col-12 mt-2" id="activeFiltersContainer" style="display: none;">
-                <div class="filter-section mb-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="filter-heading mb-0">{{ __('Active Filters') }}</h5>
-                        <button class="btn btn-sm btn-outline-danger" id="clearAllFilters">
-                            <i class="bi bi-x-circle me-1"></i> {{ __('Clear All Filters') }}
-                        </button>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2 mt-2" id="activeFilters">
-                        <!-- Active filters will be added here dynamically -->
-                    </div>
-                </div>
-            </div>
+        </div>
+    </div>
+    
+    <!-- Active Filters -->
+    <div class="mb-4" id="activeFiltersContainer" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="filter-title mb-0">{{ __('Active Filters') }}</h5>
+            <button class="btn btn-sm btn-outline-danger" id="clearAllFilters">
+                <i class="bi bi-x-circle me-1"></i> {{ __('Clear All') }}
+            </button>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-2" id="activeFilters">
+            <!-- Active filters will be added here dynamically -->
         </div>
     </div>
 
@@ -104,6 +252,7 @@
         <div class="row g-4" id="productsGrid">
             @foreach($products as $product)
                 <div class="col-6 col-md-4 col-lg-3 product-item" 
+                     data-categories="{{ $product->categories->pluck('id')->implode(',') }}"
                      data-sizes="{{ $product->sizes->pluck('id')->implode(',') }}"
                      data-colors="{{ $product->colors->pluck('id')->implode(',') }}">
                     <x-product-card :product="$product" />
@@ -255,25 +404,126 @@
     font-size: 1.1rem;
 }
 
-/* Filter Styles */
-.filters-bar {
-    background-color: var(--surface);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid var(--border);
+/* Filter Bar - Horizontal Layout */
+.filter-bar {
     margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+}
+
+/* Filter Dropdown Buttons */
+.filter-btn {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-btn:hover, 
+.filter-btn:focus {
+    background-color: var(--surface-alt);
+    border-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.filter-btn::after {
+    margin-left: 0.5rem;
+    transition: transform var(--transition-normal);
+}
+
+.filter-btn[aria-expanded="true"] {
+    background-color: var(--surface-alt);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-btn[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menus */
+.filter-dropdown .dropdown-menu {
+    min-width: 320px;
+    max-width: 420px;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    margin-top: 0.5rem;
+    padding: 1rem;
+}
+
+/* Filter Subtitle */
+.filter-subtitle {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Category Filters */
+.category-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-filter {
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    text-align: center;
+    white-space: normal;
+    display: inline-block;
+    flex-grow: 1;
+    flex-basis: calc(33.333% - 0.5rem);
+    max-width: calc(33.333% - 0.5rem);
+    min-width: 80px;
+}
+
+.category-filter:hover {
+    background-color: var(--surface-alt);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
 }
 
-.filter-section {
-    margin-bottom: 1.5rem;
+.category-filter.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
-.filter-heading {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: var(--text-primary);
+/* Size Filter Buttons */
+.size-options {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.size-options::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 .size-filter {
@@ -286,14 +536,19 @@
     background-color: var(--surface);
     color: var(--text-secondary);
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 500;
     transition: all var(--transition-normal);
     cursor: pointer;
+    padding: 0 0.75rem;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .size-filter:hover {
     background-color: var(--surface-alt);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .size-filter.active {
@@ -302,10 +557,24 @@
     border-color: var(--primary);
 }
 
-/* Color Filter */
+/* Color Filter Buttons */
+.color-dropdown-menu {
+    width: auto !important;
+    min-width: 250px !important;
+}
+
+.color-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 32px);
+    gap: 0.75rem;
+    width: 100%;
+    padding-bottom: 5px;
+    justify-content: center;
+}
+
 .color-filter {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 2px solid var(--border);
     cursor: pointer;
@@ -335,13 +604,99 @@
     font-weight: bold;
 }
 
+/* Sort Options */
+.sort-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.sort-button {
+    width: auto;
+    text-align: left;
+    justify-content: space-between;
+    position: relative;
+    padding-right: 30px;
+}
+
+.sort-button::after {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.sort-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sort-dropdown-menu {
+    min-width: unset !important;
+    width: 200px;
+}
+
+.selected-sort {
+    font-weight: normal;
+    color: var(--text-secondary);
+    margin-left: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sort-option {
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.sort-option:hover {
+    background-color: var(--surface-alt);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.sort-option.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
 /* Active Filters */
+#activeFiltersContainer {
+    padding: 0.75rem 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.filter-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
 .active-filter-tag {
     background-color: var(--surface-alt);
     color: var(--text-primary);
     border-radius: 30px;
     padding: 0.35rem 0.75rem;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -358,44 +713,17 @@
     color: var(--primary);
 }
 
-.sort-dropdown .form-select {
-    min-width: 180px;
-}
-
-.btn-icon {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
+/* Clear All Filters Button */
+#clearAllFilters {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-md);
     transition: all var(--transition-normal);
-    z-index: 2;
-    position: relative;
 }
 
-.btn-icon:hover {
-    color: var(--primary);
-}
-
-.btn-icon.active {
-    color: var(--primary);
-}
-
-.wishlist-toggle .bi-heart-fill {
-    color: var(--primary);
-}
-
-.color-swatch-lg {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    cursor: pointer;
-}
-
-.size-option {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+#clearAllFilters:hover {
+    background-color: var(--bs-danger);
+    color: white;
 }
 
 /* Notification Styles */
@@ -456,22 +784,162 @@
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
-    .filter-section {
-        margin-bottom: 1rem;
+    .filter-title {
+        font-size: 0.95rem;
     }
     
-    .filter-heading {
-        font-size: 0.9rem;
+    .filter-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .category-filter {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+        flex-basis: calc(50% - 0.5rem);
+        max-width: calc(50% - 0.5rem);
     }
     
     .size-filter {
-        min-width: 35px;
-        height: 35px;
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.75rem;
     }
     
-    .filters-bar {
-        padding: 1rem;
+    .filter-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
     }
+    
+    .filter-dropdown .dropdown-menu {
+        min-width: 280px;
+        max-width: 350px;
+    }
+    
+    .select-wrapper {
+        min-width: 160px;
+    }
+    
+    .sort-control .form-select {
+        font-size: 0.85rem;
+    }
+    
+    .sort-control label {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-dropdown .dropdown-menu {
+        min-width: 260px;
+        max-width: 320px;
+        padding: 0.75rem;
+    }
+    
+    .filter-bar {
+        padding-bottom: 0.5rem;
+    }
+    
+    .filter-dropdown {
+        margin-right: 0.5rem;
+    }
+    
+    .category-filter {
+        flex-basis: 100%;
+        max-width: 100%;
+    }
+    
+    .size-options, .color-options {
+        gap: 0.4rem;
+    }
+    
+    .size-filter {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 0.5rem;
+    }
+    
+    .color-filter {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .sort-wrapper {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    .sort-control {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .select-wrapper {
+        flex-grow: 1;
+        margin-left: 0.5rem;
+    }
+}
+
+/* Sort Control - Enhanced Version */
+.sort-wrapper {
+    position: relative;
+}
+
+.sort-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sort-control label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.select-wrapper {
+    position: relative;
+    min-width: 180px;
+}
+
+.select-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-secondary);
+    pointer-events: none;
+}
+
+.sort-control .form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    width: 100%;
+    transition: all var(--transition-normal);
+    background-image: none;
+}
+
+.sort-control .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--focus-ring);
+    outline: none;
+}
+
+.sort-control .form-select:hover {
+    border-color: var(--primary-light);
 }
 </style>
 @endpush
@@ -498,7 +966,8 @@
         // Filter state
         const filterState = {
             sizes: [],
-            colors: []
+            colors: [],
+            categories: []
         };
         
         // DOM elements
@@ -508,6 +977,7 @@
         const clearAllFiltersBtn = document.getElementById('clearAllFilters');
         const sizesInput = document.getElementById('sizesInput');
         const colorsInput = document.getElementById('colorsInput');
+        const categoriesInput = document.getElementById('categoriesInput');
         const sortForm = document.getElementById('sortForm');
         
         // Size filter functionality
@@ -563,16 +1033,45 @@
                 applyFilters();
             });
         });
+
+        // Category filter functionality
+        const categoryFilters = document.querySelectorAll('.category-filter');
+        categoryFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                const filterId = this.dataset.filter;
+                const filterType = this.dataset.type;
+                
+                // Toggle this filter
+                const filterIndex = filterState.categories.indexOf(filterId);
+                if (filterIndex === -1) {
+                    // Add filter
+                    filterState.categories.push(filterId);
+                    this.classList.add('active');
+                } else {
+                    // Remove filter
+                    filterState.categories.splice(filterIndex, 1);
+                    this.classList.remove('active');
+                }
+                
+                // Update active filters display
+                updateActiveFilters();
+                
+                // Apply filters
+                applyFilters();
+            });
+        });
         
         // Clear all filters
         clearAllFiltersBtn.addEventListener('click', function() {
             // Reset filter state
             filterState.sizes = [];
             filterState.colors = [];
+            filterState.categories = [];
             
             // Reset UI
             sizeFilters.forEach(f => f.classList.remove('active'));
             colorFilters.forEach(f => f.classList.remove('active'));
+            categoryFilters.forEach(f => f.classList.remove('active'));
             
             // Update active filters display
             updateActiveFilters();
@@ -604,15 +1103,25 @@
                     addActiveFilterTag(colorId, filterName, 'color', filterColor);
                 }
             });
+
+            // Add category filters
+            filterState.categories.forEach(categoryId => {
+                const filter = document.querySelector(`.category-filter[data-filter="${categoryId}"]`);
+                if (filter) {
+                    const filterName = filter.textContent.trim();
+                    addActiveFilterTag(categoryId, filterName, 'category');
+                }
+            });
             
             // Show/hide active filters container
-            const hasActiveFilters = filterState.sizes.length > 0 || filterState.colors.length > 0;
+            const hasActiveFilters = filterState.sizes.length > 0 || filterState.colors.length > 0 || filterState.categories.length > 0;
                                     
             activeFiltersContainer.style.display = hasActiveFilters ? 'block' : 'none';
             
             // Update hidden inputs for form submission
             sizesInput.value = filterState.sizes.join(',');
             colorsInput.value = filterState.colors.join(',');
+            categoriesInput.value = filterState.categories.join(',');
         }
         
         // Function to add an active filter tag
@@ -664,6 +1173,14 @@
                         document.querySelector(`.color-filter[data-filter="${id}"]`).classList.remove('active');
                     }
                     break;
+
+                case 'category':
+                    const categoryIndex = filterState.categories.indexOf(id);
+                    if (categoryIndex !== -1) {
+                        filterState.categories.splice(categoryIndex, 1);
+                        document.querySelector(`.category-filter[data-filter="${id}"]`).classList.remove('active');
+                    }
+                    break;
             }
             
             // Update active filters display
@@ -704,6 +1221,18 @@
                         showItem = false;
                     }
                 }
+
+                // Check category filters
+                if (showItem && filterState.categories.length > 0) {
+                    const productCategories = item.dataset.categories.split(',');
+                    const hasMatchingCategory = filterState.categories.some(categoryId => 
+                        productCategories.includes(categoryId)
+                    );
+                    
+                    if (!hasMatchingCategory) {
+                        showItem = false;
+                    }
+                }
                 
                 // Show/hide item
                 if (showItem) {
@@ -732,6 +1261,29 @@
                 }
             }
         }
+        
+        // Sort Options
+        const sortOptions = document.querySelectorAll('.sort-option');
+        const selectedSortSpan = document.querySelector('.selected-sort');
+        
+        sortOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Update hidden input value
+                const sortValue = this.dataset.value;
+                document.getElementById('sortInput').value = sortValue;
+                
+                // Update UI
+                sortOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update the displayed sort option
+                const sortText = this.textContent.trim();
+                selectedSortSpan.textContent = ': ' + sortText;
+                
+                // Submit form
+                document.getElementById('sortForm').submit();
+            });
+        });
         
         // Wishlist toggle functionality
         const wishlistBtns = document.querySelectorAll('.wishlist-toggle');
@@ -842,6 +1394,18 @@
                     if (filter) {
                         filter.classList.add('active');
                         filterState.colors.push(id);
+                    }
+                });
+            }
+
+            // Initialize categories
+            if (urlParams.has('categories')) {
+                const categoryIds = urlParams.get('categories').split(',').filter(id => id.trim() !== '');
+                categoryIds.forEach(id => {
+                    const filter = document.querySelector(`.category-filter[data-filter="${id}"]`);
+                    if (filter) {
+                        filter.classList.add('active');
+                        filterState.categories.push(id);
                     }
                 });
             }

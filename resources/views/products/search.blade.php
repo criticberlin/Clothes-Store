@@ -239,52 +239,18 @@
         wishlistBtns.forEach(btn => {
             const productId = btn.getAttribute('data-product-id');
             
-            // Check if product is in wishlist
-            fetch(`{{ url('wishlist/check') }}/${productId}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.in_wishlist) {
-                        btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                        btn.classList.add('active');
-                    } else {
-                        btn.innerHTML = '<i class="bi bi-heart"></i>';
-                        btn.classList.remove('active');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking wishlist status:', error);
-                });
-            
-            // Add click event listener
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+            // Use global wishlist functions if available
+            if (window.checkWishlistStatus) {
+                window.checkWishlistStatus(btn, productId, '{{ url("/") }}');
                 
-                const productId = this.getAttribute('data-product-id');
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                
-                // Show loading state
-                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-                this.disabled = true;
-                
-                // Toggle wishlist status
-                fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
-                    method: 'POST',
+                // Event listeners are added in the checkWishlistStatus function
+            } else {
+                // Fallback implementation
+                // Check if product is in wishlist
+                fetch(`{{ url('wishlist/check') }}/${productId}`, {
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken,
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
+                        'Accept': 'application/json'
                     },
                     credentials: 'same-origin'
                 })
@@ -295,35 +261,58 @@
                         return response.json();
                     })
                     .then(data => {
-                        // Enable button
-                        this.disabled = false;
-                        
-                        if (data.success) {
-                            if (data.in_wishlist) {
-                                this.innerHTML = '<i class="bi bi-heart-fill"></i>';
-                                this.classList.add('active');
-                                showNotification('Product added to wishlist', 'success');
-                            } else {
-                                this.innerHTML = '<i class="bi bi-heart"></i>';
-                                this.classList.remove('active');
-                                showNotification('Product removed from wishlist', 'info');
-                            }
+                        if (data.in_wishlist) {
+                            btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                            btn.classList.add('active');
                         } else {
-                            // If not authenticated, redirect to login
-                            if (data.message.includes('login')) {
-                                window.location.href = '/login';
-                            } else {
-                                showNotification(data.message || 'Error updating wishlist', 'error');
-                            }
+                            btn.innerHTML = '<i class="bi bi-heart"></i>';
+                            btn.classList.remove('active');
                         }
                     })
                     .catch(error => {
-                        console.error('Error toggling wishlist:', error);
-                        this.disabled = false;
-                        this.innerHTML = '<i class="bi bi-heart"></i>';
-                        showNotification('Error updating wishlist', 'error');
+                        console.error('Error checking wishlist status:', error);
                     });
-            });
+                
+                // Add click event listener
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (window.toggleWishlistItem) {
+                        window.toggleWishlistItem(btn, productId, '{{ url("/") }}');
+                    } else {
+                        fetch(`{{ url('wishlist/toggle') }}/${productId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                if (data.in_wishlist) {
+                                    btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                                    btn.classList.add('active');
+                                } else {
+                                    btn.innerHTML = '<i class="bi bi-heart"></i>';
+                                    btn.classList.remove('active');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error toggling wishlist item:', error);
+                        });
+                    }
+                });
+            }
         });
         
         // Show notification function

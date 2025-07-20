@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Category extends Model
 {
@@ -21,10 +22,14 @@ class Category extends Model
         'status'
     ];
 
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
     /**
      * Get all products associated with this category
      */
-    public function products()
+    public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
     }
@@ -40,7 +45,7 @@ class Category extends Model
     /**
      * Get all parent categories (many-to-many)
      */
-    public function parents()
+    public function parents(): BelongsToMany
     {
         return $this->belongsToMany(
             Category::class, 
@@ -61,7 +66,7 @@ class Category extends Model
     /**
      * Get all child categories (many-to-many)
      */
-    public function allChildren()
+    public function allChildren(): BelongsToMany
     {
         return $this->belongsToMany(
             Category::class, 
@@ -147,36 +152,26 @@ class Category extends Model
             return $this->name;
         }
         
-        $parentNames = $ancestors->pluck('name')->implode(', ');
+        $parentNames = $ancestors->pluck('name')->implode(' > ');
         return $parentNames . ' > ' . $this->name;
     }
     
     /**
-     * Get categories filtered by type
+     * Scope a query to only include categories of a specific type
      */
-    public static function getByType(string $type)
+    public function scopeOfType($query, string $type)
     {
-        return self::where('type', $type)->where('status', true)->get();
+        return $query->where('type', $type)->where('status', true);
     }
     
     /**
-     * Get main categories (top level)
+     * Scope a query to only include main categories
      */
-    public static function getMainCategories()
+    public function scopeMain($query)
     {
-        return self::where('type', 'main')
-            ->where('parent_id', null)
-            ->where('status', true)
-            ->get();
-    }
-    
-    /**
-     * Get visible categories for store frontend
-     * This ensures only active categories are displayed
-     */
-    public static function getVisibleCategories()
-    {
-        return self::where('status', true)->get();
+        return $query->where('type', 'main')
+            ->whereNull('parent_id')
+            ->where('status', true);
     }
     
     /**

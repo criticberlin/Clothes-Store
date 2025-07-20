@@ -1,14 +1,33 @@
 <?php
+
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-class Color extends Model{
-    protected $table = "colors";
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Color extends Model
+{
+    use HasFactory;
+    
     protected $fillable = [
         "name",
         "hex_code"
     ];
 
-    public function products() {
+    /**
+     * Get all products with this color
+     */
+    public function products(): BelongsToMany
+    {
         return $this->belongsToMany(Product::class);
-}
+    }
+    
+    /**
+     * Get the CSS background color style for this color
+     */
+    public function getColorStyleAttribute(): string
+    {
+        return "background-color: {$this->hex_code};";
+    }
 }

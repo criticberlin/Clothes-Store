@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupportTicketReply extends Model
 {
@@ -11,8 +12,6 @@ class SupportTicketReply extends Model
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'support_ticket_id',
@@ -22,9 +21,16 @@ class SupportTicketReply extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'is_admin' => 'boolean',
+    ];
+
+    /**
      * Get the support ticket that owns the reply.
      */
-    public function ticket()
+    public function ticket(): BelongsTo
     {
         return $this->belongsTo(SupportTicket::class, 'support_ticket_id');
     }
@@ -32,7 +38,7 @@ class SupportTicketReply extends Model
     /**
      * Get the user that created the reply.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

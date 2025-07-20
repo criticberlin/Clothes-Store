@@ -12,8 +12,6 @@ class Currency extends Model
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array
      */
     protected $fillable = [
         'code',
@@ -27,8 +25,6 @@ class Currency extends Model
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array
      */
     protected $casts = [
         'rate' => 'float',
@@ -37,31 +33,25 @@ class Currency extends Model
     ];
 
     /**
-     * Get all active currencies.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * Scope a query to only include active currencies
      */
-    public static function getActiveCurrencies()
+    public function scopeActive($query)
     {
-        return self::where('is_active', true)->get();
+        return $query->where('is_active', true);
     }
 
     /**
-     * Get the default currency.
-     *
-     * @return \App\Models\Currency|null
+     * Scope a query to only include the default currency
      */
-    public static function getDefaultCurrency()
+    public function scopeDefault($query)
     {
-        return self::where('is_default', true)->first();
+        return $query->where('is_default', true);
     }
 
     /**
      * Get the appropriate symbol based on current locale
-     * 
-     * @return string
      */
-    public function getSymbolForCurrentLocale()
+    public function getSymbolForCurrentLocale(): string
     {
         // Use arabic symbol if locale is Arabic
         if (App::getLocale() === 'ar') {
@@ -69,5 +59,19 @@ class Currency extends Model
         }
         
         return $this->symbol_en;
+    }
+
+    /**
+     * Format a price in this currency
+     */
+    public function formatPrice(float $price): string
+    {
+        $symbol = $this->getSymbolForCurrentLocale();
+        
+        if (App::getLocale() === 'ar') {
+            return number_format($price, 2) . ' ' . $symbol;
+        }
+        
+        return $symbol . ' ' . number_format($price, 2);
     }
 } 

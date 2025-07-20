@@ -1165,7 +1165,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-lg) 0 0 var(--radius-lg);
             border-right: none;
-            min-width: 80px;
+            min-width: 0px;
             cursor: pointer;
             z-index: 1500;
             padding: 0 15px;
@@ -1173,9 +1173,36 @@
             align-items: center;
         }
         
+        .category-dropdown:hover {
+            background-color: var(--surface-alt);
+        }
+        
+        .category-dropdown.open {
+            background-color: var(--surface-alt);
+        }
+        
         .search-bar-container {
             position: relative;
         }
+        
+        /* .search-input-group {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
+            display: flex;
+        }
+        
+        .dropdown-header {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            white-space: nowrap;
+            user-select: none;
+            width: 100%;
+            padding: 0 15px;
+        } */
         
         .category-dropdown-menu {
             position: absolute;
@@ -1200,7 +1227,8 @@
         
         .category-dropdown-menu.show {
             display: block !important;
-            animation: fadeInDown 0.2s ease-out;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Enhanced Category Dropdown */
@@ -1707,7 +1735,7 @@
                             <!-- Specific Item Types -->
                             <div class="dropdown-divider"></div>
                             <div class="dropdown-header">{{ __('Specific Item Types') }}</div>
-                            @foreach(App\Models\Category::where('type', 'specific')->where('status', true)->orderBy('name')->get() as $category)
+                            @foreach(App\Models\Category::whereNotIn('type', ['main', 'clothing'])->where('status', true)->orderBy('name')->get() as $category)
                                 <div class="dropdown-item {{ request('category_id') == $category->id ? 'active' : '' }}" 
                                      data-value="{{ $category->id }}" 
                                      role="menuitem" 

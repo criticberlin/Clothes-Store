@@ -108,8 +108,16 @@
 }
 
 /* Recommendation Navigation */
+.recommended-section {
+    position: relative;
+    padding: 0 15px;
+}
+
 .recommended-products-container {
     overflow: hidden;
+    border-radius: 8px;
+    padding: 0 30px;
+    touch-action: pan-x; /* Enable horizontal touch scrolling */
 }
 
 .recommended-products {
@@ -120,19 +128,38 @@
 
 .recommended-item {
     flex: 0 0 auto;
-    width: 50%;
+    width: 85%; /* Wider cards on mobile */
+    padding: 10px;
 }
 
 @media (min-width: 768px) {
     .recommended-item {
         width: 25%;
     }
+    .recommended-section {
+        padding: 0 25px;
+    }
+}
+
+/* Make product cards bigger on mobile */
+@media (max-width: 767px) {
+    .product-card {
+        transform: scale(1.05);
+    }
+    
+    .product-image-container {
+        height: auto;
+        min-height: 180px;
+    }
 }
 
 .nav-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    position: absolute;
+    top: 44%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 30px;
+    border-radius: 30px;
     background-color: var(--surface);
     border: 1px solid var(--border);
     color: var(--text-primary);
@@ -140,19 +167,42 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.nav-btn.prev-btn {
+    left: -15px;
+}
+
+.nav-btn.next-btn {
+    right: -15px;
 }
 
 .nav-btn:hover {
     background-color: var(--primary);
     color: white;
-    transform: translateY(-2px);
 }
 
 .nav-btn:disabled {
-    opacity: 0.5;
+    opacity: 0;
     cursor: not-allowed;
-    transform: none;
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .nav-btn {
+        width: 36px;
+        height: 28px;
+    }
+    
+    /* Hide arrows on touch devices */
+    @media (pointer: coarse) {
+        .nav-btn {
+            display: none;
+        }
+    }
 }
 
 /* Fix for "You Might Also Like" section */
@@ -388,68 +438,68 @@
     <!-- You might also like section -->
     @if(!empty($cartItems) || true)
     <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">{{ __('You might also like') }}</h3>
-            <div class="recommendation-nav">
-                <button class="btn btn-sm btn-icon nav-btn prev-btn me-2" id="cartRecommendPrev">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                <button class="btn btn-sm btn-icon nav-btn next-btn" id="cartRecommendNext">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-            </div>
-        </div>
+        <h3 class="mb-4">{{ __('You might also like') }}</h3>
         
-        <div class="recommended-products-container position-relative">
-            <div class="recommended-products row g-4" id="cartRecommendedProductsRow">
-                @php
-                    // Get product categories from cart items
-                    $categoryIds = [];
-                    if(!empty($cartItems)) {
-                        foreach($cartItems as $item) {
-                            if($item->product && $item->product->categories) {
-                                $categoryIds = array_merge($categoryIds, $item->product->categories->pluck('id')->toArray());
+        <div class="recommended-section">
+            <div class="recommended-products-container">
+                <div class="recommended-products row g-0" id="cartRecommendedProductsRow">
+                    @php
+                        // Get product categories from cart items
+                        $categoryIds = [];
+                        if(!empty($cartItems)) {
+                            foreach($cartItems as $item) {
+                                if($item->product && $item->product->categories) {
+                                    $categoryIds = array_merge($categoryIds, $item->product->categories->pluck('id')->toArray());
+                                }
                             }
+                            $categoryIds = array_unique($categoryIds);
                         }
-                        $categoryIds = array_unique($categoryIds);
-                    }
-                    
-                    // Get recommended products based on cart categories
-                    if(!empty($categoryIds)) {
-                        $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                            ->whereHas('categories', function($query) use ($categoryIds) {
-                                $query->whereIn('categories.id', $categoryIds);
-                            })
-                            ->inRandomOrder()
-                            ->limit(8)
-                            ->get();
-                            
-                        // If not enough products, add some random ones
-                        if($recommendedProducts->count() < 8) {
-                            $existingIds = $recommendedProducts->pluck('id')->toArray();
-                            $moreProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                                ->whereNotIn('id', $existingIds)
+                        
+                        // Get recommended products based on cart categories
+                        if(!empty($categoryIds)) {
+                            $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                ->whereHas('categories', function($query) use ($categoryIds) {
+                                    $query->whereIn('categories.id', $categoryIds);
+                                })
                                 ->inRandomOrder()
-                                ->limit(8 - $recommendedProducts->count())
+                                ->limit(8)
                                 ->get();
                                 
-                            $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                            // If not enough products, add some random ones
+                            if($recommendedProducts->count() < 8) {
+                                $existingIds = $recommendedProducts->pluck('id')->toArray();
+                                $moreProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                    ->whereNotIn('id', $existingIds)
+                                    ->inRandomOrder()
+                                    ->limit(8 - $recommendedProducts->count())
+                                    ->get();
+                                    
+                                $recommendedProducts = $recommendedProducts->concat($moreProducts);
+                            }
+                        } else {
+                            // If no cart items or categories, just get random products
+                            $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
+                                ->inRandomOrder()
+                                ->limit(8)
+                                ->get();
                         }
-                    } else {
-                        // If no cart items or categories, just get random products
-                        $recommendedProducts = \App\Models\Product::with(['categories', 'colors', 'sizes', 'images'])
-                            ->inRandomOrder()
-                            ->limit(8)
-                            ->get();
-                    }
-                @endphp
-                
-                @foreach($recommendedProducts as $product)
-                <div class="col-6 col-md-3 recommended-item">
-                    <x-product-card :product="$product" />
+                    @endphp
+                    
+                    @foreach($recommendedProducts as $product)
+                    <div class="recommended-item">
+                        <x-product-card :product="$product" />
+                    </div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
+            
+            <button class="btn nav-btn prev-btn" id="cartRecommendPrev" aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            
+            <button class="btn nav-btn next-btn" id="cartRecommendNext" aria-label="Next">
+                <i class="bi bi-chevron-right"></i>
+            </button>
         </div>
     </div>
     @endif
@@ -512,7 +562,7 @@
         if (recommendRow && prevBtn && nextBtn) {
             let currentPosition = 0;
             const itemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
-            const visibleItems = window.innerWidth >= 768 ? 4 : 2;
+            const visibleItems = window.innerWidth >= 768 ? 4 : 1; // Show only 1 item at a time on mobile
             const totalItems = recommendRow.querySelectorAll('.recommended-item').length;
             const maxPosition = Math.max(0, totalItems - visibleItems);
             
@@ -533,6 +583,58 @@
                 }
             });
             
+            // Improved touch swipe support
+            let touchStartX = 0;
+            let touchEndX = 0;
+            let isSwiping = false;
+            
+            recommendRow.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                isSwiping = true;
+            }, { passive: true });
+            
+            recommendRow.addEventListener('touchmove', function(e) {
+                if (!isSwiping) return;
+                
+                const currentX = e.changedTouches[0].screenX;
+                const diff = touchStartX - currentX;
+                
+                // Add resistance at the edges
+                if ((currentPosition === 0 && diff < 0) || 
+                    (currentPosition >= maxPosition && diff > 0)) {
+                    return;
+                }
+                
+                // Prevent default to avoid page scrolling
+                e.preventDefault();
+            }, { passive: false });
+            
+            recommendRow.addEventListener('touchend', function(e) {
+                if (!isSwiping) return;
+                
+                touchEndX = e.changedTouches[0].screenX;
+                const swipeDistance = touchStartX - touchEndX;
+                handleSwipe(swipeDistance);
+                isSwiping = false;
+            }, { passive: true });
+            
+            function handleSwipe(swipeDistance) {
+                const swipeThreshold = 50;
+                if (swipeDistance > swipeThreshold) {
+                    // Swipe left
+                    if (currentPosition < maxPosition) {
+                        currentPosition++;
+                        updateSliderPosition();
+                    }
+                } else if (swipeDistance < -swipeThreshold) {
+                    // Swipe right
+                    if (currentPosition > 0) {
+                        currentPosition--;
+                        updateSliderPosition();
+                    }
+                }
+            }
+            
             function updateSliderPosition() {
                 recommendRow.style.transform = `translateX(-${currentPosition * itemWidth}px)`;
                 updateNavButtons();
@@ -541,12 +643,16 @@
             function updateNavButtons() {
                 prevBtn.disabled = currentPosition === 0;
                 nextBtn.disabled = currentPosition >= maxPosition;
+                
+                // Show/hide buttons based on position
+                prevBtn.style.opacity = currentPosition === 0 ? '0' : '1';
+                nextBtn.style.opacity = currentPosition >= maxPosition ? '0' : '1';
             }
             
             // Update on window resize
             window.addEventListener('resize', function() {
                 const newItemWidth = document.querySelector('.recommended-item')?.offsetWidth || 0;
-                const newVisibleItems = window.innerWidth >= 768 ? 4 : 2;
+                const newVisibleItems = window.innerWidth >= 768 ? 4 : 1; // Show only 1 item at a time on mobile
                 const newMaxPosition = Math.max(0, totalItems - newVisibleItems);
                 
                 // Reset position if needed

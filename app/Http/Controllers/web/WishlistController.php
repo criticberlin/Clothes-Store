@@ -143,19 +143,38 @@ class WishlistController extends Controller
      */
     public function check(Request $request, $productId)
     {
-        if (!Auth::check()) {
-            return response()->json([
-                'in_wishlist' => false
-            ]);
-        }
-        
-        $inWishlist = Wishlist::where('user_id', Auth::id())
-            ->where('product_id', $productId)
-            ->exists();
+        try {
+            if (!Auth::check()) {
+                return response()->json([
+                    'in_wishlist' => false
+                ]);
+            }
             
-        return response()->json([
-            'in_wishlist' => $inWishlist
-        ]);
+            // Check if product exists
+            $product = Product::find($productId);
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found.',
+                    'in_wishlist' => false
+                ], 404);
+            }
+            
+            $inWishlist = Wishlist::where('user_id', Auth::id())
+                ->where('product_id', $productId)
+                ->exists();
+                
+            return response()->json([
+                'in_wishlist' => $inWishlist
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Wishlist check error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking wishlist status',
+                'in_wishlist' => false
+            ], 500);
+        }
     }
     
     /**
@@ -172,6 +191,19 @@ class WishlistController extends Controller
         }
         
         try {
+            // Check if product exists
+            $product = Product::find($productId);
+            if (!$product) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Product not found.',
+                    ], 404);
+                }
+                
+                return redirect()->back()->with('error', 'Product not found.');
+            }
+            
             // Check if already in wishlist
             $existingItem = Wishlist::where('user_id', Auth::id())
                 ->where('product_id', $productId)

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Cart extends Model
 {
@@ -17,23 +18,43 @@ class Cart extends Model
         'size_id'
     ];
 
-    public function user()
+    /**
+     * Get the user who owns this cart item
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function product()
+    /**
+     * Get the product in this cart item
+     */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function color()
+    /**
+     * Get the color for this cart item
+     */
+    public function color(): BelongsTo
     {
         return $this->belongsTo(Color::class);
     }
 
-    public function size()
+    /**
+     * Get the size for this cart item
+     */
+    public function size(): BelongsTo
     {
         return $this->belongsTo(Size::class);
+    }
+
+    /**
+     * Get the subtotal for this cart item
+     */
+    public function getSubtotalAttribute(): float
+    {
+        return $this->product->price * $this->quantity;
     }
 } 
