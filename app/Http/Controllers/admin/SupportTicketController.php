@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\web;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -8,7 +8,7 @@ use App\Models\SupportTicket;
 use App\Models\SupportTicketReply;
 use Illuminate\Support\Facades\Auth;
 
-class AdminSupportTicketController extends Controller
+class SupportTicketController extends Controller
 {
     /**
      * Display a listing of the support tickets.
@@ -141,4 +141,4 @@ class AdminSupportTicketController extends Controller
                 ->with('error', 'Error closing ticket: ' . $e->getMessage());
         }
     }
-}
+} 

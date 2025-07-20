@@ -1,17 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\web;
+namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CheckoutController extends Controller{
-
-
-    public function index(){
-        if (!auth()->user()) return redirect('login');
+class CheckoutController extends Controller
+{
+    public function index()
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+        
         $cartItems = Cart::where('user_id', Auth::id())
             ->with(['product', 'color', 'size'])
             ->get();
@@ -27,8 +30,12 @@ class CheckoutController extends Controller{
         return view('checkout.index', compact('cartItems', 'total'));
     }
 
-    public function process(Request $request){
-        if (!auth()->user()) return redirect('login');
+    public function process(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+        
         $request->validate([
             'shipping_address' => 'required|string|max:255',
             'payment_method' => 'required|in:credit_card,paypal',

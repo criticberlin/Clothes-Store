@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Web;
 
+use App\Http\Controllers\Controller;
+use App\Models\Currency;
+use App\Services\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cookie;
 
-class PreferencesController extends Controller
+class PreferenceController extends Controller
 {
     /**
      * Valid locales supported by the application
@@ -20,14 +23,31 @@ class PreferencesController extends Controller
     protected $validThemes = ['light', 'dark'];
     
     /**
+     * The currency service instance.
+     * 
+     * @var \App\Services\CurrencyService
+     */
+    protected $currencyService;
+    
+    /**
+     * Create a new controller instance.
+     * 
+     * @param \App\Services\CurrencyService|null $currencyService
+     */
+    public function __construct(?CurrencyService $currencyService = null)
+    {
+        $this->currencyService = $currencyService ?? app(CurrencyService::class);
+    }
+    
+    /**
      * Update the user's language preference.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function language(Request $request)
+    public function setLanguage(Request $request)
     {
-        $language = $request->language ?? 'en';
+        $language = $request->language ?? $request->locale ?? 'en';
         
         // Validate the language
         if (!in_array($language, $this->validLocales)) {
@@ -57,97 +77,12 @@ class PreferencesController extends Controller
     }
     
     /**
-     * Update the user's theme preference.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function theme(Request $request)
-    {
-        $theme = $request->theme ?? 'dark';
-        
-        // Validate the theme
-        if (!in_array($theme, $this->validThemes)) {
-            $theme = 'dark';
-        }
-        
-        // Update both theme session variables for consistency
-        Session::put('theme_mode', $theme);
-        Session::put('theme', $theme);
-        
-        // Set theme cookie that persists for a year
-        $cookie = cookie('theme', $theme, 60 * 24 * 365);
-        
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'theme' => $theme])
-                ->cookie($cookie); // Use cookie() method to ensure cookie is set
-        }
-        
-        return redirect($request->redirect ?? back()->getTargetUrl())
-            ->cookie($cookie); // Use cookie() method to ensure cookie is set
-    }
-    
-    /**
-     * Toggle between light and dark theme.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function themeToggle(Request $request)
-    {
-        // Use both theme session variables for consistency
-        $currentTheme = Session::get('theme', Session::get('theme_mode', 'dark'));
-        $newTheme = ($currentTheme === 'dark') ? 'light' : 'dark';
-        
-        // Update both theme session variables
-        Session::put('theme_mode', $newTheme);
-        Session::put('theme', $newTheme);
-        
-        // Set theme cookie that persists for a year
-        $cookie = cookie('theme', $newTheme, 60 * 24 * 365);
-        
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'theme' => $newTheme])
-                ->cookie($cookie); // Use cookie() method to ensure cookie is set
-        }
-        
-        return back()->cookie($cookie); // Use cookie() method to ensure cookie is set
-    }
-    
-    /**
-     * Update the user's currency preference.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function currency(Request $request)
-    {
-        $currencyCode = $request->currency_code;
-        
-        if ($currencyCode) {
-            Session::put('currency_code', $currencyCode);
-            
-            // Set currency cookie that persists for a year
-            $cookie = cookie('currency', $currencyCode, 60 * 24 * 365);
-            
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'currency' => $currencyCode])
-                    ->cookie($cookie);
-            }
-            
-            return redirect($request->redirect ?? back()->getTargetUrl())
-                ->cookie($cookie);
-        }
-        
-        return redirect($request->redirect ?? back()->getTargetUrl());
-    }
-
-    /**
      * Simple direct language switcher.
      *
      * @param  string  $lang
      * @return \Illuminate\Http\Response
      */
-    public function setLanguage($lang)
+    public function switchLanguage($lang)
     {
         // Validate language
         if (!in_array($lang, $this->validLocales)) {
@@ -178,6 +113,127 @@ class PreferencesController extends Controller
         
         // Redirect with cookie
         return redirect($redirect)->withCookie($cookie);
+    }
+    
+    /**
+     * Update the user's theme preference.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function setTheme(Request $request)
+    {
+        $theme = $request->theme ?? 'dark';
+        
+        // Validate the theme
+        if (!in_array($theme, $this->validThemes)) {
+            $theme = 'dark';
+        }
+        
+        // Update both theme session variables for consistency
+        Session::put('theme_mode', $theme);
+        Session::put('theme', $theme);
+        
+        // Set theme cookie that persists for a year
+        $cookie = cookie('theme', $theme, 60 * 24 * 365);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'theme' => $theme])
+                ->cookie($cookie); // Use cookie() method to ensure cookie is set
+        }
+        
+        return redirect($request->redirect ?? back()->getTargetUrl())
+            ->cookie($cookie); // Use cookie() method to ensure cookie is set
+    }
+    
+    /**
+     * Toggle between light and dark theme.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function toggleTheme(Request $request)
+    {
+        // Use both theme session variables for consistency
+        $currentTheme = Session::get('theme', Session::get('theme_mode', 'dark'));
+        $newTheme = ($currentTheme === 'dark') ? 'light' : 'dark';
+        
+        // Update both theme session variables
+        Session::put('theme_mode', $newTheme);
+        Session::put('theme', $newTheme);
+        
+        // Set theme cookie that persists for a year
+        $cookie = cookie('theme', $newTheme, 60 * 24 * 365);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'theme' => $newTheme])
+                ->cookie($cookie); // Use cookie() method to ensure cookie is set
+        }
+        
+        return back()->cookie($cookie); // Use cookie() method to ensure cookie is set
+    }
+    
+    /**
+     * Update the user's currency preference.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function setCurrency(Request $request)
+    {
+        $currencyCode = $request->currency_code ?? $request->currency;
+        
+        // Find the requested currency
+        $currency = Currency::where('code', $currencyCode)
+            ->where('is_active', true)
+            ->first();
+        
+        if ($currency) {
+            // Store in session
+            Session::put('currency_code', $currencyCode);
+            
+            // Create a cookie that lasts for a year
+            $cookie = cookie('currency', $currencyCode, 60 * 24 * 365);
+            
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true, 
+                    'currency' => $currencyCode,
+                    'symbol' => $currency->getSymbolForCurrentLocale(),
+                    'rate' => $currency->rate,
+                    'is_default' => $currency->is_default
+                ])->withCookie($cookie);
+            }
+            
+            // Redirect with cookie for regular requests
+            if ($request->has('redirect')) {
+                return redirect($request->redirect)->withCookie($cookie);
+            }
+            
+            return redirect()->back()->withCookie($cookie);
+        }
+        
+        // Currency not found, return error response
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Invalid currency']);
+        }
+        
+        // Redirect without setting cookie
+        if ($request->has('redirect')) {
+            return redirect($request->redirect);
+        }
+        
+        return redirect()->back();
+    }
+    
+    /**
+     * Get available currencies
+     */
+    public function getCurrencies()
+    {
+        $currencies = Currency::where('is_active', true)->get();
+        
+        return response()->json($currencies);
     }
     
     /**

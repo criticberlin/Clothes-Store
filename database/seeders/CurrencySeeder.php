@@ -68,7 +68,7 @@ class CurrencySeeder extends Seeder
                 'is_active' => true,
             ],
         ];
-
+        
         foreach ($currencies as $currency) {
             Currency::create($currency);
         }

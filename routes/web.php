@@ -3,19 +3,18 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
-use App\Http\Controllers\web\UsersController;
-use App\Http\Controllers\web\SocialAuthController;
-use App\Http\Controllers\web\SupportTicketController;
-use App\Http\Controllers\web\ProductsController;
-use App\Http\Controllers\web\CartController;
-use App\Http\Controllers\web\CheckoutController;
-use App\Http\Controllers\web\HomeController;
-use App\Http\Controllers\web\AdminController;
-use App\Http\Controllers\PreferenceController;
+use App\Http\Controllers\Web\UsersController;
+use App\Http\Controllers\Web\SocialAuthController;
+use App\Http\Controllers\Web\SupportTicketController;
+use App\Http\Controllers\Web\ProductsController;
+use App\Http\Controllers\Web\CartController;
+use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\PreferenceController;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\PreferencesController;
-use App\Http\Controllers\RatingController;
-use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\Web\RatingController;
+use App\Http\Controllers\Web\LanguageController;
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -30,14 +29,14 @@ use Illuminate\Support\Facades\DB;
 */
 
 // Preferences Routes
-Route::post('/preferences/language', [PreferencesController::class, 'language'])->name('preferences.language');
-Route::get('/preferences/language', [PreferencesController::class, 'language'])->name('preferences.language.get');
-Route::get('/set-language/{lang}', [PreferencesController::class, 'setLanguage'])->name('set.language');
-Route::post('/preferences/theme', [PreferencesController::class, 'theme'])->name('preferences.theme');
-Route::get('/theme/toggle', [PreferencesController::class, 'themeToggle'])->name('theme.toggle');
-Route::get('/theme/{theme}', [PreferencesController::class, 'theme'])->name('theme.set');
-Route::post('/preferences/currency', [PreferencesController::class, 'currency'])->name('preferences.currency');
-Route::get('/preferences/clear', [PreferencesController::class, 'clearPreferences'])->name('preferences.clear');
+Route::post('/preferences/language', [PreferenceController::class, 'setLanguage'])->name('preferences.language');
+Route::get('/preferences/language', [PreferenceController::class, 'setLanguage'])->name('preferences.language.get');
+Route::get('/set-language/{lang}', [PreferenceController::class, 'switchLanguage'])->name('set.language');
+Route::post('/preferences/theme', [PreferenceController::class, 'setTheme'])->name('preferences.theme');
+Route::get('/theme/toggle', [PreferenceController::class, 'toggleTheme'])->name('theme.toggle');
+Route::get('/theme/{theme}', [PreferenceController::class, 'setTheme'])->name('theme.set');
+Route::post('/preferences/currency', [PreferenceController::class, 'setCurrency'])->name('preferences.currency');
+Route::get('/preferences/clear', [PreferenceController::class, 'clearPreferences'])->name('preferences.clear');
 Route::get('/currencies/list', function() {
     return response()->json(App\Models\Currency::getActiveCurrencies());
 })->name('currencies.list');
@@ -99,12 +98,12 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     
     // Admin Category Management
     Route::get('/categories', [AdminController::class, 'categories'])->name('admin.categories.index');
-    Route::get('/categories/create', [App\Http\Controllers\web\CategoryController::class, 'create'])->name('admin.categories.create');
-    Route::post('/categories', [App\Http\Controllers\web\CategoryController::class, 'store'])->name('admin.categories.store');
-    Route::get('/categories/{category}/edit', [App\Http\Controllers\web\CategoryController::class, 'edit'])->name('admin.categories.edit');
-    Route::put('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'update'])->name('admin.categories.update');
-    Route::delete('/categories/{category}', [App\Http\Controllers\web\CategoryController::class, 'destroy'])->name('admin.categories.destroy');
-    Route::get('/categories/children', [App\Http\Controllers\web\CategoryController::class, 'getChildCategories'])->name('admin.categories.children');
+    Route::get('/categories/create', [App\Http\Controllers\Web\CategoryController::class, 'create'])->name('admin.categories.create');
+    Route::post('/categories', [App\Http\Controllers\Web\CategoryController::class, 'store'])->name('admin.categories.store');
+    Route::get('/categories/{category}/edit', [App\Http\Controllers\Web\CategoryController::class, 'edit'])->name('admin.categories.edit');
+    Route::put('/categories/{category}', [App\Http\Controllers\Web\CategoryController::class, 'update'])->name('admin.categories.update');
+    Route::delete('/categories/{category}', [App\Http\Controllers\Web\CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+    Route::get('/categories/children', [App\Http\Controllers\Web\CategoryController::class, 'getChildCategories'])->name('admin.categories.children');
     
     // Admin Order Management
     Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders.list');
@@ -139,10 +138,10 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     });
     
     // Admin Support Ticket Management
-    Route::get('/support', [App\Http\Controllers\web\AdminSupportTicketController::class, 'index'])->name('admin.support.index');
-    Route::get('/support/{ticket}', [App\Http\Controllers\web\AdminSupportTicketController::class, 'show'])->name('admin.support.show');
-    Route::post('/support/{ticket}/reply', [App\Http\Controllers\web\AdminSupportTicketController::class, 'reply'])->name('admin.support.reply');
-    Route::post('/support/{ticket}/close', [App\Http\Controllers\web\AdminSupportTicketController::class, 'close'])->name('admin.support.close');
+    Route::get('/support', [App\Http\Controllers\Admin\SupportTicketController::class, 'index'])->name('admin.support.index');
+    Route::get('/support/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('admin.support.show');
+    Route::post('/support/{ticket}/reply', [App\Http\Controllers\Admin\SupportTicketController::class, 'reply'])->name('admin.support.reply');
+    Route::post('/support/{ticket}/close', [App\Http\Controllers\Admin\SupportTicketController::class, 'close'])->name('admin.support.close');
 });
 
 // Public product routes
@@ -150,17 +149,17 @@ Route::get('/category', [ProductsController::class, 'category'])->name('products
 Route::get('/category/{category}', [ProductsController::class, 'ListByCategory'])->name('products.byCategory');
 Route::get('/products', [ProductsController::class, 'index'])->name('products.list');
 Route::get('/products/search', [ProductsController::class, 'search'])->name('products.search');
-Route::get('/test-products', [App\Http\Controllers\web\TestProductController::class, 'index'])->name('test.products');
+Route::get('/test-products', [App\Http\Controllers\Web\TestProductController::class, 'index'])->name('test.products');
 Route::get('/product/{id}', [ProductsController::class, 'productDetails'])->name('products.details');
 
 // Static pages
-Route::get('/about', [App\Http\Controllers\web\PageController::class, 'about'])->name('pages.about');
-Route::get('/faq', [App\Http\Controllers\web\PageController::class, 'faq'])->name('pages.faq');
-Route::get('/contact', [App\Http\Controllers\web\PageController::class, 'contact'])->name('pages.contact');
-Route::get('/privacy', [App\Http\Controllers\web\PageController::class, 'privacy'])->name('pages.privacy');
-Route::get('/terms', [App\Http\Controllers\web\PageController::class, 'terms'])->name('pages.terms');
-Route::get('/shipping', [App\Http\Controllers\web\PageController::class, 'shipping'])->name('pages.shipping');
-Route::get('/returns', [App\Http\Controllers\web\PageController::class, 'returns'])->name('pages.returns');
+Route::get('/about', [App\Http\Controllers\Web\PageController::class, 'about'])->name('pages.about');
+Route::get('/faq', [App\Http\Controllers\Web\PageController::class, 'faq'])->name('pages.faq');
+Route::get('/contact', [App\Http\Controllers\Web\PageController::class, 'contact'])->name('pages.contact');
+Route::get('/privacy', [App\Http\Controllers\Web\PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/terms', [App\Http\Controllers\Web\PageController::class, 'terms'])->name('pages.terms');
+Route::get('/shipping', [App\Http\Controllers\Web\PageController::class, 'shipping'])->name('pages.shipping');
+Route::get('/returns', [App\Http\Controllers\Web\PageController::class, 'returns'])->name('pages.returns');
 
 // Protected product management routes
 Route::middleware(['auth:web'])->group(function () {
@@ -200,20 +199,20 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/orders/{order}', [CartController::class, 'orderDetails'])->name('orders.details');
 
     // Wishlist routes
-    Route::get('/wishlist', [App\Http\Controllers\web\WishlistController::class, 'index'])->name('wishlist.index');
-    Route::post('/wishlist/add/{productId}', [App\Http\Controllers\web\WishlistController::class, 'add'])->name('wishlist.add');
-    Route::delete('/wishlist/remove/{itemId}', [App\Http\Controllers\web\WishlistController::class, 'remove'])->name('wishlist.remove');
-    Route::get('/wishlist/check/{productId}', [App\Http\Controllers\web\WishlistController::class, 'check'])->name('wishlist.check');
-    Route::post('/wishlist/toggle/{productId}', [App\Http\Controllers\web\WishlistController::class, 'toggle'])->name('wishlist.toggle');
-    Route::delete('/wishlist/clear', [App\Http\Controllers\web\WishlistController::class, 'clear'])->name('wishlist.clear');
-    Route::get('/wishlist/clear', [App\Http\Controllers\web\WishlistController::class, 'clear'])->name('wishlist.clear.get'); // Temporary for debugging
+    Route::get('/wishlist', [App\Http\Controllers\Web\WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/add/{productId}', [App\Http\Controllers\Web\WishlistController::class, 'add'])->name('wishlist.add');
+    Route::delete('/wishlist/remove/{itemId}', [App\Http\Controllers\Web\WishlistController::class, 'remove'])->name('wishlist.remove');
+    Route::get('/wishlist/check/{productId}', [App\Http\Controllers\Web\WishlistController::class, 'check'])->name('wishlist.check');
+    Route::post('/wishlist/toggle/{productId}', [App\Http\Controllers\Web\WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::delete('/wishlist/clear', [App\Http\Controllers\Web\WishlistController::class, 'clear'])->name('wishlist.clear');
+    Route::get('/wishlist/clear', [App\Http\Controllers\Web\WishlistController::class, 'clear'])->name('wishlist.clear.get'); // Temporary for debugging
 });
 
 
-Route::get('/support', [App\Http\Controllers\web\SupportTicketController::class, 'list'])->name('support.list');
-Route::get('/support/add', [App\Http\Controllers\web\SupportTicketController::class, 'add'])->name('support.add');
-Route::post('/support', [App\Http\Controllers\web\SupportTicketController::class, 'store'])->name('support.store');
-Route::get('/support/{ticket}', [App\Http\Controllers\web\SupportTicketController::class, 'show'])->name('support.show');
+Route::get('/support', [App\Http\Controllers\Web\SupportTicketController::class, 'list'])->name('support.list');
+Route::get('/support/add', [App\Http\Controllers\Web\SupportTicketController::class, 'add'])->name('support.add');
+Route::post('/support', [App\Http\Controllers\Web\SupportTicketController::class, 'store'])->name('support.store');
+Route::get('/support/{ticket}', [App\Http\Controllers\Web\SupportTicketController::class, 'show'])->name('support.show');
 
 // 3D Customizer route
 Route::get('/3d-customizer', function () {
@@ -239,7 +238,7 @@ Route::get('/api-status', function () {
 });
 
 // Test route for CategoryController
-Route::get('/test-category-controller', [App\Http\Controllers\web\CategoryController::class, 'testController']);
+Route::get('/test-category-controller', [App\Http\Controllers\Web\CategoryController::class, 'testController']);
 
 // Test route for CSRF token
 Route::post('/test-csrf', function() {

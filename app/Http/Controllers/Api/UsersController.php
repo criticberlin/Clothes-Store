@@ -9,6 +9,12 @@ use App\Models\User;
 
 class UsersController extends Controller
 {
+    /**
+     * Login user and create token
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function login(Request $request)
     {
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
@@ -19,20 +25,32 @@ class UsersController extends Controller
         $token = $user->createToken('app');
 
         return response()->json([
-            'token' => $token->accessToken,
+            'token' => $token->plainTextToken,
             'user' => $user->getAttributes()
         ]);
     }
 
+    /**
+     * Get list of users
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function users(Request $request)
     {
         $users = User::select('id', 'name', 'email')->get()->toArray();
         return response()->json(['users' => $users]);
     }
 
+    /**
+     * Logout user (revoke token)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function logout(Request $request)
     {
-        auth()->user()->token()->revoke();
+        $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Token revoked']);
     }
 }
