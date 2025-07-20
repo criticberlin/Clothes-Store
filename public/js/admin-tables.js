@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
             destroy: true
         };
         
-        new DataTable(table, options);
+        const dataTable = new DataTable(table, options);
         
         // Hide DataTables pagination if Laravel pagination exists (after initialization)
         if (hasLaravelPagination) {
@@ -72,34 +72,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-    });
-    
-    // Confirm delete for all delete forms
-    const deleteForms = document.querySelectorAll('.delete-form');
-    deleteForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const confirmMessage = form.dataset.confirmMessage || 'Are you sure you want to delete this item?';
-            if (confirm(confirmMessage)) {
-                this.submit();
-            }
-        });
-    });
-}); 
-
+        
         // Add theme-aware classes to DataTables elements
-        const tableContainer = $(table).closest('.dataTables_wrapper');
+        const jqTableContainer = $(table).closest('.dataTables_wrapper');
         
         // Style the search input
-        const searchInput = tableContainer.find('.dataTables_filter input');
+        const searchInput = jqTableContainer.find('.dataTables_filter input');
         searchInput.addClass('search-input');
-        tableContainer.find('.dataTables_filter').addClass('has-search');
-        tableContainer.find('.dataTables_filter label').prepend(
+        jqTableContainer.find('.dataTables_filter').addClass('has-search');
+        jqTableContainer.find('.dataTables_filter label').prepend(
             '<span class="bi bi-search search-icon"></span>'
         );
         
         // Style the length select
-        tableContainer.find('.dataTables_length select').addClass('form-select');
+        jqTableContainer.find('.dataTables_length select').addClass('form-select');
         
         // Theme toggle detection for refresh
         const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -112,6 +98,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 300);
             });
         }
+    });
+    
+    // Confirm delete for all delete forms
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const confirmMessage = form.dataset.confirmMessage || 'Are you sure you want to delete this item?';
+            if (confirm(confirmMessage)) {
+                this.submit();
+            }
+        });
     });
     
     // Make sure tables adapt to container size changes
