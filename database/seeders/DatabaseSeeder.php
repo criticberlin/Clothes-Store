@@ -23,6 +23,12 @@ class DatabaseSeeder extends Seeder
             WishlistSeeder::class,
             SupportTicketSeeder::class,
             SettingSeeder::class,
+            
+            // New seeders for checkout system
+            GovernorateSeeder::class,
+            CitySeeder::class,
+            ShippingMethodSeeder::class,
+            PaymentMethodSeeder::class,
         ]);
     }
 }

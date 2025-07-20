@@ -13,14 +13,30 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'shipping_address',
-        'payment_method',
-        'total_amount',
-        'status'
+        'address_id',
+        'payment_method_id',
+        'shipping_method_id',
+        'promo_code_id',
+        'subtotal',
+        'shipping_cost',
+        'payment_fee',
+        'discount_amount',
+        'total',
+        'status',
+        'payment_status',
+        'transaction_id',
+        'payment_details',
+        'terms_accepted'
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
+        'payment_fee' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'payment_details' => 'json',
+        'terms_accepted' => 'boolean',
     ];
 
     /**
@@ -29,6 +45,38 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the address for this order
+     */
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Get the payment method for this order
+     */
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    /**
+     * Get the shipping method for this order
+     */
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(ShippingMethod::class);
+    }
+
+    /**
+     * Get the promo code for this order
+     */
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     /**
@@ -56,11 +104,27 @@ class Order extends Model
     }
 
     /**
+     * Get the formatted payment status of this order
+     */
+    public function getFormattedPaymentStatusAttribute(): string
+    {
+        return ucfirst($this->payment_status);
+    }
+
+    /**
      * Scope a query to only include orders with a specific status
      */
     public function scopeWithStatus($query, string $status)
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Scope a query to only include orders with a specific payment status
+     */
+    public function scopeWithPaymentStatus($query, string $paymentStatus)
+    {
+        return $query->where('payment_status', $paymentStatus);
     }
 
     /**

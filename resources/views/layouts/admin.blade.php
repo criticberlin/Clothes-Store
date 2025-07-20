@@ -518,32 +518,61 @@
                     </div>
                 </div>
                 
-                <!-- Settings Section -->
+                <!-- Store Settings -->
                 <div class="nav-section">
-                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#settingsCollapse" role="button" aria-expanded="true" aria-controls="settingsCollapse">
-                        <span>{{ __('Settings') }}</span>
+                    <div class="nav-section-title d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#storeSettingsCollapse" role="button" aria-expanded="true" aria-controls="storeSettingsCollapse">
+                        <span>{{ __('Store Settings') }}</span>
                         <i class="bi bi-chevron-down small"></i>
                     </div>
-                    <div class="collapse show {{ (request()->routeIs('admin.settings') || request()->routeIs('admin.currencies.*') || request()->routeIs('admin.settings.*')) ? 'show' : '' }}" id="settingsCollapse">
+                    <div class="collapse show" id="storeSettingsCollapse">
                         <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') && !request('section') ? 'active' : '' }}">
-                            <span class="nav-icon"><i class="bi bi-shop"></i></span>
-                            <span>{{ __('Store Information') }}</span>
-                    </a>
-                        <a href="{{ route('admin.currencies.index') }}" class="nav-link {{ (request()->routeIs('admin.currencies.*')) ? 'active' : '' }}">
-                            <span class="nav-icon"><i class="bi bi-currency-exchange"></i></span>
-                        <span>{{ __('Currency Management') }}</span>
-                    </a>
-                        <a href="{{ route('admin.settings.payment') }}" class="nav-link {{ request()->routeIs('admin.settings.payment') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                            <span>{{ __('General Settings') }}</span>
+                        </a>
+                        
+                        <!-- Shipping Settings -->
+                        <div class="nav-item">
+                            <a href="#shippingSubmenu" data-bs-toggle="collapse" aria-expanded="{{ request()->routeIs('admin.shipping.*') || request()->routeIs('admin.settings.shipping') ? 'true' : 'false' }}" class="nav-link dropdown-toggle {{ request()->routeIs('admin.shipping.*') || request()->routeIs('admin.settings.shipping') ? 'active' : '' }}">
+                                <span class="nav-icon"><i class="bi bi-truck"></i></span>
+                                <span>{{ __('Shipping Settings') }}</span>
+                            </a>
+                            <div class="collapse {{ request()->routeIs('admin.shipping.*') || request()->routeIs('admin.settings.shipping') ? 'show' : '' }}" id="shippingSubmenu">
+                                <div class="ps-4">
+                                    <a href="{{ route('admin.shipping.methods') }}" class="nav-link {{ request()->routeIs('admin.shipping.methods') ? 'active' : '' }}">
+                                        <span class="nav-icon"><i class="bi bi-box-seam"></i></span>
+                                        <span>{{ __('Shipping Methods') }}</span>
+                                    </a>
+                                    <a href="{{ route('admin.shipping.governorates') }}" class="nav-link {{ request()->routeIs('admin.shipping.governorates') ? 'active' : '' }}">
+                                        <span class="nav-icon"><i class="bi bi-geo-alt"></i></span>
+                                        <span>{{ __('Governorates') }}</span>
+                                    </a>
+                                    <a href="{{ route('admin.shipping.cities') }}" class="nav-link {{ request()->routeIs('admin.shipping.cities') ? 'active' : '' }}">
+                                        <span class="nav-icon"><i class="bi bi-building"></i></span>
+                                        <span>{{ __('Cities') }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Settings -->
+                        <a href="{{ route('admin.payment.index') }}" class="nav-link {{ request()->routeIs('admin.payment.*') || request()->routeIs('admin.settings.payment') ? 'active' : '' }}">
                             <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
                             <span>{{ __('Payment Settings') }}</span>
                         </a>
-                        <a href="{{ route('admin.settings.shipping') }}" class="nav-link {{ request()->routeIs('admin.settings.shipping') ? 'active' : '' }}">
-                            <span class="nav-icon"><i class="bi bi-truck"></i></span>
-                            <span>{{ __('Shipping Settings') }}</span>
+                        
+                        <!-- Promo Codes -->
+                        <a href="{{ route('admin.promo-codes.index') }}" class="nav-link {{ request()->routeIs('admin.promo-codes.*') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-ticket-perforated"></i></span>
+                            <span>{{ __('Promo Codes') }}</span>
                         </a>
+                        
                         <a href="{{ route('admin.settings.email') }}" class="nav-link {{ request()->routeIs('admin.settings.email') ? 'active' : '' }}">
                             <span class="nav-icon"><i class="bi bi-envelope"></i></span>
                             <span>{{ __('Email Settings') }}</span>
+                        </a>
+                        <a href="{{ route('admin.currencies.index') }}" class="nav-link {{ request()->routeIs('admin.currencies.*') ? 'active' : '' }}">
+                            <span class="nav-icon"><i class="bi bi-currency-exchange"></i></span>
+                            <span>{{ __('Currencies') }}</span>
                         </a>
                     </div>
                 </div>
@@ -685,6 +714,61 @@
                     adminSidebar.classList.toggle('show');
                 });
             }
+            
+            // Save and restore sidebar collapse state
+            const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+            
+            // Load saved states
+            collapseElements.forEach(el => {
+                const target = el.getAttribute('href') || el.getAttribute('data-bs-target');
+                const targetId = target.replace('#', '');
+                const savedState = localStorage.getItem('sidebar-' + targetId);
+                
+                if (savedState === 'show') {
+                    const collapse = document.querySelector(target);
+                    if (collapse) {
+                        collapse.classList.add('show');
+                        el.setAttribute('aria-expanded', 'true');
+                    }
+                } else if (savedState === 'hide') {
+                    const collapse = document.querySelector(target);
+                    if (collapse) {
+                        collapse.classList.remove('show');
+                        el.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+            
+            // Save state on click
+            collapseElements.forEach(el => {
+                el.addEventListener('click', function() {
+                    const target = this.getAttribute('href') || this.getAttribute('data-bs-target');
+                    const targetId = target.replace('#', '');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Save the opposite state (since click will toggle it)
+                    localStorage.setItem('sidebar-' + targetId, isExpanded ? 'hide' : 'show');
+                });
+            });
+            
+            // Save and restore sidebar scroll position
+            const sidebar = document.querySelector('.admin-sidebar');
+            
+            // Restore scroll position
+            const savedScrollPosition = localStorage.getItem('sidebar-scroll-position');
+            if (savedScrollPosition) {
+                sidebar.scrollTop = parseInt(savedScrollPosition);
+            }
+            
+            // Save scroll position when user scrolls
+            sidebar.addEventListener('scroll', function() {
+                localStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+            });
+            
+            // Save scroll position before page unload
+            window.addEventListener('beforeunload', function() {
+                localStorage.setItem('sidebar-scroll-position', sidebar.scrollTop);
+            });
         });
     </script>
     

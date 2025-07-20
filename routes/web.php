@@ -76,7 +76,7 @@ Route::post('/users/{user}/save-password', [UsersController::class, 'savePasswor
 Route::get('/users/{user}/profile', [UsersController::class, 'profile'])->name('profile');
 
 // Admin Routes
-Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(function () {
+Route::prefix('admin')->middleware(['auth:web', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
     // Admin Dashboard
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard'); // Add a root route for admin
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
@@ -142,6 +142,57 @@ Route::prefix('admin')->middleware(['auth:web', AdminMiddleware::class])->group(
     Route::get('/support/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('admin.support.show');
     Route::post('/support/{ticket}/reply', [App\Http\Controllers\Admin\SupportTicketController::class, 'reply'])->name('admin.support.reply');
     Route::post('/support/{ticket}/close', [App\Http\Controllers\Admin\SupportTicketController::class, 'close'])->name('admin.support.close');
+    
+    // Admin Shipping Management
+    Route::prefix('shipping')->name('admin.shipping.')->group(function () {
+        // Governorates
+        Route::get('/governorates', [App\Http\Controllers\Admin\ShippingController::class, 'governorates'])->name('governorates');
+        Route::get('/governorates/create', [App\Http\Controllers\Admin\ShippingController::class, 'createGovernorate'])->name('governorates.create');
+        Route::post('/governorates', [App\Http\Controllers\Admin\ShippingController::class, 'storeGovernorate'])->name('governorates.store');
+        Route::get('/governorates/{governorate}/edit', [App\Http\Controllers\Admin\ShippingController::class, 'editGovernorate'])->name('governorates.edit');
+        Route::put('/governorates/{governorate}', [App\Http\Controllers\Admin\ShippingController::class, 'updateGovernorate'])->name('governorates.update');
+        Route::delete('/governorates/{governorate}', [App\Http\Controllers\Admin\ShippingController::class, 'destroyGovernorate'])->name('governorates.destroy');
+        
+        // Cities
+        Route::get('/cities', [App\Http\Controllers\Admin\ShippingController::class, 'cities'])->name('cities');
+        Route::get('/cities/create', [App\Http\Controllers\Admin\ShippingController::class, 'createCity'])->name('cities.create');
+        Route::post('/cities', [App\Http\Controllers\Admin\ShippingController::class, 'storeCity'])->name('cities.store');
+        Route::get('/cities/{city}/edit', [App\Http\Controllers\Admin\ShippingController::class, 'editCity'])->name('cities.edit');
+        Route::put('/cities/{city}', [App\Http\Controllers\Admin\ShippingController::class, 'updateCity'])->name('cities.update');
+        Route::delete('/cities/{city}', [App\Http\Controllers\Admin\ShippingController::class, 'destroyCity'])->name('cities.destroy');
+        
+        // Shipping Methods
+        Route::get('/methods', [App\Http\Controllers\Admin\ShippingController::class, 'methods'])->name('methods');
+        Route::get('/methods/create', [App\Http\Controllers\Admin\ShippingController::class, 'createMethod'])->name('methods.create');
+        Route::post('/methods', [App\Http\Controllers\Admin\ShippingController::class, 'storeMethod'])->name('methods.store');
+        Route::get('/methods/{method}/edit', [App\Http\Controllers\Admin\ShippingController::class, 'editMethod'])->name('methods.edit');
+        Route::put('/methods/{method}', [App\Http\Controllers\Admin\ShippingController::class, 'updateMethod'])->name('methods.update');
+        Route::patch('/methods/{method}/toggle', [App\Http\Controllers\Admin\ShippingController::class, 'toggleMethodStatus'])->name('methods.toggle');
+        Route::delete('/methods/{method}', [App\Http\Controllers\Admin\ShippingController::class, 'destroyMethod'])->name('methods.delete');
+    });
+    
+    // Admin Payment Methods Management
+    Route::prefix('payment')->name('admin.payment.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PaymentMethodController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\PaymentMethodController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\PaymentMethodController::class, 'store'])->name('store');
+        Route::get('/{paymentMethod}/edit', [App\Http\Controllers\Admin\PaymentMethodController::class, 'edit'])->name('edit');
+        Route::put('/{paymentMethod}', [App\Http\Controllers\Admin\PaymentMethodController::class, 'update'])->name('update');
+        Route::patch('/{paymentMethod}/toggle', [App\Http\Controllers\Admin\PaymentMethodController::class, 'toggleStatus'])->name('toggle');
+        Route::delete('/{paymentMethod}', [App\Http\Controllers\Admin\PaymentMethodController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Admin Promo Codes Management
+    Route::prefix('promo-codes')->name('admin.promo-codes.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PromoCodeController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\PromoCodeController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\PromoCodeController::class, 'store'])->name('store');
+        Route::get('/{promoCode}/edit', [App\Http\Controllers\Admin\PromoCodeController::class, 'edit'])->name('edit');
+        Route::put('/{promoCode}', [App\Http\Controllers\Admin\PromoCodeController::class, 'update'])->name('update');
+        Route::patch('/{promoCode}/toggle', [App\Http\Controllers\Admin\PromoCodeController::class, 'toggleStatus'])->name('toggle');
+        Route::patch('/{promoCode}/reset', [App\Http\Controllers\Admin\PromoCodeController::class, 'resetUsage'])->name('reset');
+        Route::delete('/{promoCode}', [App\Http\Controllers\Admin\PromoCodeController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // Public product routes
@@ -206,6 +257,43 @@ Route::middleware(['auth:web'])->group(function () {
     Route::post('/wishlist/toggle/{productId}', [App\Http\Controllers\Web\WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::delete('/wishlist/clear', [App\Http\Controllers\Web\WishlistController::class, 'clear'])->name('wishlist.clear');
     Route::get('/wishlist/clear', [App\Http\Controllers\Web\WishlistController::class, 'clear'])->name('wishlist.clear.get'); // Temporary for debugging
+});
+
+// Checkout Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout', [App\Http\Controllers\Web\CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/address', [App\Http\Controllers\Web\CheckoutController::class, 'saveAddress'])->name('checkout.address');
+    Route::post('/checkout/shipping', [App\Http\Controllers\Web\CheckoutController::class, 'saveShipping'])->name('checkout.shipping');
+    Route::post('/checkout/payment', [App\Http\Controllers\Web\CheckoutController::class, 'savePayment'])->name('checkout.payment');
+    Route::post('/checkout/promo-code', [App\Http\Controllers\Web\CheckoutController::class, 'applyPromoCode'])->name('checkout.promo-code');
+    Route::delete('/checkout/promo-code', [App\Http\Controllers\Web\CheckoutController::class, 'removePromoCode'])->name('checkout.promo-code.remove');
+    Route::post('/checkout/process', [App\Http\Controllers\Web\CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout/success/{order}', [App\Http\Controllers\Web\CheckoutController::class, 'success'])->name('checkout.success');
+});
+
+// Shipping Address Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/shipping', [App\Http\Controllers\Web\ShippingController::class, 'index'])->name('shipping.index');
+    Route::get('/shipping/create', [App\Http\Controllers\Web\ShippingController::class, 'create'])->name('shipping.create');
+    Route::post('/shipping', [App\Http\Controllers\Web\ShippingController::class, 'store'])->name('shipping.store');
+    Route::get('/shipping/{address}/edit', [App\Http\Controllers\Web\ShippingController::class, 'edit'])->name('shipping.edit');
+    Route::put('/shipping/{address}', [App\Http\Controllers\Web\ShippingController::class, 'update'])->name('shipping.update');
+    Route::delete('/shipping/{address}', [App\Http\Controllers\Web\ShippingController::class, 'destroy'])->name('shipping.destroy');
+    Route::post('/shipping/{address}/default', [App\Http\Controllers\Web\ShippingController::class, 'setDefault'])->name('shipping.default');
+    Route::post('/shipping/cities', [App\Http\Controllers\Web\ShippingController::class, 'getCities'])->name('shipping.cities');
+});
+
+// Payment Routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/payment/{order}/process', [App\Http\Controllers\Web\PaymentController::class, 'process'])->name('payment.process');
+    Route::get('/payment/methods', [App\Http\Controllers\Web\PaymentController::class, 'savedMethods'])->name('payment.methods');
+});
+
+// Promo code routes
+Route::middleware(['auth:web'])->group(function () {
+    Route::post('/promo-code/apply', [App\Http\Controllers\Web\PromoCodeController::class, 'apply'])->name('promo-code.apply');
+    Route::delete('/promo-code/remove', [App\Http\Controllers\Web\PromoCodeController::class, 'remove'])->name('promo-code.remove');
+    Route::post('/promo-code/validate', [App\Http\Controllers\Web\PromoCodeController::class, 'validateCode'])->name('promo-code.validate');
 });
 
 

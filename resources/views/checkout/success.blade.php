@@ -27,27 +27,66 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-3">
                                 <span>Order ID:</span>
-                                <span class="fw-bold">{{ $lastOrder->id }}</span>
+                                <span class="fw-bold">{{ $order->id }}</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span>Order Date:</span>
-                                <span>{{ $lastOrder->created_at->format('F d, Y') }}</span>
+                                <span>{{ $order->created_at->format('F d, Y') }}</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span>Order Status:</span>
-                                <span class="badge bg-warning text-dark">{{ ucfirst($lastOrder->status) }}</span>
+                                <span class="badge bg-warning text-dark">{{ ucfirst($order->status) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Payment Status:</span>
+                                <span class="badge bg-{{ $order->payment_status === 'paid' ? 'success' : 'warning' }}">
+                                    {{ ucfirst($order->payment_status) }}
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span>Shipping Address:</span>
-                                <span>{{ $lastOrder->shipping_address }}</span>
+                                <span class="text-end">
+                                    @if($order->address)
+                                        {{ $order->address->full_name }}<br>
+                                        {{ $order->address->street_address }}<br>
+                                        {{ $order->address->city->name }}, 
+                                        {{ $order->address->governorate->name }}
+                                    @else
+                                        N/A
+                                    @endif
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span>Payment Method:</span>
-                                <span>{{ ucfirst($lastOrder->payment_method) }}</span>
+                                <span>{{ $order->paymentMethod ? $order->paymentMethod->name : 'N/A' }}</span>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Shipping Method:</span>
+                                <span>{{ $order->shippingMethod ? $order->shippingMethod->name : 'N/A' }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span>${{ number_format($order->subtotal, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Shipping Cost:</span>
+                                <span>${{ number_format($order->shipping_cost, 2) }}</span>
+                            </div>
+                            @if($order->payment_fee > 0)
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Payment Fee:</span>
+                                <span>${{ number_format($order->payment_fee, 2) }}</span>
+                            </div>
+                            @endif
+                            @if($order->discount_amount > 0)
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Discount:</span>
+                                <span class="text-success">-${{ number_format($order->discount_amount, 2) }}</span>
+                            </div>
+                            @endif
+                            <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top">
                                 <span>Total:</span>
-                                <span>${{ number_format($lastOrder->total_amount, 2) }}</span>
+                                <span>${{ number_format($order->total, 2) }}</span>
                             </div>
                         </div>
                     </div>
@@ -68,9 +107,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($lastOrder->items as $item)
+                                        @foreach($order->items as $item)
                                             <tr>
-                                                <td>{{ $item->product->name }}</td>
+                                                <td>
+                                                    {{ $item->product->name }}
+                                                    @if($item->color)
+                                                        <br><small class="text-muted">Color: {{ $item->color->name }}</small>
+                                                    @endif
+                                                    @if($item->size)
+                                                        <br><small class="text-muted">Size: {{ $item->size->name }}</small>
+                                                    @endif
+                                                </td>
                                                 <td class="text-end">${{ number_format($item->price, 2) }}</td>
                                                 <td class="text-center">{{ $item->quantity }}</td>
                                                 <td class="text-end">${{ number_format($item->price * $item->quantity, 2) }}</td>

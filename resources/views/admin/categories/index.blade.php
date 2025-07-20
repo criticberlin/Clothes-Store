@@ -461,75 +461,18 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize DataTable with theme-aware settings
-        if ($.fn.DataTable) {
-            // Destroy existing DataTable instance if it exists
-            if ($.fn.DataTable.isDataTable('#categoriesTable')) {
-                $('#categoriesTable').DataTable().destroy();
-            }
-            
-            // Initialize new DataTable
-            const dataTable = $('#categoriesTable').DataTable({
-                responsive: true,
-                pageLength: 10,
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search categories...",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ categories",
-                    infoEmpty: "Showing 0 to 0 of 0 categories",
-                    infoFiltered: "(filtered from _MAX_ total categories)"
-                },
-                dom: '<"top d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center"l><"d-flex"f>>rt<"bottom d-flex justify-content-between align-items-center"<"d-flex align-items-center"i><"d-flex"p>>',
-                initComplete: function() {
-                    // Add theme-aware classes to DataTables elements
-                    $('.dataTables_filter input').addClass('form-control');
-                    $('.dataTables_length select').addClass('form-select');
-                    
-                    // Add aria-label for accessibility
-                    $('.dataTables_filter input').attr('aria-label', 'Search categories');
+        // Add no-pagination class to the table to disable DataTables pagination
+        document.querySelector('.admin-datatable').classList.add('no-pagination');
+        
+        // Delete confirmation for category delete forms
+        document.querySelectorAll('.delete').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const formId = this.getAttribute('onclick').match(/document\.getElementById\('([^']+)'\)/)[1];
+                if (confirm('Are you sure you want to delete this category?')) {
+                    document.getElementById(formId).submit();
                 }
             });
-
-            // Apply theme-specific styles to DataTables
-            const applyThemeStyles = () => {
-                const isDark = document.documentElement.classList.contains('theme-dark');
-                
-                // Style adjustments for dark mode
-                if (isDark) {
-                    $('.dataTable').addClass('table-dark');
-                    $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').addClass('text-light');
-                } else {
-                    $('.dataTable').removeClass('table-dark');
-                    $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').removeClass('text-light');
-                }
-            };
-            
-            // Initial application of theme styles
-            applyThemeStyles();
-        }
-        
-        // Update theme-aware elements when theme changes
-        document.addEventListener('themeChanged', function(e) {
-            // Apply theme-specific styles
-            const isDark = document.documentElement.classList.contains('theme-dark');
-            
-            // Update DataTable styles
-            if ($.fn.DataTable && $.fn.DataTable.isDataTable('#categoriesTable')) {
-                const applyThemeStyles = () => {
-                    // Style adjustments for dark mode
-                    if (isDark) {
-                        $('.dataTable').addClass('table-dark');
-                        $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').addClass('text-light');
-                    } else {
-                        $('.dataTable').removeClass('table-dark');
-                        $('.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate').removeClass('text-light');
-                    }
-                };
-                
-                applyThemeStyles();
-                $('#categoriesTable').DataTable().draw();
-            }
         });
     });
 </script>

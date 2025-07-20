@@ -138,6 +138,22 @@ class User extends Authenticatable
     }
     
     /**
+     * Get all addresses for this user
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
+    }
+    
+    /**
+     * Get the default address for this user
+     */
+    public function getDefaultAddressAttribute()
+    {
+        return $this->addresses()->where('is_default', true)->first();
+    }
+    
+    /**
      * Check if user has a product in their wishlist
      */
     public function hasInWishlist(int $productId): bool
