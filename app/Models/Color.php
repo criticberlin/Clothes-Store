@@ -21,7 +21,7 @@ class Color extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
-    }
+}
     
     /**
      * Get the CSS background color style for this color

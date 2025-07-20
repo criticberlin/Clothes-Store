@@ -15,6 +15,20 @@
         </div>
     </div>
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="row g-4">
         <!-- Ticket Information -->
         <div class="col-lg-4">
@@ -27,11 +41,12 @@
                         <span class="text-secondary">Status:</span>
                         <span class="badge bg-{{ 
                             $ticket->status === 'open' ? 'danger' : 
-                            ($ticket->status === 'pending' ? 'warning' : 'success') 
+                            ($ticket->status === 'pending' || $ticket->status === 'in_progress' ? 'warning' : 'success') 
                         }}">
                             {{ ucfirst($ticket->status) }}
                         </span>
                     </div>
+                    @if(isset($ticket->priority))
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Priority:</span>
                         <span class="badge bg-{{ 
@@ -41,6 +56,7 @@
                             {{ ucfirst($ticket->priority ?? 'normal') }}
                         </span>
                     </div>
+                    @endif
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Created:</span>
                         <span>{{ $ticket->created_at->format('M d, Y') }}</span>
@@ -80,7 +96,7 @@
                     <span>Ticket Actions</span>
                 </div>
                 <div class="admin-card-body">
-                    @if($ticket->status !== 'resolved')
+                    @if($ticket->status !== 'closed' && $ticket->status !== 'resolved')
                         <form method="POST" action="{{ route('admin.support.close', $ticket) }}" class="mb-3">
                             @csrf
                             <div class="mb-3">
@@ -130,6 +146,35 @@
                         </div>
                     </div>
                     
+                    <!-- Admin Reply (if no replies table) -->
+                    @if($ticket->admin_reply)
+                        <div class="ticket-message admin-message mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar bg-success text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        @if($ticket->admin)
+                                            {{ strtoupper(substr($ticket->admin->name, 0, 1)) }}
+                                        @else
+                                            A
+                                        @endif
+                                    </div>
+                                    <span class="fw-bold">
+                                        @if($ticket->admin)
+                                            {{ $ticket->admin->name }}
+                                        @else
+                                            Admin
+                                        @endif
+                                        <span class="badge bg-success ms-1">Staff</span>
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ $ticket->updated_at->format('M d, Y h:i A') }}</small>
+                            </div>
+                            <div class="message-content p-3 bg-success bg-opacity-10 rounded">
+                                {!! nl2br(e($ticket->admin_reply)) !!}
+                            </div>
+                        </div>
+                    @endif
+                    
                     <!-- Replies -->
                     @if(isset($ticket->replies) && $ticket->replies->count() > 0)
                         @foreach($ticket->replies as $reply)
@@ -156,7 +201,7 @@
                     @endif
                     
                     <!-- Reply Form -->
-                    @if($ticket->status !== 'resolved')
+                    @if($ticket->status !== 'closed' && $ticket->status !== 'resolved')
                         <div class="reply-form mt-4 pt-4 border-top">
                             <h5>Reply to Ticket</h5>
                             <form method="POST" action="{{ route('admin.support.reply', $ticket) }}">

@@ -39,15 +39,29 @@ class AdminSupportTicketController extends Controller
      */
     public function show(SupportTicket $ticket)
     {
-        $ticket->load(['user', 'replies.user']);
-        
-        // Mark ticket as read if it was new
-        if ($ticket->status === 'open') {
-            $ticket->status = 'pending';
-            $ticket->save();
+        try {
+            // First try to load with replies
+            $ticket->load(['user']);
+            
+            // Check if the replies relationship exists and the table exists
+            try {
+                $ticket->load(['replies.user']);
+            } catch (\Exception $e) {
+                // If there's an error, we'll continue without loading replies
+                // This allows the view to still work even if replies table doesn't exist
+            }
+            
+            // Mark ticket as read if it was new
+            if ($ticket->status === 'open') {
+                $ticket->status = 'pending';
+                $ticket->save();
+            }
+            
+            return view('admin.support.show', compact('ticket'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.support.index')
+                ->with('error', 'Error loading ticket: ' . $e->getMessage());
         }
-        
-        return view('admin.support.show', compact('ticket'));
     }
 
     /**
@@ -63,19 +77,31 @@ class AdminSupportTicketController extends Controller
             'message' => 'required|string',
         ]);
         
-        $reply = new SupportTicketReply();
-        $reply->support_ticket_id = $ticket->id;
-        $reply->user_id = Auth::id();
-        $reply->message = $request->message;
-        $reply->is_admin = true;
-        $reply->save();
-        
-        // Update ticket status
-        $ticket->status = $request->resolve ? 'resolved' : 'pending';
-        $ticket->save();
-        
-        return redirect()->route('admin.support.show', $ticket)
-            ->with('success', 'Reply sent successfully.');
+        try {
+            // Try to create a reply if the table exists
+            try {
+                $reply = new SupportTicketReply();
+                $reply->support_ticket_id = $ticket->id;
+                $reply->user_id = Auth::id();
+                $reply->message = $request->message;
+                $reply->is_admin = true;
+                $reply->save();
+            } catch (\Exception $e) {
+                // If the table doesn't exist, update the ticket with admin reply
+                $ticket->admin_reply = $request->message;
+                $ticket->admin_id = Auth::id();
+            }
+            
+            // Update ticket status
+            $ticket->status = $request->resolve ? 'resolved' : 'pending';
+            $ticket->save();
+            
+            return redirect()->route('admin.support.show', $ticket)
+                ->with('success', 'Reply sent successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.support.show', $ticket)
+                ->with('error', 'Error sending reply: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -87,19 +113,32 @@ class AdminSupportTicketController extends Controller
      */
     public function close(Request $request, SupportTicket $ticket)
     {
-        $ticket->status = 'resolved';
-        $ticket->save();
-        
-        if ($request->message) {
-            $reply = new SupportTicketReply();
-            $reply->support_ticket_id = $ticket->id;
-            $reply->user_id = Auth::id();
-            $reply->message = $request->message;
-            $reply->is_admin = true;
-            $reply->save();
+        try {
+            $ticket->status = 'resolved';
+            
+            if ($request->message) {
+                // Try to create a reply if the table exists
+                try {
+                    $reply = new SupportTicketReply();
+                    $reply->support_ticket_id = $ticket->id;
+                    $reply->user_id = Auth::id();
+                    $reply->message = $request->message;
+                    $reply->is_admin = true;
+                    $reply->save();
+                } catch (\Exception $e) {
+                    // If the table doesn't exist, update the ticket with admin reply
+                    $ticket->admin_reply = $request->message;
+                    $ticket->admin_id = Auth::id();
+                }
+            }
+            
+            $ticket->save();
+            
+            return redirect()->route('admin.support.show', $ticket)
+                ->with('success', 'Ticket closed successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.support.show', $ticket)
+                ->with('error', 'Error closing ticket: ' . $e->getMessage());
         }
-        
-        return redirect()->route('admin.support.show', $ticket)
-            ->with('success', 'Ticket closed successfully.');
     }
 }

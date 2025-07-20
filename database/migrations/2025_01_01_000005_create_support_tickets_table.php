@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Create support tickets table
         if (!Schema::hasTable('support_tickets')) {
             Schema::create('support_tickets', function (Blueprint $table) {
                 $table->id();
@@ -23,6 +24,18 @@ return new class extends Migration
                 $table->timestamps();
             });
         }
+
+        // Create support ticket replies table
+        if (!Schema::hasTable('support_ticket_replies')) {
+            Schema::create('support_ticket_replies', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('support_ticket_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->text('message');
+                $table->boolean('is_admin')->default(false);
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -30,6 +43,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('support_ticket_replies');
         Schema::dropIfExists('support_tickets');
     }
 }; 
